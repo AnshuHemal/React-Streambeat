@@ -1,28 +1,24 @@
 import useSocialAuth from "@/hooks/useSocialAuth";
 import { useRouter } from "expo-router";
 import {
-  ActivityIndicator,
-  Dimensions,
-  Image,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-const { height } = Dimensions.get("window");
 
 export default function SignInScreen() {
   const router = useRouter();
   const { handleSocialAuth, loadingStrategy } = useSocialAuth();
 
-  const isGoogleLoading = loadingStrategy === "oauth_google";
-  const isFacebookLoading = loadingStrategy === "oauth_facebook";
-  const isAppleLoading = loadingStrategy === "oauth_apple";
-  const isAnyLoading = isGoogleLoading || isFacebookLoading || isAppleLoading;
+  const isGoogleLoading = loadingStrategy === "google";
+  const isAppleLoading = loadingStrategy === "apple";
+  const isAnyLoading = isGoogleLoading || isAppleLoading;
 
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-[#121212]">
       <View className="w-full">
         <Image
           source={require("@/assets/images/login-bg.png")}
@@ -46,30 +42,40 @@ export default function SignInScreen() {
           </View>
 
           <View className="w-full gap-y-3 mb-4">
+            {/* Sign up button — Spotify green style */}
             <TouchableOpacity
-              onPress={() => router.push("/(auth)/phone-auth")}
+              onPress={() => router.push("/(auth)/signup")}
+              disabled={isAnyLoading}
+              className="flex-row items-center justify-center bg-[#1DB954] rounded-full py-4 px-5"
+              activeOpacity={0.8}
+            >
+              <Text className="text-black text-lg font-bold font-CircularStd">
+                Sign up free
+              </Text>
+            </TouchableOpacity>
+
+            {/* Phone number */}
+            <TouchableOpacity
+              onPress={() => router.push("/(auth)/phone")}
               disabled={isAnyLoading}
               className="flex-row items-center border border-[#777777] rounded-full py-4 px-5"
               activeOpacity={0.7}
             >
               <View className="w-8 items-center">
-                {isGoogleLoading ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Image
-                    source={require("@/assets/images/logo-phone.png")}
-                    style={{ width: 24, height: 24 }}
-                    resizeMode="contain"
-                  />
-                )}
+                <Image
+                  source={require("@/assets/images/logo-phone.png")}
+                  style={{ width: 24, height: 24 }}
+                  resizeMode="contain"
+                />
               </View>
               <Text className="flex-1 text-center text-white text-lg font-bold font-CircularStd">
                 Continue with phone number
               </Text>
             </TouchableOpacity>
 
+            {/* Google */}
             <TouchableOpacity
-              onPress={() => handleSocialAuth("oauth_google")}
+              onPress={() => handleSocialAuth("google")}
               disabled={isAnyLoading}
               className="flex-row items-center border border-[#777777] rounded-full py-4 px-5"
               activeOpacity={0.7}
@@ -90,35 +96,14 @@ export default function SignInScreen() {
               </Text>
             </TouchableOpacity>
 
+            {/* Apple */}
             <TouchableOpacity
-              onPress={() => handleSocialAuth("oauth_facebook")}
-              disabled={isAnyLoading}
-              className="flex-row items-center border border-[#777777] rounded-full py-4 px-5 w-full"
-              activeOpacity={0.7}
-            >
-              <View className="w-8 items-center">
-                {isFacebookLoading ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Image
-                    source={require("@/assets/images/logo-facebook.png")}
-                    style={{ width: 24, height: 24 }}
-                    resizeMode="contain"
-                  />
-                )}
-              </View>
-              <Text className="flex-1 text-center text-white text-lg font-bold font-CircularStd">
-                Continue with Facebook
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => handleSocialAuth("oauth_apple")}
+              onPress={() => handleSocialAuth("apple")}
               disabled={isAnyLoading}
               className="flex-row items-center border border-[#777777] rounded-full py-4 px-5"
               activeOpacity={0.7}
             >
-              <View className="w-8 items-center text-center">
+              <View className="w-8 items-center">
                 {isAppleLoading ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
@@ -135,7 +120,7 @@ export default function SignInScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => router.push("/(auth)/phone-auth")}
+              onPress={() => router.push("/(auth)/login")}
               className="mt-2 items-center"
             >
               <Text className="text-white font-bold font-CircularStd text-lg">

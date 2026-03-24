@@ -1,15 +1,13 @@
-import { useAuth } from "@clerk/expo";
+import { useAuth } from "@/context/AuthContext";
 import { Redirect, Stack } from "expo-router";
 
 export default function AuthRoutesLayout() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isLoaded, session } = useAuth();
 
-  if (!isLoaded) {
-    return null;
-  }
+  if (!isLoaded) return null;
 
-  if (isSignedIn) {
-    return <Redirect href={"/"} />;
+  if (session) {
+    return <Redirect href="/(tabs)" />;
   }
 
   return (
@@ -17,7 +15,7 @@ export default function AuthRoutesLayout() {
       screenOptions={{
         headerShown: false,
         animation: "fade",
-        contentStyle: { backgroundColor: "#000" },
+        contentStyle: { backgroundColor: "#121212" },
       }}
     />
   );

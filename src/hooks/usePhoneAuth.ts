@@ -1,85 +1,60 @@
-import { useSignIn, useSignUp } from "@clerk/expo";
+import { supabase } from "@/lib/supabase";
 import { useState } from "react";
 import { Alert } from "react-native";
 
 const usePhoneAuth = () => {
-    const { signIn } = useSignIn();
-    const { signUp } = useSignUp();
-    const [loading, setLoading] = useState(false);
-    const [pendingVerification, setPendingVerification] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [phone, setPhone] = useState("");
 
-    const handleSendCode = async (phoneNumber: string) => {
-        if (!signIn || !signUp) return;
+  const handleSendCode = async (phoneNumber: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phoneNumber,
+      });
 
-        setLoading(true);
-        try {
-            await (signIn as any).create({
-                identifier: phoneNumber,
-            });
+      if (error) {
+        Alert.alert("Error", error.message);
+        return;
+      }
 
-            await (signIn as any).phoneCode.send();
+      setPhone(phoneNumber);
+      setPendingVerification(true);
+    } catch (err: any) {
+      console.log("[PhoneAuth] Exception:", err);
+      Alert.alert("Error", err?.message ?? "Failed to send code.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            setPendingVerification(true);
-        } catch (err: any) {
-            console.error("Phone Sign In Error:", err);
-            if (err.errors && err.errors[0]?.code === "form_identifier_not_found") {
-                try {
-                    await (signUp as any).create({
-                        phoneNumber,
-                    });
+  const handleVerifyCode = async (code: string) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone,
+        token: code,
+        type: "sms",
+      });
 
-                    await (signUp as any).phoneCode.send();
+      if (error) {
+        Alert.alert("Error", error.message);
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err?.message ?? "Invalid verification code.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                    setPendingVerification(true);
-                } catch (signUpErr: any) {
-                    console.error("Phone Sign Up Error:", signUpErr);
-                    Alert.alert("Error", signUpErr.errors?.[0]?.message || "Something went wrong.");
-                }
-            } else {
-                Alert.alert("Error", err.errors?.[0]?.message || "Something went wrong.");
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleVerifyCode = async (code: string) => {
-        if (!signIn || !signUp) return;
-
-        setLoading(true);
-        try {
-            if ((signIn as any).status === "needs_first_factor") {
-                await (signIn as any).phoneCode.authenticate({
-                    code,
-                });
-
-                if ((signIn as any).status === "complete") {
-                    await (signIn as any).finalize();
-                }
-            } else if ((signUp as any).status === "missing_requirements") {
-                await (signUp as any).phoneCode.authenticate({
-                    code,
-                });
-
-                if ((signUp as any).status === "complete") {
-                    await (signUp as any).finalize();
-                }
-            }
-        } catch (err: any) {
-            console.error("Verification error:", err);
-            Alert.alert("Error", err.errors?.[0]?.message || "Invalid verification code.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    return {
-        handleSendCode,
-        handleVerifyCode,
-        loading,
-        pendingVerification,
-        setPendingVerification,
-    };
+  return {
+    handleSendCode,
+    handleVerifyCode,
+    loading,
+    pendingVerification,
+    setPendingVerification,
+  };
 };
 
 export default usePhoneAuth;
