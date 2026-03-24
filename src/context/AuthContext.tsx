@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 type Profile = {
   onboarding_complete: boolean;
+  notifications_seen: boolean;
   display_name: string | null;
   music_preferences: string[] | null;
 } | null;
@@ -32,7 +33,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("onboarding_complete, display_name, music_preferences")
+      .select(
+        "onboarding_complete, notifications_seen, display_name, music_preferences",
+      )
       .eq("id", userId)
       .single();
     setProfile(data ?? null);

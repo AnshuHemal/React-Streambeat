@@ -3,31 +3,29 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignUpEmailScreen() {
   const router = useRouter();
-  const { checkEmailAvailable, checkingEmail, emailError, setEmailError } =
-    useSignUp();
+  const { validateEmail, emailError, setEmailError } = useSignUp();
 
   const [email, setEmail] = useState("");
 
   const emailValid =
     email.trim().length > 0 && email.includes("@") && email.includes(".");
 
-  const onNext = async () => {
+  const onNext = () => {
     if (!emailValid) return;
-    const available = await checkEmailAvailable(email.trim().toLowerCase());
-    if (available) {
+    const valid = validateEmail(email.trim().toLowerCase());
+    if (valid) {
       router.push({
         pathname: "/(auth)/signup/password",
         params: { email: email.trim().toLowerCase() },
@@ -101,17 +99,13 @@ export default function SignUpEmailScreen() {
           <View className="items-center mt-10">
             <TouchableOpacity
               onPress={onNext}
-              disabled={!emailValid || checkingEmail}
+              disabled={!emailValid}
               className={`bg-white rounded-full py-4 px-16 items-center ${
-                !emailValid || checkingEmail ? "opacity-40" : ""
+                !emailValid ? "opacity-40" : ""
               }`}
               activeOpacity={0.85}
             >
-              {checkingEmail ? (
-                <ActivityIndicator color="black" />
-              ) : (
-                <Text className="text-black font-bold text-base ">Next</Text>
-              )}
+              <Text className="text-black font-bold text-base ">Next</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

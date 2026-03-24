@@ -1,15 +1,33 @@
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function SignUpNotificationsScreen() {
+export default function OnboardingNotificationsScreen() {
   const router = useRouter();
+  const { user } = useAuth();
 
-  const proceed = () => router.replace("/onboarding/music" as any);
+  const proceed = async () => {
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ notifications_seen: true })
+        .eq("id", user.id);
+    }
+    router.replace("/onboarding/music" as any);
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#121212]">
-      <View className="flex-1 items-center justify-center px-8">
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
+      <View
+        style={{
+          flex: 1,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: 32,
+        }}
+      >
         {/* Mock notification card */}
         <View
           style={{
@@ -24,7 +42,14 @@ export default function SignUpNotificationsScreen() {
             elevation: 8,
           }}
         >
-          <View className="flex-row items-center gap-x-3 mb-3">
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 12,
+            }}
+          >
             <View
               style={{
                 width: 32,
@@ -73,19 +98,51 @@ export default function SignUpNotificationsScreen() {
           />
         </View>
 
-        <Text className="text-white text-2xl font-bold  text-center mb-4">
+        <Text
+          style={{
+            color: "#ffffff",
+            fontSize: 24,
+            fontWeight: "700",
+            fontFamily: "CircularStd",
+            textAlign: "center",
+            marginBottom: 12,
+          }}
+        >
           Turn on notifications
         </Text>
-        <Text className="text-[#a7a7a7] text-base  text-center mb-10 leading-6">
+        <Text
+          style={{
+            color: "#a7a7a7",
+            fontSize: 15,
+            fontFamily: "CircularStd",
+            textAlign: "center",
+            marginBottom: 40,
+            lineHeight: 22,
+          }}
+        >
           Get updates about new music, special offers, events and more.
         </Text>
 
         <TouchableOpacity
           onPress={proceed}
-          className="bg-white rounded-full py-4 w-full items-center mb-4"
+          style={{
+            backgroundColor: "#ffffff",
+            borderRadius: 50,
+            paddingVertical: 16,
+            width: "100%",
+            alignItems: "center",
+            marginBottom: 16,
+          }}
           activeOpacity={0.85}
         >
-          <Text className="text-black font-bold text-base ">
+          <Text
+            style={{
+              color: "#000",
+              fontWeight: "700",
+              fontSize: 16,
+              fontFamily: "CircularStd",
+            }}
+          >
             Turn on notifications
           </Text>
         </TouchableOpacity>
@@ -93,12 +150,31 @@ export default function SignUpNotificationsScreen() {
         <TouchableOpacity
           onPress={proceed}
           activeOpacity={0.7}
-          className="py-3"
+          style={{ paddingVertical: 12 }}
         >
-          <Text className="text-white font-bold text-base ">Not now</Text>
+          <Text
+            style={{
+              color: "#ffffff",
+              fontWeight: "700",
+              fontSize: 16,
+              fontFamily: "CircularStd",
+            }}
+          >
+            Not now
+          </Text>
         </TouchableOpacity>
 
-        <Text className="text-[#a7a7a7] text-xs  text-center mt-10 leading-5 px-4">
+        <Text
+          style={{
+            color: "#a7a7a7",
+            fontSize: 12,
+            fontFamily: "CircularStd",
+            textAlign: "center",
+            marginTop: 40,
+            lineHeight: 18,
+            paddingHorizontal: 16,
+          }}
+        >
           Manage your notification categories in Settings at any time.
         </Text>
       </View>

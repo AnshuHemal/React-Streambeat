@@ -19,7 +19,12 @@ export default function Index() {
 
   if (!session) return <Redirect href="/(auth)/sign-in" />;
 
-  // Profile loaded and onboarding not done → go to onboarding
+  // Show notifications screen first time after login
+  if (profile && !profile.notifications_seen) {
+    return <Redirect href={"/onboarding/notifications" as any} />;
+  }
+
+  // Show music onboarding if not completed
   if (profile && !profile.onboarding_complete) {
     return <Redirect href={"/onboarding/music" as any} />;
   }

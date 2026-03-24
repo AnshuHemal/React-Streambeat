@@ -3,13 +3,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  Animated,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Animated,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -163,7 +163,7 @@ export default function SignUpUsernameScreen() {
       share_data: shareData,
     });
     if (result.success) {
-      router.replace("/(auth)/signup/notifications" as any);
+      router.replace("/(auth)/sign-in?signup=success" as any);
     } else {
       Alert.alert(
         "Sign Up Failed",

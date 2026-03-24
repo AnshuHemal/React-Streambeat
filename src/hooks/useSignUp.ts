@@ -21,25 +21,14 @@ export const isPasswordValid = (password: string) =>
   getPasswordRules(password).every((r) => r.valid);
 
 const useSignUp = () => {
-  const [checkingEmail, setCheckingEmail] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
-  const [signUpError, setSignUpError] = useState<string | null>(null);
 
-  // Basic format validation only — no OTP/email send
-  const checkEmailAvailable = async (email: string): Promise<boolean> => {
-    setCheckingEmail(true);
+  const validateEmail = (email: string): boolean => {
     setEmailError(null);
-    try {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        setEmailError("Please enter a valid email address.");
-        return false;
-      }
-      return true;
-    } finally {
-      setCheckingEmail(false);
-    }
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!valid) setEmailError("Please enter a valid email address.");
+    return valid;
   };
 
   const signUp = async (
@@ -48,7 +37,6 @@ const useSignUp = () => {
     metadata?: Record<string, unknown>,
   ): Promise<{ success: boolean; error?: string }> => {
     setSigningUp(true);
-    setSignUpError(null);
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -59,20 +47,20 @@ const useSignUp = () => {
       if (error) {
         if (
           error.message.toLowerCase().includes("already") ||
-          error.message.toLowerCase().includes("registered") ||
-          error.message.toLowerCase().includes("already registered")
+          error.message.toLowerCase().includes("registered")
         ) {
           const msg =
             "An account with this email already exists. Try logging in.";
           setEmailError(msg);
           return { success: false, error: msg };
         }
-        setSignUpError(error.message);
         return { success: false, error: error.message };
       }
 
-      // Write extended profile data to profiles table
       if (data.user) {
+        // Establish session so RLS allows the profile write
+        await supabase.auth.signInWithPassword({ email, password });
+
         const { error: profileError } = await supabase.from("profiles").upsert({
           id: data.user.id,
           email,
@@ -82,37 +70,26 @@ const useSignUp = () => {
           no_marketing: metadata?.no_marketing ?? false,
           share_data: metadata?.share_data ?? false,
           onboarding_complete: false,
+          notifications_seen: false,
           created_at: new Date().toISOString(),
         });
 
-        if (profileError) {
-          setSignUpError(profileError.message);
+        if (profileError)
           return { success: false, error: profileError.message };
-        }
 
-        // Auto sign-in immediately after signup
-        await supabase.auth.signInWithPassword({ email, password });
+        // Sign out — user must verify email then log in manually
+        await supabase.auth.signOut();
       }
 
       return { success: true };
     } catch (e: any) {
-      const msg = e?.message ?? "Unexpected error";
-      setSignUpError(msg);
-      return { success: false, error: msg };
+      return { success: false, error: e?.message ?? "Unexpected error" };
     } finally {
       setSigningUp(false);
     }
   };
 
-  return {
-    checkEmailAvailable,
-    signUp,
-    checkingEmail,
-    signingUp,
-    emailError,
-    setEmailError,
-    signUpError,
-  };
+  return { validateEmail, signUp, signingUp, emailError, setEmailError };
 };
 
 export default useSignUp;

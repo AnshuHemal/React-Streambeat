@@ -1,51 +1,50 @@
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type Genre = {
   id: string;
+  slug: string;
   label: string;
   color: string;
+  image_url: string | null;
 };
-
-const GENRES: Genre[] = [
-  { id: "hindi", label: "Hindi", color: "#E8474C" },
-  { id: "international", label: "International", color: "#D4A017" },
-  { id: "punjabi", label: "Punjabi", color: "#7B3FA0" },
-  { id: "tamil", label: "Tamil", color: "#C8A020" },
-  { id: "telugu", label: "Telugu", color: "#1AA34A" },
-  { id: "malayalam", label: "Malayalam", color: "#2ECC71" },
-  { id: "marathi", label: "Marathi", color: "#A0522D" },
-  { id: "gujarati", label: "Gujarati", color: "#E91E8C" },
-  { id: "bengali", label: "Bengali", color: "#4A90D9" },
-  { id: "kannada", label: "Kannada", color: "#E53935" },
-  { id: "pop", label: "Pop", color: "#8E44AD" },
-  { id: "hiphop", label: "Hip-Hop", color: "#2C3E50" },
-  { id: "rock", label: "Rock", color: "#C0392B" },
-  { id: "jazz", label: "Jazz", color: "#16A085" },
-  { id: "classical", label: "Classical", color: "#D35400" },
-  { id: "electronic", label: "Electronic", color: "#1ABC9C" },
-];
 
 export default function OnboardingMusicScreen() {
   const router = useRouter();
   const { user } = useAuth();
+
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
-  const toggle = (id: string) => {
+  useEffect(() => {
+    supabase
+      .from("genres")
+      .select("id, slug, label, color, image_url")
+      .eq("is_active", true)
+      .order("sort_order")
+      .then(({ data }) => {
+        setGenres(data ?? []);
+        setLoading(false);
+      });
+  }, []);
+
+  const toggle = (slug: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      next.has(slug) ? next.delete(slug) : next.add(slug);
       return next;
     });
   };
@@ -61,7 +60,6 @@ export default function OnboardingMusicScreen() {
           onboarding_complete: true,
         })
         .eq("id", user.id);
-
       router.replace("/(tabs)");
     } finally {
       setSaving(false);
@@ -69,10 +67,10 @@ export default function OnboardingMusicScreen() {
   };
 
   const renderItem = ({ item }: { item: Genre }) => {
-    const isSelected = selected.has(item.id);
+    const isSelected = selected.has(item.slug);
     return (
       <TouchableOpacity
-        onPress={() => toggle(item.id)}
+        onPress={() => toggle(item.slug)}
         activeOpacity={0.85}
         style={{
           flex: 1,
@@ -81,37 +79,41 @@ export default function OnboardingMusicScreen() {
           borderRadius: 10,
           backgroundColor: item.color,
           overflow: "hidden",
-          justifyContent: "flex-end",
           borderWidth: isSelected ? 3 : 0,
-          borderColor: isSelected ? "#ffffff" : "transparent",
+          borderColor: "#ffffff",
         }}
       >
-        {/* Subtle dark gradient overlay at bottom for text readability */}
-        <View
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 50,
-            backgroundColor: "rgba(0,0,0,0.25)",
-          }}
-        />
+        {/* Artist image — bottom-right cutout style */}
+        {item.image_url && (
+          <Image
+            source={{ uri: item.image_url }}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              right: 0,
+              width: 80,
+              height: 100,
+            }}
+            resizeMode="cover"
+          />
+        )}
 
+        {/* Genre label — top-left */}
         <Text
           style={{
+            position: "absolute",
+            top: 10,
+            left: 10,
             color: "#ffffff",
             fontFamily: "CircularStd",
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: "700",
-            padding: 10,
-            paddingBottom: 12,
           }}
         >
           {item.label}
         </Text>
 
-        {/* Checkmark badge — top right, only when selected */}
+        {/* Checkmark badge — top-right when selected */}
         {isSelected && (
           <View
             style={{
@@ -125,22 +127,16 @@ export default function OnboardingMusicScreen() {
               alignItems: "center",
               justifyContent: "center",
               shadowColor: "#000",
-              shadowOpacity: 0.3,
+              shadowOpacity: 0.25,
               shadowRadius: 4,
               elevation: 4,
             }}
           >
-            <Text
-              style={{
-                color: "#121212",
-                fontSize: 14,
-                fontWeight: "900",
-                lineHeight: 16,
-                marginTop: 1,
-              }}
-            >
-              ✓
-            </Text>
+            <Image
+              source={require("@/assets/images/icon-check.png")}
+              style={{ width: 16, height: 16 }}
+              resizeMode="contain"
+            />
           </View>
         )}
       </TouchableOpacity>
@@ -164,24 +160,28 @@ export default function OnboardingMusicScreen() {
           What music do you like?
         </Text>
         <Text
-          style={{
-            color: "#a7a7a7",
-            fontSize: 14,
-            fontFamily: "CircularStd",
-          }}
+          style={{ color: "#a7a7a7", fontSize: 14, fontFamily: "CircularStd" }}
         >
           Pick a few genres to get started. You can always change this later.
         </Text>
       </View>
 
-      <FlatList
-        data={GENRES}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 120 }}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <ActivityIndicator color="#1DB954" size="large" />
+        </View>
+      ) : (
+        <FlatList
+          data={genres}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 120 }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* Sticky bottom button */}
       <View
