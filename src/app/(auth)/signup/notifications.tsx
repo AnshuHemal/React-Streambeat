@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SignUpNotificationsScreen() {
   const router = useRouter();
 
-  const proceed = () => router.replace("/(tabs)");
+  const proceed = () => router.replace("/onboarding/music" as any);
 
   return (
     <SafeAreaView className="flex-1 bg-[#121212]">
@@ -73,10 +73,10 @@ export default function SignUpNotificationsScreen() {
           />
         </View>
 
-        <Text className="text-white text-2xl font-bold font-CircularStd text-center mb-4">
+        <Text className="text-white text-2xl font-bold  text-center mb-4">
           Turn on notifications
         </Text>
-        <Text className="text-[#a7a7a7] text-base font-CircularStd text-center mb-10 leading-6">
+        <Text className="text-[#a7a7a7] text-base  text-center mb-10 leading-6">
           Get updates about new music, special offers, events and more.
         </Text>
 
@@ -85,7 +85,7 @@ export default function SignUpNotificationsScreen() {
           className="bg-white rounded-full py-4 w-full items-center mb-4"
           activeOpacity={0.85}
         >
-          <Text className="text-black font-bold text-base font-CircularStd">
+          <Text className="text-black font-bold text-base ">
             Turn on notifications
           </Text>
         </TouchableOpacity>
@@ -95,12 +95,10 @@ export default function SignUpNotificationsScreen() {
           activeOpacity={0.7}
           className="py-3"
         >
-          <Text className="text-white font-bold text-base font-CircularStd">
-            Not now
-          </Text>
+          <Text className="text-white font-bold text-base ">Not now</Text>
         </TouchableOpacity>
 
-        <Text className="text-[#a7a7a7] text-xs font-CircularStd text-center mt-10 leading-5 px-4">
+        <Text className="text-[#a7a7a7] text-xs  text-center mt-10 leading-5 px-4">
           Manage your notification categories in Settings at any time.
         </Text>
       </View>

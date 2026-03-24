@@ -24,46 +24,18 @@ const useSignUp = () => {
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [signingUp, setSigningUp] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [signUpError, setSignUpError] = useState<string | null>(null);
 
-  // Returns true if email is available (not registered), false otherwise
+  // Basic format validation only — no OTP/email send
   const checkEmailAvailable = async (email: string): Promise<boolean> => {
     setCheckingEmail(true);
     setEmailError(null);
     try {
-      // signInWithOtp with shouldCreateUser: false will error if user doesn't exist
-      // and succeed (send OTP) if user exists — we use this to detect existing accounts
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: false },
-      });
-
-      if (!error) {
-        // OTP was sent → email already registered
-        setEmailError(
-          "An account with this email already exists. Try logging in.",
-        );
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setEmailError("Please enter a valid email address.");
         return false;
       }
-
-      // "Email not confirmed" or similar → also already registered
-      if (
-        error.message.toLowerCase().includes("email") ||
-        error.message.toLowerCase().includes("user") ||
-        error.message.toLowerCase().includes("invalid")
-      ) {
-        // "Invalid login credentials" means user does NOT exist → available
-        if (error.message.toLowerCase().includes("invalid login credentials")) {
-          return true;
-        }
-        setEmailError(
-          "An account with this email already exists. Try logging in.",
-        );
-        return false;
-      }
-
-      return true;
-    } catch {
-      // Network or unexpected error — allow proceeding
       return true;
     } finally {
       setCheckingEmail(false);
@@ -74,26 +46,59 @@ const useSignUp = () => {
     email: string,
     password: string,
     metadata?: Record<string, unknown>,
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; error?: string }> => {
     setSigningUp(true);
+    setSignUpError(null);
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: metadata },
       });
+
       if (error) {
         if (
           error.message.toLowerCase().includes("already") ||
-          error.message.toLowerCase().includes("registered")
+          error.message.toLowerCase().includes("registered") ||
+          error.message.toLowerCase().includes("already registered")
         ) {
-          setEmailError("An account with this email already exists.");
+          const msg =
+            "An account with this email already exists. Try logging in.";
+          setEmailError(msg);
+          return { success: false, error: msg };
         }
-        return false;
+        setSignUpError(error.message);
+        return { success: false, error: error.message };
       }
-      return true;
-    } catch {
-      return false;
+
+      // Write extended profile data to profiles table
+      if (data.user) {
+        const { error: profileError } = await supabase.from("profiles").upsert({
+          id: data.user.id,
+          email,
+          display_name: metadata?.display_name ?? null,
+          dob: metadata?.dob ?? null,
+          gender: metadata?.gender ?? null,
+          no_marketing: metadata?.no_marketing ?? false,
+          share_data: metadata?.share_data ?? false,
+          onboarding_complete: false,
+          created_at: new Date().toISOString(),
+        });
+
+        if (profileError) {
+          setSignUpError(profileError.message);
+          return { success: false, error: profileError.message };
+        }
+
+        // Auto sign-in immediately after signup
+        await supabase.auth.signInWithPassword({ email, password });
+      }
+
+      return { success: true };
+    } catch (e: any) {
+      const msg = e?.message ?? "Unexpected error";
+      setSignUpError(msg);
+      return { success: false, error: msg };
     } finally {
       setSigningUp(false);
     }
@@ -106,6 +111,7 @@ const useSignUp = () => {
     signingUp,
     emailError,
     setEmailError,
+    signUpError,
   };
 };
 

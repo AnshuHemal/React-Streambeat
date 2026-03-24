@@ -3,13 +3,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Animated,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -155,17 +155,20 @@ export default function SignUpUsernameScreen() {
 
   const onCreateAccount = async () => {
     if (!isNameValid) return;
-    const success = await signUp(email, password, {
+    const result = await signUp(email, password, {
       display_name: name.trim(),
       dob,
       gender,
       no_marketing: noMarketing,
       share_data: shareData,
     });
-    if (success) {
+    if (result.success) {
       router.replace("/(auth)/signup/notifications" as any);
     } else {
-      Alert.alert("Error", "Could not create account. Please try again.");
+      Alert.alert(
+        "Sign Up Failed",
+        result.error ?? "Could not create account. Please try again.",
+      );
     }
   };
 
@@ -181,9 +184,7 @@ export default function SignUpUsernameScreen() {
         >
           <Ionicons name="chevron-back" size={28} color="white" />
         </TouchableOpacity>
-        <Text className="text-white text-lg font-bold font-CircularStd">
-          Create account
-        </Text>
+        <Text className="text-white text-lg font-bold ">Create account</Text>
       </View>
 
       <ScrollView
@@ -196,21 +197,18 @@ export default function SignUpUsernameScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text className="text-white text-3xl font-bold font-CircularStd mb-2">
+        <Text className="text-white text-3xl font-bold mb-2">
           What's your name?
-        </Text>
-        <Text className="text-[#a7a7a7] text-sm font-CircularStd mb-6">
-          This appears on your Streambeat profile.
         </Text>
 
         <View
-          className={`border rounded-lg px-4 py-4 bg-[#1a1a1a] mb-1 ${nameError ? "border-[#e91429]" : "border-[#535353]"}`}
+          className={`border rounded-lg px-4 py-1 bg-[#1a1a1a] mb-1 ${nameError ? "border-[#e91429]" : "border-[#535353]"}`}
         >
           <TextInput
             autoFocus
             placeholder="Name"
             placeholderTextColor="#535353"
-            className="text-white text-base font-CircularStd"
+            className="text-white text-xl "
             value={name}
             onChangeText={validateName}
             selectionColor="#1DB954"
@@ -219,30 +217,25 @@ export default function SignUpUsernameScreen() {
           />
         </View>
         {nameError ? (
-          <Text className="text-[#e91429] text-xs font-CircularStd mb-4">
-            {nameError}
-          </Text>
+          <Text className="text-[#e91429] text-xs  mb-4">{nameError}</Text>
         ) : (
-          <Text className="text-[#a7a7a7] text-xs font-CircularStd mb-6">
+          <Text className="text-[#a7a7a7] text-xs  mb-6">
             This appears on your Streambeat profile.
           </Text>
         )}
 
         <View className="border-t border-[#2a2a2a] mb-6" />
 
-        <Text className="text-[#a7a7a7] text-sm font-CircularStd mb-3 leading-5">
+        <Text className="text-[#a7a7a7] text-sm  mb-3 leading-5">
           Streambeat is a personalized service.{"\n"}By tapping "Create
           account", you agree to the Streambeat{" "}
-          <Text className="text-[#1DB954] font-CircularStd">Terms of Use</Text>.
+          <Text className="text-[#1DB954] ">Terms of Use</Text>.
         </Text>
 
-        <Text className="text-[#a7a7a7] text-sm font-CircularStd mb-6 leading-5">
+        <Text className="text-[#a7a7a7] text-sm  mb-6 leading-5">
           By tapping "Create account", you confirm that you have read how we
           process your personal data in our{" "}
-          <Text className="text-[#1DB954] font-CircularStd">
-            Privacy Policy
-          </Text>
-          .
+          <Text className="text-[#1DB954] ">Privacy Policy</Text>.
         </Text>
 
         <View className="gap-y-4 mb-8">
@@ -251,7 +244,7 @@ export default function SignUpUsernameScreen() {
             activeOpacity={0.7}
             className="flex-row items-start gap-x-3"
           >
-            <Text className="flex-1 text-[#a7a7a7] text-sm font-CircularStd leading-5">
+            <Text className="flex-1 text-[#a7a7a7] text-sm  leading-5">
               I would prefer not to receive marketing messages from Streambeat.
             </Text>
             <RadioButton
@@ -265,7 +258,7 @@ export default function SignUpUsernameScreen() {
             activeOpacity={0.7}
             className="flex-row items-start gap-x-3"
           >
-            <Text className="flex-1 text-[#a7a7a7] text-sm font-CircularStd leading-5">
+            <Text className="flex-1 text-[#a7a7a7] text-sm  leading-5">
               Share my registration data with Streambeat's content providers for
               marketing purposes.
             </Text>
@@ -282,7 +275,7 @@ export default function SignUpUsernameScreen() {
           className={`bg-white rounded-full py-4 w-full items-center ${!isNameValid ? "opacity-40" : ""}`}
           activeOpacity={0.85}
         >
-          <Text className="text-black font-bold text-base font-CircularStd">
+          <Text className="text-black font-bold text-base ">
             Create account
           </Text>
         </TouchableOpacity>

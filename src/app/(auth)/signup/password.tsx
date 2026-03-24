@@ -45,9 +45,7 @@ export default function SignUpPasswordScreen() {
           >
             <Ionicons name="chevron-back" size={28} color="white" />
           </TouchableOpacity>
-          <Text className="text-white text-lg font-bold font-CircularStd">
-            Create account
-          </Text>
+          <Text className="text-white text-lg font-bold ">Create account</Text>
         </View>
 
         <ScrollView
@@ -60,12 +58,10 @@ export default function SignUpPasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text className="text-white text-3xl font-bold font-CircularStd mb-2">
+          <Text className="text-white text-3xl font-bold  mb-2">
             Create a password
           </Text>
-          <Text className="text-[#a7a7a7] text-sm font-CircularStd mb-6">
-            For {email}
-          </Text>
+          <Text className="text-[#a7a7a7] text-sm  mb-6">For {email}</Text>
 
           <View className="border border-[#535353] rounded-lg px-4 py-1 bg-[#1a1a1a] flex-row items-center mb-6">
             <TextInput
@@ -73,7 +69,7 @@ export default function SignUpPasswordScreen() {
               placeholder="Password"
               placeholderTextColor="#535353"
               secureTextEntry={!showPassword}
-              className="flex-1 text-white text-xl font-CircularStd"
+              className="flex-1 text-white text-xl "
               value={password}
               onChangeText={setPassword}
               selectionColor="#1DB954"
@@ -105,7 +101,7 @@ export default function SignUpPasswordScreen() {
                   )}
                 </View>
                 <Text
-                  className={`text-sm font-CircularStd ${
+                  className={`text-sm  ${
                     rule.valid ? "text-white" : "text-[#a7a7a7]"
                   }`}
                 >
@@ -124,9 +120,7 @@ export default function SignUpPasswordScreen() {
               }`}
               activeOpacity={0.85}
             >
-              <Text className="text-black font-bold text-base font-CircularStd">
-                Next
-              </Text>
+              <Text className="text-black font-bold text-base ">Next</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

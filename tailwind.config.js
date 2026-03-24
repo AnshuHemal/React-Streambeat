@@ -5,9 +5,10 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
+        sans: ["CircularStd"],
         CircularStd: ["CircularStd"],
       },
     },
   },
   plugins: [],
-}
+};

@@ -49,9 +49,7 @@ export default function SignUpEmailScreen() {
           >
             <Ionicons name="chevron-back" size={28} color="white" />
           </TouchableOpacity>
-          <Text className="text-white text-lg font-bold font-CircularStd">
-            Create account
-          </Text>
+          <Text className="text-white text-lg font-bold ">Create account</Text>
         </View>
 
         <ScrollView
@@ -64,10 +62,9 @@ export default function SignUpEmailScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text className="text-white text-3xl font-bold font-CircularStd mb-2">
+          <Text className="text-white text-3xl font-bold  mb-2">
             What's your email?
           </Text>
-         
 
           <View
             className={`border rounded-lg px-4 py-1 bg-[#1a1a1a] mb-2 ${
@@ -81,7 +78,7 @@ export default function SignUpEmailScreen() {
               keyboardType="email-address"
               placeholder="Email address"
               placeholderTextColor="#535353"
-              className="text-white text-xl font-CircularStd"
+              className="text-white text-xl "
               value={email}
               onChangeText={(t) => {
                 setEmail(t);
@@ -94,12 +91,10 @@ export default function SignUpEmailScreen() {
           </View>
 
           {emailError && (
-            <Text className="text-[#e91429] text-sm font-CircularStd mb-6">
-              {emailError}
-            </Text>
+            <Text className="text-[#e91429] text-sm  mb-6">{emailError}</Text>
           )}
 
-           <Text className="text-[#a7a7a7] text-sm font-CircularStd mb-6">
+          <Text className="text-[#a7a7a7] text-sm  mb-6">
             You'll need to confirm this email later.
           </Text>
 
@@ -115,9 +110,7 @@ export default function SignUpEmailScreen() {
               {checkingEmail ? (
                 <ActivityIndicator color="black" />
               ) : (
-                <Text className="text-black font-bold text-base font-CircularStd">
-                  Next
-                </Text>
+                <Text className="text-black font-bold text-base ">Next</Text>
               )}
             </TouchableOpacity>
           </View>

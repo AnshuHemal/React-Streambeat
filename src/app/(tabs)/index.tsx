@@ -41,7 +41,7 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pt-4 pb-6">
-          <Text className="text-white text-2xl font-bold font-CircularStd">
+          <Text className="text-white text-2xl font-bold ">
             {getGreeting()}
           </Text>
           <View className="flex-row items-center gap-x-4">
@@ -56,7 +56,7 @@ export default function HomeScreen() {
               activeOpacity={0.7}
               className="w-9 h-9 rounded-full bg-[#535353] items-center justify-center"
             >
-              <Text className="text-white text-sm font-bold font-CircularStd">
+              <Text className="text-white text-sm font-bold ">
                 {avatarLetter}
               </Text>
             </TouchableOpacity>
@@ -75,7 +75,7 @@ export default function HomeScreen() {
                   <Ionicons name="musical-notes" size={22} color="#1DB954" />
                 </View>
                 <Text
-                  className="flex-1 text-white text-sm font-bold font-CircularStd px-3"
+                  className="flex-1 text-white text-sm font-bold  px-3"
                   numberOfLines={2}
                 >
                   {item.title}
@@ -89,13 +89,11 @@ export default function HomeScreen() {
         {GREETING_SECTIONS.map((section) => (
           <View key={section.id} className="mb-8">
             <View className="flex-row items-center justify-between px-5 mb-4">
-              <Text className="text-white text-xl font-bold font-CircularStd">
+              <Text className="text-white text-xl font-bold ">
                 {section.title}
               </Text>
               <TouchableOpacity activeOpacity={0.7}>
-                <Text className="text-[#B3B3B3] text-sm font-CircularStd">
-                  Show all
-                </Text>
+                <Text className="text-[#B3B3B3] text-sm ">Show all</Text>
               </TouchableOpacity>
             </View>
 
@@ -109,14 +107,11 @@ export default function HomeScreen() {
                   <View className="w-36 h-36 rounded-md bg-[#282828] items-center justify-center mb-2">
                     <Ionicons name="musical-notes" size={40} color="#535353" />
                   </View>
-                  <Text
-                    className="text-white text-sm font-CircularStd"
-                    numberOfLines={2}
-                  >
+                  <Text className="text-white text-sm " numberOfLines={2}>
                     {section.title} {i + 1}
                   </Text>
                   <Text
-                    className="text-[#B3B3B3] text-xs font-CircularStd mt-0.5"
+                    className="text-[#B3B3B3] text-xs  mt-0.5"
                     numberOfLines={1}
                   >
                     Playlist • Streambeat

@@ -33,8 +33,8 @@ export default function ChooseCountryScreen() {
       className="flex-row items-center justify-between py-5 border-b border-[#222]"
       activeOpacity={0.7}
     >
-      <Text className="text-white text-lg font-CircularStd">{item.name}</Text>
-      <Text className="text-gray-400 text-lg font-CircularStd">
+      <Text className="text-white text-lg">{item.name}</Text>
+      <Text className="text-gray-400 text-lg">
         {item.code}
       </Text>
     </TouchableOpacity>
@@ -49,7 +49,7 @@ export default function ChooseCountryScreen() {
         >
           <Ionicons name="close" size={30} color="white" />
         </TouchableOpacity>
-        <Text className="text-white text-lg font-bold font-CircularStd">
+        <Text className="text-white text-lg font-bold">
           Choose your country
         </Text>
       </View>
@@ -60,7 +60,7 @@ export default function ChooseCountryScreen() {
           <TextInput
             placeholder="Search"
             placeholderTextColor="#888"
-            className="flex-1 text-white ml-3 text-lg font-CircularStd"
+            className="flex-1 text-white ml-3 text-lg"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />

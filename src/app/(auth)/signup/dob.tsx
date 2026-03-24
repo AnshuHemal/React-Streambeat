@@ -230,16 +230,16 @@ export default function SignUpDobScreen() {
         >
           <Ionicons name="chevron-back" size={28} color="white" />
         </TouchableOpacity>
-        <Text className="text-white text-lg font-bold font-CircularStd">
+        <Text className="text-white text-lg font-bold">
           Create account
         </Text>
       </View>
 
       <View className="flex-1 px-6 pt-4">
-        <Text className="text-white text-3xl font-bold font-CircularStd mb-2">
+        <Text className="text-white text-3xl font-bold mb-2">
           What's your date{"\n"}of birth?
         </Text>
-        <Text className="text-[#a7a7a7] text-sm font-CircularStd mb-8">
+        <Text className="text-[#a7a7a7] text-sm mb-8">
           This won't be shown on your profile.
         </Text>
 
@@ -248,7 +248,7 @@ export default function SignUpDobScreen() {
           {["Month", "Day", "Year"].map((l) => (
             <Text
               key={l}
-              className="flex-1 text-center text-[#a7a7a7] text-xs font-CircularStd uppercase tracking-widest"
+              className="flex-1 text-center text-[#a7a7a7] text-xs uppercase tracking-widest"
             >
               {l}
             </Text>
@@ -286,7 +286,7 @@ export default function SignUpDobScreen() {
 
         <View className="items-center mt-8">
           {ageError && (
-            <Text className="text-[#e91429] text-sm font-CircularStd text-center mb-4 px-4">
+            <Text className="text-[#e91429] text-sm text-center mb-4 px-4">
               {ageError}
             </Text>
           )}
@@ -295,7 +295,7 @@ export default function SignUpDobScreen() {
             className="bg-white rounded-full py-4 px-16 items-center"
             activeOpacity={0.85}
           >
-            <Text className="text-black font-bold text-base font-CircularStd">
+            <Text className="text-black font-bold text-base">
               Next
             </Text>
           </TouchableOpacity>

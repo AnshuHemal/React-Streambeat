@@ -3,7 +3,7 @@ import { Redirect } from "expo-router";
 import { Image, View } from "react-native";
 
 export default function Index() {
-  const { isLoaded, session } = useAuth();
+  const { isLoaded, session, profile } = useAuth();
 
   if (!isLoaded) {
     return (
@@ -17,9 +17,12 @@ export default function Index() {
     );
   }
 
-  if (session) {
-    return <Redirect href="/(tabs)" />;
+  if (!session) return <Redirect href="/(auth)/sign-in" />;
+
+  // Profile loaded and onboarding not done → go to onboarding
+  if (profile && !profile.onboarding_complete) {
+    return <Redirect href={"/onboarding/music" as any} />;
   }
 
-  return <Redirect href="/(auth)/sign-in" />;
+  return <Redirect href="/(tabs)" />;
 }
