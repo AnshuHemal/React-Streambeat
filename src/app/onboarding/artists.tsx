@@ -264,7 +264,7 @@ export default function OnboardingArtistsScreen() {
                   color: "#ffffff",
                   fontFamily: "CircularStd",
                   fontSize: 18,
-                  fontWeight: "700",
+                  fontWeight: "600",
                   textAlign: "center",
                 }}
               >
@@ -311,7 +311,7 @@ export default function OnboardingArtistsScreen() {
               style={{
                 color: "#ffffff",
                 fontSize: 28,
-                fontWeight: "700",
+                fontWeight: "600",
                 fontFamily: "CircularStd",
                 lineHeight: 36,
                 marginBottom: 20,
@@ -395,7 +395,7 @@ export default function OnboardingArtistsScreen() {
             <Text
               style={{
                 color: "#121212",
-                fontWeight: "700",
+                fontWeight: "600",
                 fontSize: 16,
                 fontFamily: "CircularStd",
               }}

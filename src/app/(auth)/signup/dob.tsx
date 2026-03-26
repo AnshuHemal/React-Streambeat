@@ -2,12 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    NativeScrollEvent,
+    NativeSyntheticEvent,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -230,13 +230,13 @@ export default function SignUpDobScreen() {
         >
           <Ionicons name="chevron-back" size={28} color="white" />
         </TouchableOpacity>
-        <Text className="text-white text-lg font-bold">
+        <Text className="text-white text-lg font-CircularStd">
           Create account
         </Text>
       </View>
 
       <View className="flex-1 px-6 pt-4">
-        <Text className="text-white text-3xl font-bold mb-2">
+        <Text className="text-white text-3xl font-CircularStd mb-2">
           What's your date{"\n"}of birth?
         </Text>
         <Text className="text-[#a7a7a7] text-sm mb-8">
@@ -295,9 +295,7 @@ export default function SignUpDobScreen() {
             className="bg-white rounded-full py-4 px-16 items-center"
             activeOpacity={0.85}
           >
-            <Text className="text-black font-bold text-base">
-              Next
-            </Text>
+            <Text className="text-black font-CircularStd text-base">Next</Text>
           </TouchableOpacity>
         </View>
       </View>

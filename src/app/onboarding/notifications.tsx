@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
+import React from "react";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -71,7 +72,7 @@ export default function OnboardingNotificationsScreen() {
                 color: "#ffffff",
                 fontFamily: "CircularStd",
                 fontSize: 13,
-                fontWeight: "700",
+                fontWeight: "600",
                 letterSpacing: 1.5,
                 textTransform: "uppercase",
               }}
@@ -102,7 +103,7 @@ export default function OnboardingNotificationsScreen() {
           style={{
             color: "#ffffff",
             fontSize: 24,
-            fontWeight: "700",
+            fontWeight: "600",
             fontFamily: "CircularStd",
             textAlign: "center",
             marginBottom: 12,
@@ -138,7 +139,7 @@ export default function OnboardingNotificationsScreen() {
           <Text
             style={{
               color: "#000",
-              fontWeight: "700",
+              fontWeight: "600",
               fontSize: 16,
               fontFamily: "CircularStd",
             }}
@@ -155,7 +156,7 @@ export default function OnboardingNotificationsScreen() {
           <Text
             style={{
               color: "#ffffff",
-              fontWeight: "700",
+              fontWeight: "600",
               fontSize: 16,
               fontFamily: "CircularStd",
             }}

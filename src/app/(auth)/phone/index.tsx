@@ -70,7 +70,7 @@ export default function PhoneAuthScreen() {
             <Ionicons name="arrow-back" size={28} color="white" />
           </TouchableOpacity>
 
-          <Text className="text-white text-3xl font-bold mb-8">
+          <Text className="text-white text-3xl font-CircularStd mb-8">
             {!pendingVerification ? "Enter phone number" : "Check your SMS"}
           </Text>
 
@@ -82,9 +82,7 @@ export default function PhoneAuthScreen() {
                   activeOpacity={0.7}
                   onPress={() => router.push("/(auth)/phone/choose-country")}
                 >
-                  <Text className="text-white text-lg">
-                    {country}
-                  </Text>
+                  <Text className="text-white text-lg">{country}</Text>
                   <Ionicons name="chevron-forward" size={20} color="white" />
                 </TouchableOpacity>
 
@@ -93,9 +91,7 @@ export default function PhoneAuthScreen() {
                     onPress={() => router.push("/(auth)/phone/choose-country")}
                     className="px-5 py-4 border-r border-[#3a3a3a]"
                   >
-                    <Text className="text-white text-lg">
-                      {countryCode}
-                    </Text>
+                    <Text className="text-white text-lg">{countryCode}</Text>
                   </TouchableOpacity>
                   <TextInput
                     autoFocus
@@ -131,7 +127,7 @@ export default function PhoneAuthScreen() {
                   {loading ? (
                     <ActivityIndicator color="black" />
                   ) : (
-                    <Text className="text-black font-bold text-lg">
+                    <Text className="text-black font-CircularStd text-lg">
                       Next
                     </Text>
                   )}
@@ -166,7 +162,7 @@ export default function PhoneAuthScreen() {
                   {loading ? (
                     <ActivityIndicator color="black" />
                   ) : (
-                    <Text className="text-black font-bold text-lg">
+                    <Text className="text-black font-CircularStd text-lg">
                       Verify
                     </Text>
                   )}
@@ -176,7 +172,7 @@ export default function PhoneAuthScreen() {
                   onPress={() => setPendingVerification(false)}
                   className="mt-8"
                 >
-                  <Text className="text-white font-bold text-base">
+                  <Text className="text-white font-CircularStd text-base">
                     Edit phone number
                   </Text>
                 </TouchableOpacity>

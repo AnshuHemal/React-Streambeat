@@ -2,12 +2,12 @@ import { AuthProvider } from "@/context/AuthContext";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
 import { Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 import "../../global.css";
-import { StatusBar } from "expo-status-bar";
 
 // Set CircularStd as the default font for all Text and TextInput components
 const defaultTextStyle = { fontFamily: "CircularStd" };
@@ -55,7 +55,7 @@ export default function RootLayout() {
               color: "#ffffff",
               fontFamily: "CircularStd",
               fontSize: 14,
-              fontWeight: "700",
+              fontWeight: "600",
             },
             descriptionStyle: {
               color: "#a7a7a7",

@@ -42,13 +42,13 @@ export default function SignUpGenderScreen() {
         >
           <Ionicons name="chevron-back" size={28} color="white" />
         </TouchableOpacity>
-        <Text className="text-white text-lg font-bold">
+        <Text className="text-white text-lg font-CircularStd">
           Create account
         </Text>
       </View>
 
       <View className="flex-1 px-6 pt-4">
-        <Text className="text-white text-3xl font-bold mb-2">
+        <Text className="text-white text-3xl font-CircularStd mb-2">
           What's your gender?
         </Text>
         <Text className="text-[#a7a7a7] text-sm mb-8">
@@ -67,7 +67,7 @@ export default function SignUpGenderScreen() {
                 style={{ opacity: isDimmed ? 0.3 : 1 }}
                 className="border border-[#535353] rounded-full py-3 px-5 items-center"
               >
-                <Text className="text-white font-bold text-base">
+                <Text className="text-white font-CircularStd text-base">
                   {option}
                 </Text>
               </TouchableOpacity>

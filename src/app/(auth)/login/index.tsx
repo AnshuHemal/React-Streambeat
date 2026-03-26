@@ -3,14 +3,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -39,9 +39,7 @@ export default function LoginScreen() {
           >
             <Ionicons name="chevron-back" size={28} color="white" />
           </TouchableOpacity>
-          <Text className="text-white text-lg font-bold">
-            Log in
-          </Text>
+          <Text className="text-white text-lg font-CircularStd">Log in</Text>
         </View>
 
         <ScrollView
@@ -55,7 +53,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           {/* Email field */}
-          <Text className="text-white text-3xl font-bold mb-3">
+          <Text className="text-white text-3xl font-CircularStd mb-3">
             Email address
           </Text>
           <View className="border border-[#535353] rounded-lg mb-8 px-4 py-1 bg-[#1a1a1a]">
@@ -73,7 +71,7 @@ export default function LoginScreen() {
           </View>
 
           {/* Password field */}
-          <Text className="text-white text-3xl font-bold mb-3">
+          <Text className="text-white text-3xl font-CircularStd mb-3">
             Password
           </Text>
           <View className="border border-[#535353] rounded-lg mb-2 px-4 py-1 bg-[#1a1a1a] flex-row items-center">
@@ -111,7 +109,7 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator color="black" />
               ) : (
-                <Text className="text-black font-bold text-base">
+                <Text className="text-black font-CircularStd text-base">
                   Log in
                 </Text>
               )}

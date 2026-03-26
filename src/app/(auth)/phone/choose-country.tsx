@@ -2,6 +2,7 @@ import { countries, Country } from "@/constants/countries";
 import { setCountrySelection } from "@/constants/countryStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import React from "react";
 import { useState } from "react";
 import {
     FlatList,
@@ -49,7 +50,7 @@ export default function ChooseCountryScreen() {
         >
           <Ionicons name="close" size={30} color="white" />
         </TouchableOpacity>
-        <Text className="text-white text-lg font-bold">
+        <Text className="text-white text-lg font-CircularStd">
           Choose your country
         </Text>
       </View>

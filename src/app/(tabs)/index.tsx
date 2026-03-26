@@ -1,5 +1,6 @@
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -34,14 +35,14 @@ export default function HomeScreen() {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top"]}>
+    <SafeAreaView className="flex-1 bg-[#121212] pb-5" edges={["top", "bottom"]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 24 }}
       >
         {/* Header */}
         <View className="flex-row items-center justify-between px-5 pt-4 pb-6">
-          <Text className="text-white text-2xl font-bold ">
+          <Text className="text-white text-2xl font-CircularStd ">
             {getGreeting()}
           </Text>
           <View className="flex-row items-center gap-x-4">
@@ -56,7 +57,7 @@ export default function HomeScreen() {
               activeOpacity={0.7}
               className="w-9 h-9 rounded-full bg-[#535353] items-center justify-center"
             >
-              <Text className="text-white text-sm font-bold ">
+              <Text className="text-white text-sm font-CircularStd ">
                 {avatarLetter}
               </Text>
             </TouchableOpacity>
@@ -75,7 +76,7 @@ export default function HomeScreen() {
                   <Ionicons name="musical-notes" size={22} color="#1DB954" />
                 </View>
                 <Text
-                  className="flex-1 text-white text-sm font-bold  px-3"
+                  className="flex-1 text-white text-sm font-CircularStd  px-3"
                   numberOfLines={2}
                 >
                   {item.title}
@@ -89,7 +90,7 @@ export default function HomeScreen() {
         {GREETING_SECTIONS.map((section) => (
           <View key={section.id} className="mb-8">
             <View className="flex-row items-center justify-between px-5 mb-4">
-              <Text className="text-white text-xl font-bold ">
+              <Text className="text-white text-xl font-CircularStd ">
                 {section.title}
               </Text>
               <TouchableOpacity activeOpacity={0.7}>

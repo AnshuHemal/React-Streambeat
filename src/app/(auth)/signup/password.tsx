@@ -3,13 +3,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -45,7 +45,9 @@ export default function SignUpPasswordScreen() {
           >
             <Ionicons name="chevron-back" size={28} color="white" />
           </TouchableOpacity>
-          <Text className="text-white text-lg font-bold ">Create account</Text>
+          <Text className="text-white text-lg font-CircularStd ">
+            Create account
+          </Text>
         </View>
 
         <ScrollView
@@ -58,7 +60,7 @@ export default function SignUpPasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text className="text-white text-3xl font-bold  mb-2">
+          <Text className="text-white text-3xl font-CircularStd  mb-2">
             Create a password
           </Text>
           <Text className="text-[#a7a7a7] text-sm  mb-6">For {email}</Text>
@@ -120,7 +122,9 @@ export default function SignUpPasswordScreen() {
               }`}
               activeOpacity={0.85}
             >
-              <Text className="text-black font-bold text-base ">Next</Text>
+              <Text className="text-black font-CircularStd text-base ">
+                Next
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

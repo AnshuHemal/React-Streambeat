@@ -1,12 +1,13 @@
 import useSocialAuth from "@/hooks/useSocialAuth";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import React from "react";
 import { useEffect } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -48,7 +49,7 @@ export default function SignInScreen() {
           />
 
           <View className="items-center mb-10 px-4">
-            <Text className="text-white text-[32px] font-bold text-center leading-[42px]">
+            <Text className="text-white text-[32px] font-CircularStd text-center leading-[42px]">
               Millions of songs.{"\n"}Free on Streambeat.
             </Text>
           </View>
@@ -60,7 +61,9 @@ export default function SignInScreen() {
               className="flex-row items-center justify-center bg-[#1DB954] rounded-full py-4 px-5"
               activeOpacity={0.8}
             >
-              <Text className="text-black text-lg font-bold">Sign up free</Text>
+              <Text className="text-black text-lg font-CircularStd">
+                Sign up free
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -76,7 +79,7 @@ export default function SignInScreen() {
                   resizeMode="contain"
                 />
               </View>
-              <Text className="flex-1 text-center text-white text-lg font-bold">
+              <Text className="flex-1 text-center text-white text-lg font-CircularStd">
                 Continue with phone number
               </Text>
             </TouchableOpacity>
@@ -98,7 +101,7 @@ export default function SignInScreen() {
                   />
                 )}
               </View>
-              <Text className="flex-1 text-center text-white text-lg font-bold">
+              <Text className="flex-1 text-center text-white text-lg font-CircularStd">
                 Continue with Google
               </Text>
             </TouchableOpacity>
@@ -120,7 +123,7 @@ export default function SignInScreen() {
                   />
                 )}
               </View>
-              <Text className="flex-1 text-center text-white text-lg font-bold">
+              <Text className="flex-1 text-center text-white text-lg font-CircularStd">
                 Continue with Apple
               </Text>
             </TouchableOpacity>
@@ -129,7 +132,9 @@ export default function SignInScreen() {
               onPress={() => router.push("/(auth)/login")}
               className="mt-2 items-center"
             >
-              <Text className="text-white font-bold text-lg">Log in</Text>
+              <Text className="text-white font-CircularStd text-lg">
+                Log in
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

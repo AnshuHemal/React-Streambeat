@@ -119,7 +119,7 @@ export default function SignUpUsernameScreen() {
         >
           <Ionicons name="chevron-back" size={28} color="white" />
         </TouchableOpacity>
-        <Text className="text-white text-lg font-bold ">Create account</Text>
+        <Text className="text-white text-lg font-CircularStd ">Create account</Text>
       </View>
 
       <ScrollView
@@ -132,7 +132,7 @@ export default function SignUpUsernameScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text className="text-white text-3xl font-bold mb-2">
+        <Text className="text-white text-3xl font-CircularStd mb-2">
           What's your name?
         </Text>
 
@@ -210,7 +210,7 @@ export default function SignUpUsernameScreen() {
           className={`bg-white rounded-full py-4 w-full items-center ${!isNameValid ? "opacity-40" : ""}`}
           activeOpacity={0.85}
         >
-          <Text className="text-black font-bold text-base ">
+          <Text className="text-black font-CircularStd text-base ">
             Create account
           </Text>
         </TouchableOpacity>

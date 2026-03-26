@@ -160,7 +160,7 @@ export default function GreatPicksScreen() {
               color: "#ffffff",
               fontFamily: "CircularStd",
               fontSize: 26,
-              fontWeight: "700",
+              fontWeight: "600",
               textAlign: "center",
             }}
           >

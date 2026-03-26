@@ -124,7 +124,7 @@ export default function OnboardingMusicScreen() {
             color: "#ffffff",
             fontFamily: "CircularStd",
             fontSize: 15,
-            fontWeight: "700",
+            fontWeight: "600",
             textShadowColor: "rgba(0,0,0,0.25)",
             textShadowOffset: { width: 0, height: 1 },
             textShadowRadius: 2,
@@ -169,7 +169,7 @@ export default function OnboardingMusicScreen() {
           style={{
             color: "#ffffff",
             fontSize: 28,
-            fontWeight: "700",
+            fontWeight: "600",
             fontFamily: "CircularStd",
           }}
         >
@@ -229,7 +229,7 @@ export default function OnboardingMusicScreen() {
             <Text
               style={{
                 color: "#121212",
-                fontWeight: "700",
+                fontWeight: "600",
                 fontSize: 16,
                 fontFamily: "CircularStd",
               }}
