@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import React from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
     NativeScrollEvent,
@@ -140,7 +141,7 @@ function WheelColumn({
                 style={{
                   fontFamily: "CircularStd",
                   fontSize: isSelected ? 18 : 14,
-                  fontWeight: isSelected ? "700" : "400",
+                  fontWeight: isSelected ? "500" : "400",
                   color: isSelected ? "#ffffff" : "#444444",
                 }}
               >

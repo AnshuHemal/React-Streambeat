@@ -4,12 +4,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Redirect, Tabs } from "expo-router";
 import React from "react";
 import {
-  ActivityIndicator,
-  Image,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    Platform,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -83,6 +83,9 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           const isFocused = state.index === index;
           const config = TABS[route.name];
 
+          // Don't render a tab button for hidden routes (e.g. settings)
+          if (!config) return null;
+
           const onPress = () => {
             const event = navigation.emit({
               type: "tabPress",
@@ -148,12 +151,19 @@ export default function TabsLayout() {
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        sceneStyle: { backgroundColor: "#121212" },
+      }}
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="search" />
       <Tabs.Screen name="library" />
       <Tabs.Screen name="premium" />
+      <Tabs.Screen
+        name="settings"
+        options={{ tabBarButton: () => null, animation: "fade" }}
+      />
     </Tabs>
   );
 }
