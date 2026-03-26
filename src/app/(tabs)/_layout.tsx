@@ -1,6 +1,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
+import React from "react";
 import { ActivityIndicator, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,7 +21,10 @@ export default function TabsLayout() {
   }
 
   return (
-    <SafeAreaView>
+    <SafeAreaView
+      style={{ flex: 1 }}
+      edges={["bottom"]}
+    >
       <Tabs
         screenOptions={{
           headerShown: false,

@@ -58,27 +58,19 @@ const useSignUp = () => {
       }
 
       if (data.user) {
-        // Establish session so RLS allows the profile write
-        await supabase.auth.signInWithPassword({ email, password });
-
-        const { error: profileError } = await supabase.from("profiles").upsert({
-          id: data.user.id,
-          email,
-          display_name: metadata?.display_name ?? null,
-          dob: metadata?.dob ?? null,
-          gender: metadata?.gender ?? null,
-          no_marketing: metadata?.no_marketing ?? false,
-          share_data: metadata?.share_data ?? false,
-          onboarding_complete: false,
-          notifications_seen: false,
-          created_at: new Date().toISOString(),
+        // Call a security definer RPC — bypasses RLS, works before email confirmation
+        const { error: profileError } = await supabase.rpc("create_profile", {
+          user_id: data.user.id,
+          user_email: email,
+          display_name: String(metadata?.display_name ?? ""),
+          dob: String(metadata?.dob ?? ""),
+          gender: String(metadata?.gender ?? ""),
+          no_marketing: Boolean(metadata?.no_marketing ?? false),
+          share_data: Boolean(metadata?.share_data ?? false),
         });
 
         if (profileError)
           return { success: false, error: profileError.message };
-
-        // Sign out — user must verify email then log in manually
-        await supabase.auth.signOut();
       }
 
       return { success: true };

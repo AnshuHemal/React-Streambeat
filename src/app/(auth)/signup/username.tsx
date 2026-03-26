@@ -1,10 +1,9 @@
+import LoadingDots from "@/components/LoadingDots";
 import useSignUp from "@/hooks/useSignUp";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    Animated,
     ScrollView,
     Text,
     TextInput,
@@ -12,6 +11,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 function deriveNameFromEmail(email: string): string {
   const local = email.split("@")[0] ?? "";
@@ -52,71 +52,6 @@ function RadioButton({
         />
       )}
     </TouchableOpacity>
-  );
-}
-
-function LoadingDots() {
-  const dots = [
-    useRef(new Animated.Value(0)).current,
-    useRef(new Animated.Value(0)).current,
-    useRef(new Animated.Value(0)).current,
-  ];
-
-  useEffect(() => {
-    const animations = dots.map((dot, i) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(i * 150),
-          Animated.timing(dot, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.timing(dot, {
-            toValue: 0,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.delay((dots.length - i) * 150),
-        ]),
-      ),
-    );
-    animations.forEach((a) => a.start());
-    return () => animations.forEach((a) => a.stop());
-  }, []);
-
-  return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: "#121212",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <View style={{ flexDirection: "row", gap: 10 }}>
-        {dots.map((dot, i) => (
-          <Animated.View
-            key={i}
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: 6,
-              backgroundColor: "#ffffff",
-              opacity: dot,
-              transform: [
-                {
-                  scale: dot.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.6, 1],
-                  }),
-                },
-              ],
-            }}
-          />
-        ))}
-      </View>
-    </View>
   );
 }
 
@@ -165,10 +100,10 @@ export default function SignUpUsernameScreen() {
     if (result.success) {
       router.replace("/(auth)/sign-in?signup=success" as any);
     } else {
-      Alert.alert(
-        "Sign Up Failed",
-        result.error ?? "Could not create account. Please try again.",
-      );
+      toast.error("Sign up failed", {
+        description:
+          result.error ?? "Could not create account. Please try again.",
+      });
     }
   };
 

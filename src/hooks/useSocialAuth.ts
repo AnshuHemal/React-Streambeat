@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { useState } from "react";
-import { Alert } from "react-native";
+import { toast } from "sonner-native";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -21,19 +21,15 @@ const useSocialAuth = () => {
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
+        options: { redirectTo, skipBrowserRedirect: true },
       });
 
       if (error) {
-        Alert.alert("Error", error.message);
+        toast.error(error.message);
         return;
       }
-
       if (!data.url) {
-        Alert.alert("Error", "Could not initiate sign-in. Please try again.");
+        toast.error("Could not initiate sign-in. Please try again.");
         return;
       }
 
@@ -43,10 +39,7 @@ const useSocialAuth = () => {
       );
 
       if (result.type === "success") {
-        const url = result.url;
-        const parsedUrl = new URL(url);
-
-        // Extract tokens from the URL fragment or query params
+        const parsedUrl = new URL(result.url);
         const accessToken =
           parsedUrl.searchParams.get("access_token") ??
           new URLSearchParams(parsedUrl.hash.slice(1)).get("access_token");
@@ -59,13 +52,11 @@ const useSocialAuth = () => {
             access_token: accessToken,
             refresh_token: refreshToken,
           });
-          if (sessionError) {
-            Alert.alert("Error", sessionError.message);
-          }
+          if (sessionError) toast.error(sessionError.message);
         }
       }
     } catch (err: any) {
-      Alert.alert("Error", err?.message ?? "Failed to sign in.");
+      toast.error(err?.message ?? "Failed to sign in.");
     } finally {
       setLoadingStrategy(null);
     }

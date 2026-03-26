@@ -1,16 +1,20 @@
+import LoadingDots from "@/components/LoadingDots";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   Image,
+  RefreshControl,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { toast } from "sonner-native";
 
 type Genre = {
   id: string;
@@ -20,70 +24,83 @@ type Genre = {
   image_url: string | null;
 };
 
+const CARD_HEIGHT = (Dimensions.get("window").width / 2) * 0.5;
+
 export default function OnboardingMusicScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
   const [genres, setGenres] = useState<Genre[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    supabase
+  const fetchGenres = useCallback(async () => {
+    const { data } = await supabase
       .from("genres")
       .select("id, slug, label, color, image_url")
       .eq("is_active", true)
-      .order("sort_order")
-      .then(({ data }) => {
-        setGenres(data ?? []);
-        setLoading(false);
-      });
+      .order("sort_order");
+    setGenres(data ?? []);
   }, []);
 
-  const toggle = (slug: string) => {
+  useEffect(() => {
+    fetchGenres().finally(() => setLoading(false));
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchGenres();
+    setRefreshing(false);
+  }, [fetchGenres]);
+
+  const toggle = (id: string) => {
     setSelected((prev) => {
       const next = new Set(prev);
-      next.has(slug) ? next.delete(slug) : next.add(slug);
+      next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
   };
 
   const onDone = async () => {
-    if (selected.size === 0 || !user) return;
+    if (!user) return;
+    if (selected.size < 3) {
+      toast.info("Select at least 3 genres", {
+        description: "Pick a few more to personalize your experience.",
+      });
+      return;
+    }
     setSaving(true);
     try {
       await supabase
         .from("profiles")
-        .update({
-          music_preferences: Array.from(selected),
-          onboarding_complete: true,
-        })
+        .update({ music_preferences: Array.from(selected) })
         .eq("id", user.id);
-      router.replace("/(tabs)");
+      router.replace("/onboarding/artists" as any);
     } finally {
       setSaving(false);
     }
   };
 
+  if (loading) return <LoadingDots />;
+
   const renderItem = ({ item }: { item: Genre }) => {
-    const isSelected = selected.has(item.slug);
+    const isSelected = selected.has(item.id);
     return (
       <TouchableOpacity
-        onPress={() => toggle(item.slug)}
+        onPress={() => toggle(item.id)}
         activeOpacity={0.85}
         style={{
           flex: 1,
           margin: 5,
-          height: 110,
-          borderRadius: 10,
+          height: CARD_HEIGHT,
+          borderRadius: 12,
           backgroundColor: item.color,
           overflow: "hidden",
-          borderWidth: isSelected ? 3 : 0,
-          borderColor: "#ffffff",
         }}
       >
-        {/* Artist image — bottom-right cutout style */}
+        {/* Artist image — bottom-right, fixed size, cover fills regardless of source dimensions */}
         {item.image_url && (
           <Image
             source={{ uri: item.image_url }}
@@ -91,10 +108,10 @@ export default function OnboardingMusicScreen() {
               position: "absolute",
               bottom: 0,
               right: 0,
-              width: 80,
-              height: 100,
+              width: "80%",
+              height: "80%",
             }}
-            resizeMode="cover"
+            resizeMode="center"
           />
         )}
 
@@ -102,18 +119,21 @@ export default function OnboardingMusicScreen() {
         <Text
           style={{
             position: "absolute",
-            top: 10,
-            left: 10,
+            top: 12,
+            left: 12,
             color: "#ffffff",
             fontFamily: "CircularStd",
             fontSize: 15,
             fontWeight: "700",
+            textShadowColor: "rgba(0,0,0,0.25)",
+            textShadowOffset: { width: 0, height: 1 },
+            textShadowRadius: 2,
           }}
         >
           {item.label}
         </Text>
 
-        {/* Checkmark badge — top-right when selected */}
+        {/* Checkmark badge — white circle, top-right, only when selected */}
         {isSelected && (
           <View
             style={{
@@ -123,18 +143,17 @@ export default function OnboardingMusicScreen() {
               width: 28,
               height: 28,
               borderRadius: 14,
-              backgroundColor: "#ffffff",
               alignItems: "center",
               justifyContent: "center",
+              elevation: 6,
               shadowColor: "#000",
-              shadowOpacity: 0.25,
+              shadowOpacity: 0.2,
               shadowRadius: 4,
-              elevation: 4,
             }}
           >
             <Image
               source={require("@/assets/images/icon-check.png")}
-              style={{ width: 16, height: 16 }}
+              style={{ width: 24, height: 24 }}
               resizeMode="contain"
             />
           </View>
@@ -145,68 +164,62 @@ export default function OnboardingMusicScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#121212" }}>
-      <View
-        style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12 }}
-      >
+      <View style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 8 }}>
         <Text
           style={{
             color: "#ffffff",
             fontSize: 28,
             fontWeight: "700",
             fontFamily: "CircularStd",
-            marginBottom: 8,
           }}
         >
           What music do you like?
         </Text>
-        <Text
-          style={{ color: "#a7a7a7", fontSize: 14, fontFamily: "CircularStd" }}
-        >
-          Pick a few genres to get started. You can always change this later.
-        </Text>
       </View>
 
-      {loading ? (
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
-          <ActivityIndicator color="#1DB954" size="large" />
-        </View>
-      ) : (
-        <FlatList
-          data={genres}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 120 }}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      <FlatList
+        data={genres}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        contentContainerStyle={{
+          paddingHorizontal: 10,
+          paddingBottom: 10,
+          marginTop: 20,
+        }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#1DB954"
+            colors={["#1DB954"]}
+          />
+        }
+      />
 
-      {/* Sticky bottom button */}
+      {/* Centered pill Next button */}
       <View
         style={{
           position: "absolute",
           bottom: 0,
           left: 0,
           right: 0,
-          paddingHorizontal: 24,
-          paddingBottom: 36,
-          paddingTop: 16,
-          backgroundColor: "#121212",
-          borderTopWidth: 1,
-          borderTopColor: "#2a2a2a",
+          paddingBottom: 44,
+          paddingTop: 12,
+          alignItems: "center",
         }}
       >
         <TouchableOpacity
           onPress={onDone}
-          disabled={selected.size === 0 || saving}
+          disabled={saving}
           style={{
             backgroundColor: "#ffffff",
             borderRadius: 50,
             paddingVertical: 16,
+            paddingHorizontal: 64,
             alignItems: "center",
-            opacity: selected.size === 0 ? 0.4 : 1,
+            opacity: selected.size < 3 ? 0.35 : 1,
           }}
           activeOpacity={0.85}
         >

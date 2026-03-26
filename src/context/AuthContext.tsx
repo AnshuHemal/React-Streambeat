@@ -7,6 +7,7 @@ type Profile = {
   notifications_seen: boolean;
   display_name: string | null;
   music_preferences: string[] | null;
+  artist_preferences: string[] | null;
 } | null;
 
 type AuthContextType = {
@@ -15,6 +16,7 @@ type AuthContextType = {
   profile: Profile;
   isLoaded: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   isLoaded: false,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -30,30 +33,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string): Promise<Profile> => {
     const { data } = await supabase
       .from("profiles")
       .select(
-        "onboarding_complete, notifications_seen, display_name, music_preferences",
+        "onboarding_complete, notifications_seen, display_name, music_preferences, artist_preferences",
       )
       .eq("id", userId)
       .single();
-    setProfile(data ?? null);
+    return data ?? null;
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Wait for both session AND profile before marking as loaded
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
-      if (session?.user) fetchProfile(session.user.id);
+      if (session?.user) {
+        const p = await fetchProfile(session.user.id);
+        setProfile(p);
+      }
       setIsLoaded(true);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       if (session?.user) {
-        fetchProfile(session.user.id);
+        const p = await fetchProfile(session.user.id);
+        setProfile(p);
       } else {
         setProfile(null);
       }
@@ -66,6 +74,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const refreshProfile = async () => {
+    if (session?.user) {
+      const p = await fetchProfile(session.user.id);
+      setProfile(p);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -74,6 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile,
         isLoaded,
         signOut,
+        refreshProfile,
       }}
     >
       {children}
