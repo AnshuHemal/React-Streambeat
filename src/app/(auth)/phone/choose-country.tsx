@@ -5,11 +5,11 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { useState } from "react";
 import {
-    FlatList,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -35,9 +35,7 @@ export default function ChooseCountryScreen() {
       activeOpacity={0.7}
     >
       <Text className="text-white text-lg">{item.name}</Text>
-      <Text className="text-gray-400 text-lg">
-        {item.code}
-      </Text>
+      <Text className="text-gray-400 text-lg">{item.code}</Text>
     </TouchableOpacity>
   );
 
