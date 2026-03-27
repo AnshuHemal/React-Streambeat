@@ -2,6 +2,7 @@ import { getCountrySelection } from "@/constants/countryStore";
 import usePhoneAuth from "@/hooks/usePhoneAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
+import React from "react";
 import { useCallback, useState } from "react";
 import {
     ActivityIndicator,
