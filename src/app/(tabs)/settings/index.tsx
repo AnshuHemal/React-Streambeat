@@ -57,6 +57,11 @@ const SETTINGS_ITEMS = [
     title: "About and support",
     subtitle: "Version • Privacy Policy",
   },
+  {
+    icon: "information-circle-outline",
+    title: "About and support",
+    subtitle: "Version • Privacy Policy",
+  },
 ];
 
 export default function SettingsScreen() {
