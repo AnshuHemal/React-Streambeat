@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -60,7 +60,7 @@ function AlbumGrid() {
             style={{
               color: "rgba(255,255,255,0.7)",
               fontFamily: "CircularStd",
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: "600",
               textAlign: "center",
               padding: 8,
@@ -298,7 +298,7 @@ export default function PremiumScreen() {
                   style={{
                     color: "#1DB954",
                     fontFamily: "CircularStd",
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: "600",
                   }}
                 >
@@ -415,7 +415,7 @@ export default function PremiumScreen() {
                   style={{
                     color: "#1DB954",
                     fontFamily: "CircularStd",
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: "600",
                   }}
                 >
@@ -685,7 +685,7 @@ export default function PremiumScreen() {
                 style={{
                   color: "#777777",
                   fontFamily: "CircularStd",
-                  fontSize: 13,
+                  fontSize: 12,
                   textAlign: "center",
                   marginTop: 12,
                   textDecorationLine: "underline",
@@ -719,7 +719,7 @@ export default function PremiumScreen() {
                 style={{
                   color: "#000000",
                   fontFamily: "CircularStd",
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: "600",
                 }}
               >
@@ -1076,7 +1076,7 @@ export default function PremiumScreen() {
                 style={{
                   color: "#000000",
                   fontFamily: "CircularStd",
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: "600",
                 }}
               >

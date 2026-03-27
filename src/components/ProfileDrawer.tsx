@@ -101,7 +101,7 @@ export default function ProfileDrawerContent({ onClose }: Props) {
           <Text
             style={{
               color: "#a7a7a7",
-              fontSize: 13,
+              fontSize: 12,
               fontFamily: "CircularStd",
             }}
           >
