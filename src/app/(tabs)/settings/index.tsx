@@ -158,6 +158,12 @@ export default function SettingsScreen() {
                 router.push("/(tabs)/settings/playback" as any);
               if (item.title === "Advertisements")
                 router.push("/(tabs)/settings/advertisements" as any);
+              if (item.title === "Apps and devices")
+                router.push("/(tabs)/settings/apps-devices" as any);
+              if (item.title === "Data-saving and offline")
+                router.push("/(tabs)/settings/data-saving" as any);
+              if (item.title === "Notifications")
+                router.push("/(tabs)/settings/notifications" as any);
               if (item.title === "Content and display")
                 router.push("/(tabs)/settings/content-display" as any);
               if (item.title === "About and support")
