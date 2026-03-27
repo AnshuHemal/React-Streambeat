@@ -38,6 +38,16 @@ const SETTINGS_ITEMS = [
     subtitle: "Google Maps • Streambeat Connect control",
   },
   {
+    icon: "megaphone-outline",
+    title: "Advertisements",
+    subtitle: "Tailored ads",
+  },
+  {
+    icon: "information-circle-outline",
+    title: "About and support",
+    subtitle: "Version • Privacy Policy",
+  },
+  {
     image: require("@/assets/images/ico-24-plus-arrrow-down.png"),
     title: "Data-saving and offline",
     subtitle: "Data saver mode • Downloads over cellular",
@@ -56,12 +66,7 @@ const SETTINGS_ITEMS = [
     icon: "information-circle-outline",
     title: "About and support",
     subtitle: "Version • Privacy Policy",
-  },
-  {
-    icon: "information-circle-outline",
-    title: "About and support",
-    subtitle: "Version • Privacy Policy",
-  },
+  }
 ];
 
 export default function SettingsScreen() {
