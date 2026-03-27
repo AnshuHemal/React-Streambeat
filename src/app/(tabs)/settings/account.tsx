@@ -198,7 +198,7 @@ export default function AccountScreen() {
             <Text
               style={{
                 color: "#a7a7a7",
-                fontSize: 13,
+                fontSize: 12,
                 fontFamily: "CircularStd",
               }}
             >
@@ -213,7 +213,7 @@ export default function AccountScreen() {
           <Text
             style={{
               color: "#a7a7a7",
-              fontSize: 13,
+              fontSize: 12,
               fontFamily: "CircularStd",
               lineHeight: 20,
             }}
