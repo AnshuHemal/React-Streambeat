@@ -7,7 +7,6 @@ export default function SettingsLayout() {
       screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
-        animationTypeForReplace: "push",
         contentStyle: { backgroundColor: "#121212" },
       }}
     />

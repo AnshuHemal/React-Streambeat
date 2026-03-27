@@ -2,44 +2,14 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import React from "react";
-import {
-  Image,
-  Linking,
-  PermissionsAndroid,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-async function requestNotificationPermission(): Promise<boolean> {
-  if (Platform.OS === "android") {
-    // Android 13+ (API 33) requires POST_NOTIFICATIONS permission
-    if (Platform.Version >= 33) {
-      const result = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-      );
-      return result === PermissionsAndroid.RESULTS.GRANTED;
-    }
-    // Below Android 13 — notifications are on by default
-    return true;
-  }
-  // iOS — open settings since we can't request without expo-notifications
-  Linking.openSettings();
-  return false;
-}
 
 export default function OnboardingNotificationsScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const proceed = async (requestPermission = false) => {
-    if (requestPermission) {
-      await requestNotificationPermission();
-      // Small delay to let the app fully return to foreground after the OS dialog
-      await new Promise((resolve) => setTimeout(resolve, 300));
-    }
+  const proceed = async () => {
     if (user) {
       await supabase
         .from("profiles")
@@ -155,7 +125,7 @@ export default function OnboardingNotificationsScreen() {
         </Text>
 
         <TouchableOpacity
-          onPress={() => proceed(true)}
+          onPress={proceed}
           style={{
             backgroundColor: "#ffffff",
             borderRadius: 50,
@@ -179,7 +149,7 @@ export default function OnboardingNotificationsScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => proceed(false)}
+          onPress={proceed}
           activeOpacity={0.7}
           style={{ paddingVertical: 12 }}
         >

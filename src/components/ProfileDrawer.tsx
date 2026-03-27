@@ -144,6 +144,36 @@ export default function ProfileDrawerContent({ onClose }: Props) {
             </Text>
           </TouchableOpacity>
         ))}
+
+        {/* Log out */}
+        <TouchableOpacity
+          onPress={() => {
+            onClose();
+            signOut();
+          }}
+          activeOpacity={0.7}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 16,
+            paddingHorizontal: 20,
+            paddingVertical: 16,
+            marginTop: 8,
+            borderTopWidth: 1,
+            borderTopColor: "#2a2a2a",
+          }}
+        >
+          <Ionicons name="log-out-outline" size={22} color="#a7a7a7" />
+          <Text
+            style={{
+              color: "#a7a7a7",
+              fontSize: 16,
+              fontFamily: "CircularStd",
+            }}
+          >
+            Log out
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
