@@ -156,6 +156,8 @@ export default function SettingsScreen() {
                 router.push("/(tabs)/settings/privacy-social" as any);
               if (item.title === "Playback")
                 router.push("/(tabs)/settings/playback" as any);
+              if (item.title === "Advertisements")
+                router.push("/(tabs)/settings/advertisements" as any);
               if (item.title === "Content and display")
                 router.push("/(tabs)/settings/content-display" as any);
               if (item.title === "About and support")
