@@ -1,7 +1,9 @@
+import BottomDialog from "@/components/BottomDialog";
+import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const SETTINGS_ITEMS = [
@@ -31,12 +33,12 @@ const SETTINGS_ITEMS = [
     subtitle: "Push • Email",
   },
   {
-    icon: "phone-portrait-outline",
+    image: require("@/assets/images/ico-24-musical-box.png"),
     title: "Apps and devices",
     subtitle: "Google Maps • Streambeat Connect control",
   },
   {
-    icon: "cloud-download-outline",
+    image: require("@/assets/images/ico-24-plus-arrrow-down.png"),
     title: "Data-saving and offline",
     subtitle: "Data saver mode • Downloads over cellular",
   },
@@ -59,6 +61,8 @@ const SETTINGS_ITEMS = [
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { signOut } = useAuth();
+  const [logoutDialogVisible, setLogoutDialogVisible] = useState(false);
 
   return (
     <SafeAreaView
@@ -86,7 +90,7 @@ export default function SettingsScreen() {
           style={{
             color: "#ffffff",
             fontSize: 18,
-            fontWeight: "700",
+            fontWeight: "600",
             fontFamily: "CircularStd",
           }}
         >
@@ -95,6 +99,7 @@ export default function SettingsScreen() {
 
         <TouchableOpacity
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
         >
           <Ionicons name="search" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -130,7 +135,7 @@ export default function SettingsScreen() {
               style={{
                 color: "#121212",
                 fontSize: 15,
-                fontWeight: "700",
+                fontWeight: "600",
                 fontFamily: "CircularStd",
               }}
             >
@@ -144,15 +149,35 @@ export default function SettingsScreen() {
           <TouchableOpacity
             key={i}
             activeOpacity={0.7}
+            onPress={() => {
+              if (item.title === "Account")
+                router.push("/(tabs)/settings/account" as any);
+              if (item.title === "Privacy and social")
+                router.push("/(tabs)/settings/privacy-social" as any);
+              if (item.title === "Playback")
+                router.push("/(tabs)/settings/playback" as any);
+              if (item.title === "Content and display")
+                router.push("/(tabs)/settings/content-display" as any);
+              if (item.title === "About and support")
+                router.push("/(tabs)/settings/about" as any);
+            }}
             style={{
               flexDirection: "row",
               alignItems: "center",
               paddingHorizontal: 20,
-              paddingVertical: 14,
+              paddingVertical: 12,
               gap: 16,
             }}
           >
-            <Ionicons name={item.icon as any} size={26} color="#ffffff" />
+            {(item as any).image ? (
+              <Image
+                source={(item as any).image}
+                style={{ width: 26, height: 26, tintColor: "#ffffff" }}
+                resizeMode="contain"
+              />
+            ) : (
+              <Ionicons name={item.icon as any} size={26} color="#ffffff" />
+            )}
             <View style={{ flex: 1 }}>
               <Text
                 style={{
@@ -168,7 +193,7 @@ export default function SettingsScreen() {
               <Text
                 style={{
                   color: "#a7a7a7",
-                  fontSize: 13,
+                  fontSize: 12,
                   fontFamily: "CircularStd",
                 }}
                 numberOfLines={1}
@@ -178,7 +203,45 @@ export default function SettingsScreen() {
             </View>
           </TouchableOpacity>
         ))}
+
+        {/* Log out button */}
+        <View style={{ alignItems: "center", paddingVertical: 22 }}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setLogoutDialogVisible(true)}
+            style={{
+              backgroundColor: "#ffffff",
+              borderRadius: 50,
+              paddingVertical: 12,
+              paddingHorizontal: 28,
+            }}
+          >
+            <Text
+              style={{
+                color: "#121212",
+                fontSize: 14,
+                fontWeight: "600",
+                fontFamily: "CircularStd",
+              }}
+            >
+              Log out
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
+
+      <BottomDialog
+        visible={logoutDialogVisible}
+        title="Logout User ?"
+        description="Are you sure you want to log out of Streambeat?"
+        confirmLabel="Log out"
+        dismissLabel="Cancel"
+        onConfirm={() => {
+          setLogoutDialogVisible(false);
+          signOut();
+        }}
+        onDismiss={() => setLogoutDialogVisible(false)}
+      />
     </SafeAreaView>
   );
 }

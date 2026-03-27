@@ -1,14 +1,15 @@
 import ProfileDrawerContent from "@/components/ProfileDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Dimensions,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+  BackHandler,
+    Dimensions,
+    Image,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -48,6 +49,17 @@ export default function HomeScreen() {
   const [activeFilter, setActiveFilter] = useState<
     "All" | "Music" | "Podcasts"
   >("All");
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (open) {
+        setOpen(false);
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, [open]);
 
   const displayName =
     profile?.display_name ??
