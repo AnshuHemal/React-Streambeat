@@ -3,13 +3,13 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-  Image,
-  Linking,
-  PermissionsAndroid,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
+    Image,
+    Linking,
+    PermissionsAndroid,
+    Platform,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -101,7 +101,7 @@ export default function OnboardingNotificationsScreen() {
               style={{
                 color: "#ffffff",
                 fontFamily: "CircularStd",
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: "600",
                 letterSpacing: 1.5,
                 textTransform: "uppercase",

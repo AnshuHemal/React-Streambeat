@@ -133,7 +133,7 @@ function ToggleRow({
               <Text
                 style={{
                   color: "#a7a7a7",
-                  fontSize: 13,
+                  fontSize: 12,
                   fontFamily: "CircularStd",
                   textDecorationLine: "underline",
                 }}
@@ -317,7 +317,7 @@ export default function PrivacySocialScreen() {
           <Text
             style={{
               color: "#a7a7a7",
-              fontSize: 13,
+              fontSize: 12,
               fontFamily: "CircularStd",
               lineHeight: 18,
             }}
@@ -379,7 +379,7 @@ export default function PrivacySocialScreen() {
               <Text
                 style={{
                   color: "#ffffff",
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: "600",
                   fontFamily: "CircularStd",
                 }}
