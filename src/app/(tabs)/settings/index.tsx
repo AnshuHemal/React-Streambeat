@@ -66,17 +66,7 @@ const SETTINGS_ITEMS = [
     icon: "information-circle-outline",
     title: "About and support",
     subtitle: "Version • Privacy Policy",
-  },
-  {
-    icon: "megaphone-outline",
-    title: "Advertisements",
-    subtitle: "Tailored ads",
-  },
-  {
-    icon: "information-circle-outline",
-    title: "About and support",
-    subtitle: "Version • Privacy Policy",
-  },
+  }
 ];
 
 export default function SettingsScreen() {
