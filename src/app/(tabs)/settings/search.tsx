@@ -232,7 +232,7 @@ export default function SettingsSearchScreen() {
                 style={{
                   color: "#a7a7a7",
                   fontFamily: "CircularStd",
-                  fontSize: 13,
+                  fontSize: 12,
                 }}
               >
                 {item.section} · {item.subtitle}
