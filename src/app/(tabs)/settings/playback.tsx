@@ -1,3 +1,4 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { useRouter } from "expo-router";
@@ -199,6 +200,7 @@ export default function PlaybackScreen() {
         </Text>
         <TouchableOpacity
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
         >
           <Ionicons name="search" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -211,79 +213,87 @@ export default function PlaybackScreen() {
         {/* Track transitions */}
         <SectionHeader title="Track transitions" />
 
-        <ToggleRow
-          title="Gapless playback"
-          description="Removes any gaps or pauses that may occur in between tracks."
-          value={gapless}
-          onToggle={() => setGapless((v) => !v)}
-        />
+        <SettingHighlightRow label="Gapless playback">
+          <ToggleRow
+            title="Gapless playback"
+            description="Removes any gaps or pauses that may occur in between tracks."
+            value={gapless}
+            onToggle={() => setGapless((v) => !v)}
+          />
+        </SettingHighlightRow>
 
-        <ToggleRow
-          title="Automix"
-          description="Allows seamless transitions between songs on certain playlists."
-          value={automix}
-          onToggle={() => setAutomix((v) => !v)}
-        />
+        <SettingHighlightRow label="Automix">
+          <ToggleRow
+            title="Automix"
+            description="Allows seamless transitions between songs on certain playlists."
+            value={automix}
+            onToggle={() => setAutomix((v) => !v)}
+          />
+        </SettingHighlightRow>
 
         {/* Crossfade — slider row */}
-        <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
-          <Text
-            style={{
-              color: "#ffffff",
-              fontSize: 16,
-              fontWeight: "600",
-              fontFamily: "CircularStd",
-              marginBottom: 4,
-            }}
-          >
-            Crossfade
-          </Text>
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontSize: 12,
-              fontFamily: "CircularStd",
-              lineHeight: 18,
-              marginBottom: 16,
-            }}
-          >
-            Adjust the length of fading and overlap in between tracks.
-          </Text>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <SettingHighlightRow label="Crossfade">
+          <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
+            <Text
+              style={{
+                color: "#ffffff",
+                fontSize: 16,
+                fontWeight: "600",
+                fontFamily: "CircularStd",
+                marginBottom: 4,
+              }}
+            >
+              Crossfade
+            </Text>
             <Text
               style={{
                 color: "#a7a7a7",
                 fontSize: 12,
                 fontFamily: "CircularStd",
-                width: 24,
+                lineHeight: 18,
+                marginBottom: 16,
               }}
             >
-              {Math.round(crossfade)}s
+              Adjust the length of fading and overlap in between tracks.
             </Text>
-            <Slider
-              style={{ flex: 1, height: 50 }}
-              minimumValue={0}
-              maximumValue={12}
-              step={1}
-              value={crossfade}
-              onValueChange={setCrossfade}
-              minimumTrackTintColor="#1DB954"
-              maximumTrackTintColor="#535353"
-              thumbTintColor="#ffffff"
-            />
-            <Text
-              style={{
-                color: "#a7a7a7",
-                fontSize: 12,
-                fontFamily: "CircularStd",
-                width: 28,
-                textAlign: "right",
-              }}
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
             >
-              12s
-            </Text>
+              <Text
+                style={{
+                  color: "#a7a7a7",
+                  fontSize: 12,
+                  fontFamily: "CircularStd",
+                  width: 24,
+                }}
+              >
+                {Math.round(crossfade)}s
+              </Text>
+              <Slider
+                style={{ flex: 1, height: 50 }}
+                minimumValue={0}
+                maximumValue={12}
+                step={1}
+                value={crossfade}
+                onValueChange={setCrossfade}
+                minimumTrackTintColor="#1DB954"
+                maximumTrackTintColor="#535353"
+                thumbTintColor="#ffffff"
+              />
+              <Text
+                style={{
+                  color: "#a7a7a7",
+                  fontSize: 12,
+                  fontFamily: "CircularStd",
+                  width: 28,
+                  textAlign: "right",
+                }}
+              >
+                12s
+              </Text>
+            </View>
           </View>
-        </View>
+        </SettingHighlightRow>
 
         {/* Divider */}
         <View style={{ height: 1, backgroundColor: "#2a2a2a", marginTop: 8 }} />
@@ -291,19 +301,23 @@ export default function PlaybackScreen() {
         {/* Listening controls */}
         <SectionHeader title="Listening controls" />
 
-        <ToggleRow
-          title="Autoplay"
-          description="Similar content will play when what you're listening to ends."
-          value={autoplay}
-          onToggle={() => setAutoplay((v) => !v)}
-        />
+        <SettingHighlightRow label="Autoplay">
+          <ToggleRow
+            title="Autoplay"
+            description="Similar content will play when what you're listening to ends."
+            value={autoplay}
+            onToggle={() => setAutoplay((v) => !v)}
+          />
+        </SettingHighlightRow>
 
-        <ToggleRow
-          title="Mono audio"
-          description="Left and right speakers play the same audio."
-          value={monoAudio}
-          onToggle={() => setMonoAudio((v) => !v)}
-        />
+        <SettingHighlightRow label="Mono audio">
+          <ToggleRow
+            title="Mono audio"
+            description="Left and right speakers play the same audio."
+            value={monoAudio}
+            onToggle={() => setMonoAudio((v) => !v)}
+          />
+        </SettingHighlightRow>
 
         <ToggleRow
           title="Device broadcast status"
@@ -312,10 +326,12 @@ export default function PlaybackScreen() {
           onToggle={() => setDeviceBroadcast((v) => !v)}
         />
 
-        <NavRow
-          title="Equalizer"
-          description="Adjust different frequencies to enhance your audio experience."
-        />
+        <SettingHighlightRow label="Equalizer">
+          <NavRow
+            title="Equalizer"
+            description="Adjust different frequencies to enhance your audio experience."
+          />
+        </SettingHighlightRow>
 
         {/* Divider */}
         <View style={{ height: 1, backgroundColor: "#2a2a2a", marginTop: 8 }} />
@@ -323,73 +339,75 @@ export default function PlaybackScreen() {
         {/* Video controls */}
         <SectionHeader title="Video controls" />
 
-        <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 16,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 16,
-                  fontWeight: "600",
-                  fontFamily: "CircularStd",
-                  marginBottom: 4,
-                }}
-              >
-                Picture in picture
-              </Text>
-              <Text
-                style={{
-                  color: "#a7a7a7",
-                  fontSize: 12,
-                  fontFamily: "CircularStd",
-                  lineHeight: 18,
-                }}
-              >
-                Shrink video in a mini player when you leave Streambeat, so you
-                can continue watching while using apps.
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "flex-start",
-                  gap: 6,
-                  marginTop: 10,
-                }}
-              >
-                <Ionicons
-                  name="information-circle-outline"
-                  size={16}
-                  color="#a7a7a7"
-                  style={{ marginTop: 1 }}
-                />
+        <SettingHighlightRow label="Picture in picture">
+          <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 16,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 16,
+                    fontWeight: "600",
+                    fontFamily: "CircularStd",
+                    marginBottom: 4,
+                  }}
+                >
+                  Picture in picture
+                </Text>
                 <Text
                   style={{
                     color: "#a7a7a7",
                     fontSize: 12,
                     fontFamily: "CircularStd",
-                    flex: 1,
                     lineHeight: 18,
                   }}
                 >
-                  In Android settings, go to Apps {">"} Special app access {">"}{" "}
-                  Picture-in-picture {">"} Streambeat to allow picture in
-                  picture.
+                  Shrink video in a mini player when you leave Streambeat, so
+                  you can continue watching while using apps.
                 </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "flex-start",
+                    gap: 6,
+                    marginTop: 10,
+                  }}
+                >
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={16}
+                    color="#a7a7a7"
+                    style={{ marginTop: 1 }}
+                  />
+                  <Text
+                    style={{
+                      color: "#a7a7a7",
+                      fontSize: 12,
+                      fontFamily: "CircularStd",
+                      flex: 1,
+                      lineHeight: 18,
+                    }}
+                  >
+                    In Android settings, go to Apps {">"} Special app access{" "}
+                    {">"} Picture-in-picture {">"} Streambeat to allow picture
+                    in picture.
+                  </Text>
+                </View>
               </View>
+              <Toggle
+                value={pictureInPicture}
+                onToggle={() => setPictureInPicture((v) => !v)}
+              />
             </View>
-            <Toggle
-              value={pictureInPicture}
-              onToggle={() => setPictureInPicture((v) => !v)}
-            />
           </View>
-        </View>
+        </SettingHighlightRow>
 
         {/* Divider */}
         <View style={{ height: 1, backgroundColor: "#2a2a2a", marginTop: 8 }} />
@@ -397,12 +415,14 @@ export default function PlaybackScreen() {
         {/* Volume controls */}
         <SectionHeader title="Volume controls" />
 
-        <ToggleRow
-          title="Volume normalization"
-          description="Sets the same loudness level for all tracks."
-          value={volumeNormalization}
-          onToggle={() => setVolumeNormalization((v) => !v)}
-        />
+        <SettingHighlightRow label="Volume normalization">
+          <ToggleRow
+            title="Volume normalization"
+            description="Sets the same loudness level for all tracks."
+            value={volumeNormalization}
+            onToggle={() => setVolumeNormalization((v) => !v)}
+          />
+        </SettingHighlightRow>
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,14 +1,15 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  PermissionsAndroid,
-  Platform,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    PermissionsAndroid,
+    Platform,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -82,7 +83,12 @@ export default function NotificationsScreen() {
         >
           Notifications
         </Text>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
+        >
+          <Ionicons name="search" size={24} color="#ffffff" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -163,42 +169,43 @@ export default function NotificationsScreen() {
 
         {/* Notification categories */}
         {NOTIFICATION_ITEMS.map((item, i) => (
-          <TouchableOpacity
-            key={i}
-            activeOpacity={0.7}
-            onPress={() => {
-              if (item.label === "Social features") {
-                router.push("/(tabs)/settings/social-features" as any);
-              } else {
-                router.push({
-                  pathname: "/(tabs)/settings/notification-detail" as any,
-                  params: { title: item.label },
-                });
-              }
-            }}
-            style={{ paddingHorizontal: 20, paddingVertical: 14 }}
-          >
-            <Text
-              style={{
-                color: "#ffffff",
-                fontSize: 16,
-                fontWeight: "600",
-                fontFamily: "CircularStd",
-                marginBottom: 3,
+          <SettingHighlightRow key={i} label={item.label}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                if (item.label === "Social features") {
+                  router.push("/(tabs)/settings/social-features" as any);
+                } else {
+                  router.push({
+                    pathname: "/(tabs)/settings/notification-detail" as any,
+                    params: { title: item.label },
+                  });
+                }
               }}
+              style={{ paddingHorizontal: 20, paddingVertical: 14 }}
             >
-              {item.label}
-            </Text>
-            <Text
-              style={{
-                color: "#a7a7a7",
-                fontSize: 12,
-                fontFamily: "CircularStd",
-              }}
-            >
-              {item.status}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={{
+                  color: "#ffffff",
+                  fontSize: 16,
+                  fontWeight: "600",
+                  fontFamily: "CircularStd",
+                  marginBottom: 3,
+                }}
+              >
+                {item.label}
+              </Text>
+              <Text
+                style={{
+                  color: "#a7a7a7",
+                  fontSize: 12,
+                  fontFamily: "CircularStd",
+                }}
+              >
+                {item.status}
+              </Text>
+            </TouchableOpacity>
+          </SettingHighlightRow>
         ))}
       </ScrollView>
     </SafeAreaView>

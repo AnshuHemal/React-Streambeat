@@ -1,8 +1,9 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const VERSION = "1.0.0";
@@ -51,65 +52,82 @@ export default function AboutScreen() {
         </Text>
         <TouchableOpacity
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
         >
           <Ionicons name="search" size={24} color="#ffffff" />
         </TouchableOpacity>
       </View>
 
-      {/* Version row */}
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingHorizontal: 20,
-          paddingVertical: 18,
-          borderBottomWidth: 1,
-          borderBottomColor: "#1e1e1e",
-        }}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
       >
-        <Text
-          style={{ color: "#ffffff", fontSize: 16, fontFamily: "CircularStd" }}
-        >
-          Version
-        </Text>
-        <Text
-          style={{ color: "#a7a7a7", fontSize: 15, fontFamily: "CircularStd" }}
-        >
-          {VERSION}
-        </Text>
-      </View>
-
-      {/* Link rows */}
-      {ITEMS.map((item, i) => (
-        <TouchableOpacity
-          key={i}
-          activeOpacity={0.7}
-          onPress={() => item.url && Linking.openURL(item.url)}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            paddingHorizontal: 20,
-            paddingVertical: 18,
-            borderBottomWidth: 1,
-            borderBottomColor: "#1e1e1e",
-          }}
-        >
-          <Text
+        {/* Version row */}
+        <SettingHighlightRow label="Version">
+          <View
             style={{
-              color: "#ffffff",
-              fontSize: 16,
-              fontFamily: "CircularStd",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingHorizontal: 20,
+              paddingVertical: 18,
+              borderBottomWidth: 1,
+              borderBottomColor: "#1e1e1e",
             }}
           >
-            {item.label}
-          </Text>
-          {item.url && (
-            <Ionicons name="open-outline" size={18} color="#ffffff" />
-          )}
-        </TouchableOpacity>
-      ))}
+            <Text
+              style={{
+                color: "#ffffff",
+                fontSize: 16,
+                fontFamily: "CircularStd",
+              }}
+            >
+              Version
+            </Text>
+            <Text
+              style={{
+                color: "#a7a7a7",
+                fontSize: 15,
+                fontFamily: "CircularStd",
+              }}
+            >
+              {VERSION}
+            </Text>
+          </View>
+        </SettingHighlightRow>
+
+        {/* Link rows */}
+        {ITEMS.map((item, i) => (
+          <SettingHighlightRow key={i} label={item.label}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => item.url && Linking.openURL(item.url)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingHorizontal: 20,
+                paddingVertical: 18,
+                borderBottomWidth: 1,
+                borderBottomColor: "#1e1e1e",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#ffffff",
+                  fontSize: 16,
+                  fontFamily: "CircularStd",
+                }}
+              >
+                {item.label}
+              </Text>
+              {item.url && (
+                <Ionicons name="open-outline" size={18} color="#ffffff" />
+              )}
+            </TouchableOpacity>
+          </SettingHighlightRow>
+        ))}
+      </ScrollView>
     </SafeAreaView>
   );
 }
