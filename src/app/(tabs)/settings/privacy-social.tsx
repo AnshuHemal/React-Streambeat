@@ -3,11 +3,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -134,7 +134,7 @@ function ToggleRow({
               <Text
                 style={{
                   color: "#a7a7a7",
-                  fontSize: 13,
+                  fontSize: 12,
                   fontFamily: "CircularStd",
                   textDecorationLine: "underline",
                 }}

@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  BackHandler,
+    BackHandler,
     Dimensions,
     Image,
     ScrollView,
@@ -248,7 +248,7 @@ export default function HomeScreen() {
                     style={{
                       flex: 1,
                       color: "#ffffff",
-                      fontSize: 13,
+                      fontSize: 12,
                       fontFamily: "CircularStd",
                       fontWeight: "600",
                       paddingHorizontal: 12,
@@ -288,7 +288,7 @@ export default function HomeScreen() {
                   <Text
                     style={{
                       color: "#B3B3B3",
-                      fontSize: 13,
+                      fontSize: 12,
                       fontFamily: "CircularStd",
                     }}
                   >
@@ -328,7 +328,7 @@ export default function HomeScreen() {
                     <Text
                       style={{
                         color: "#ffffff",
-                        fontSize: 13,
+                        fontSize: 12,
                         fontFamily: "CircularStd",
                       }}
                       numberOfLines={2}
