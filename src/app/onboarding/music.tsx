@@ -173,7 +173,7 @@ export default function OnboardingMusicScreen() {
             fontFamily: "CircularStd",
           }}
         >
-          What music do you like?
+          What music do you like? Hello
         </Text>
       </View>
 
