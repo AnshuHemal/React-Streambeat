@@ -37,9 +37,9 @@ export default function SocialFeaturesScreen() {
         style={{
           flexDirection: "row",
           alignItems: "center",
+          justifyContent: "space-between",
           paddingHorizontal: 16,
           paddingVertical: 14,
-          gap: 12,
         }}
       >
         <TouchableOpacity
@@ -50,17 +50,20 @@ export default function SocialFeaturesScreen() {
         </TouchableOpacity>
         <Text
           style={{
-            flex: 1,
             color: "#ffffff",
             fontSize: 18,
             fontWeight: "600",
             fontFamily: "CircularStd",
-            textAlign: "center",
-            marginRight: 36,
           }}
         >
           Social features
         </Text>
+        <TouchableOpacity
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
+        >
+          <Ionicons name="search" size={24} color="#ffffff" />
+        </TouchableOpacity>
       </View>
 
       {/* Warning banner */}

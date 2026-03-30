@@ -1,3 +1,4 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -137,93 +138,109 @@ export default function AccountScreen() {
         <SectionHeader title="Account details" />
         <Divider />
 
-        <AccountRow label="Username" value={username} />
+        <SettingHighlightRow label="Username">
+          <AccountRow label="Username" value={username} />
+        </SettingHighlightRow>
         <Divider />
 
-        <AccountRow label="Email" value={email} showExternal />
+        <SettingHighlightRow label="Email">
+          <AccountRow label="Email" value={email} showExternal />
+        </SettingHighlightRow>
         <Divider />
 
-        <AccountRow label="Address" value="View and change your address." />
+        <SettingHighlightRow label="Address">
+          <AccountRow label="Address" value="View and change your address." />
+        </SettingHighlightRow>
         <Divider />
 
-        <AccountRow
-          label="Account overview"
-          value="View more account details on the web."
-          showExternal
-        />
+        <SettingHighlightRow label="Account overview">
+          <AccountRow
+            label="Account overview"
+            value="View more account details on the web."
+            showExternal
+          />
+        </SettingHighlightRow>
         <Divider />
 
         {/* Your plan */}
         <SectionHeader title="Your plan" />
         <Divider />
 
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={() => router.push("/(tabs)/premium" as any)}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: 20,
-            paddingVertical: 16,
-            gap: 16,
-          }}
-        >
-          <View
+        <SettingHighlightRow label="Your plan">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push("/(tabs)/premium" as any)}
             style={{
-              width: 52,
-              height: 52,
-              borderRadius: 8,
-              backgroundColor: "#2a2a2a",
+              flexDirection: "row",
               alignItems: "center",
-              justifyContent: "center",
+              paddingHorizontal: 20,
+              paddingVertical: 16,
+              gap: 16,
             }}
           >
-            <Image
-              source={require("@/assets/images/logo-white.png")}
-              style={{ width: 28, height: 28 }}
-              resizeMode="contain"
-            />
-          </View>
-          <View>
-            <Text
+            <View
               style={{
-                color: "#ffffff",
-                fontSize: 16,
-                fontFamily: "CircularStd",
-                fontWeight: "600",
+                width: 52,
+                height: 52,
+                borderRadius: 8,
+                backgroundColor: "#2a2a2a",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              Free plan
-            </Text>
+              <Image
+                source={require("@/assets/images/logo-white.png")}
+                style={{ width: 28, height: 28 }}
+                resizeMode="contain"
+              />
+            </View>
+            <View>
+              <Text
+                style={{
+                  color: "#ffffff",
+                  fontSize: 16,
+                  fontFamily: "CircularStd",
+                  fontWeight: "600",
+                }}
+              >
+                Free plan
+              </Text>
+              <Text
+                style={{
+                  color: "#a7a7a7",
+                  fontSize: 13,
+                  fontFamily: "CircularStd",
+                }}
+              >
+                View your plan
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </SettingHighlightRow>
+        <Divider />
+
+        {/* Delete account */}
+        <SettingHighlightRow label="Close account">
+          <View
+            style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16 }}
+          >
             <Text
               style={{
                 color: "#a7a7a7",
                 fontSize: 13,
                 fontFamily: "CircularStd",
+                lineHeight: 20,
               }}
             >
-              View your plan
+              To delete your data permanently,{" "}
+              <Text
+                style={{ color: "#a7a7a7", textDecorationLine: "underline" }}
+              >
+                close your account.
+              </Text>
             </Text>
           </View>
-        </TouchableOpacity>
-        <Divider />
-
-        {/* Delete account */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 24 }}>
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontSize: 13,
-              fontFamily: "CircularStd",
-              lineHeight: 20,
-            }}
-          >
-            To delete your data permanently,{" "}
-            <Text style={{ color: "#a7a7a7", textDecorationLine: "underline" }}>
-              close your account.
-            </Text>
-          </Text>
-        </View>
+        </SettingHighlightRow>
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,13 +1,14 @@
 import BottomDialog from "@/components/BottomDialog";
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -232,6 +233,7 @@ export default function ContentDisplayScreen() {
         </Text>
         <TouchableOpacity
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
         >
           <Ionicons name="search" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -244,33 +246,43 @@ export default function ContentDisplayScreen() {
         {/* Content preferences */}
         <SectionHeader title="Content preferences" />
 
-        <NavRow
-          title="Languages for music"
-          description="Set your preferred languages for music recommendations."
-          onPress={() => router.push("/(tabs)/settings/languages-music" as any)}
-        />
+        <SettingHighlightRow label="Languages for music">
+          <NavRow
+            title="Languages for music"
+            description="Set your preferred languages for music recommendations."
+            onPress={() =>
+              router.push("/(tabs)/settings/languages-music" as any)
+            }
+          />
+        </SettingHighlightRow>
 
-        <ToggleRow
-          title="Reduce animations"
-          description="Disables various autoplaying animations that can be distracting."
-          value={reduceAnimations}
-          onToggle={() => setReduceAnimations((v) => !v)}
-        />
+        <SettingHighlightRow label="Reduce animations">
+          <ToggleRow
+            title="Reduce animations"
+            description="Disables various autoplaying animations that can be distracting."
+            value={reduceAnimations}
+            onToggle={() => setReduceAnimations((v) => !v)}
+          />
+        </SettingHighlightRow>
 
-        <ToggleRow
-          title="Canvas"
-          description="Displays short, looping visuals on the Now Playing View."
-          value={canvas}
-          onToggle={() => setCanvas((v) => !v)}
-        />
+        <SettingHighlightRow label="Canvas">
+          <ToggleRow
+            title="Canvas"
+            description="Displays short, looping visuals on the Now Playing View."
+            value={canvas}
+            onToggle={() => setCanvas((v) => !v)}
+          />
+        </SettingHighlightRow>
 
-        <ToggleRow
-          title="Allow explicit content"
-          description={`Explicit content (labeled with the E tag) is playable. When off, explicit music and podcasts are skipped, and explicit audiobooks (where available) are hidden.`}
-          value={explicitContent}
-          onToggle={() => setExplicitContent((v) => !v)}
-          note="It may take some time for your experience to update."
-        />
+        <SettingHighlightRow label="Allow explicit content">
+          <ToggleRow
+            title="Allow explicit content"
+            description={`Explicit content (labeled with the E tag) is playable. When off, explicit music and podcasts are skipped, and explicit audiobooks (where available) are hidden.`}
+            value={explicitContent}
+            onToggle={() => setExplicitContent((v) => !v)}
+            note="It may take some time for your experience to update."
+          />
+        </SettingHighlightRow>
 
         <ToggleRow
           title="Show unplayable songs"
@@ -285,11 +297,13 @@ export default function ContentDisplayScreen() {
         {/* Display preferences */}
         <SectionHeader title="Display preferences" />
 
-        <NavRow
-          title="App language"
-          description="Set your default language for the Streambeat app, plus notifications and emails."
-          onPress={() => setLangDialogVisible(true)}
-        />
+        <SettingHighlightRow label="App language">
+          <NavRow
+            title="App language"
+            description="Set your default language for the Streambeat app, plus notifications and emails."
+            onPress={() => setLangDialogVisible(true)}
+          />
+        </SettingHighlightRow>
 
         <ToggleRow
           title="Create button"

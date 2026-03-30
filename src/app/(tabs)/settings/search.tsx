@@ -1,3 +1,7 @@
+import {
+    SEARCHABLE_SETTINGS,
+    SearchableItem,
+} from "@/constants/settingsSearch";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -10,75 +14,119 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// All searchable settings items from both Settings and Account screens
-const ALL_SETTINGS = [
-  // Settings screen
-  { label: "Account", subtitle: "Username • Email", section: "Settings" },
-  {
-    label: "Content and display",
-    subtitle: "Languages for music • App language",
-    section: "Settings",
-  },
-  {
-    label: "Privacy and social",
-    subtitle: "Private session • Public playlists",
-    section: "Settings",
-  },
-  {
-    label: "Playback",
-    subtitle: "Gapless playback • Autoplay",
-    section: "Settings",
-  },
-  { label: "Notifications", subtitle: "Push • Email", section: "Settings" },
-  {
-    label: "Apps and devices",
-    subtitle: "Google Maps • Streambeat Connect control",
-    section: "Settings",
-  },
-  {
-    label: "Data-saving and offline",
-    subtitle: "Data saver mode • Downloads over cellular",
-    section: "Settings",
-  },
-  {
-    label: "Media quality",
-    subtitle: "Wi-Fi streaming quality • Audio quality",
-    section: "Settings",
-  },
-  { label: "Advertisements", subtitle: "Tailored ads", section: "Settings" },
-  {
-    label: "About and support",
-    subtitle: "Version • Privacy Policy",
-    section: "Settings",
-  },
-  // Account screen
-  { label: "Username", subtitle: "Your account username", section: "Account" },
-  {
-    label: "Email",
-    subtitle: "Your account email address",
-    section: "Account",
-  },
-  {
-    label: "Address",
-    subtitle: "View and change your address",
-    section: "Account",
-  },
-  {
-    label: "Account overview",
-    subtitle: "View more account details on the web",
-    section: "Account",
-  },
-  {
-    label: "Your plan",
-    subtitle: "Free plan • View your plan",
-    section: "Account",
-  },
-  {
-    label: "Close account",
-    subtitle: "Delete your data permanently",
-    section: "Account",
-  },
-];
+/** Renders text with matched substring highlighted in green */
+function HighlightedText({
+  text,
+  query,
+  style,
+  highlightStyle,
+}: {
+  text: string;
+  query: string;
+  style?: any;
+  highlightStyle?: any;
+}) {
+  if (!query.trim()) return <Text style={style}>{text}</Text>;
+
+  const lower = text.toLowerCase();
+  const lowerQ = query.toLowerCase();
+  const idx = lower.indexOf(lowerQ);
+
+  if (idx === -1) return <Text style={style}>{text}</Text>;
+
+  return (
+    <Text style={style}>
+      {text.slice(0, idx)}
+      <Text style={[style, highlightStyle]}>
+        {text.slice(idx, idx + query.length)}
+      </Text>
+      {text.slice(idx + query.length)}
+    </Text>
+  );
+}
+
+function ResultItem({ item, query }: { item: SearchableItem; query: string }) {
+  const router = useRouter();
+
+  const handlePress = () => {
+    router.replace({
+      pathname: item.route as any,
+      params: { highlight: item.label, ...item.params },
+    });
+  };
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={handlePress}
+      style={{ paddingHorizontal: 20, paddingVertical: 14 }}
+    >
+      {/* Label with highlighted match */}
+      <HighlightedText
+        text={item.label}
+        query={query}
+        style={{
+          color: "#ffffff",
+          fontFamily: "CircularStd",
+          fontSize: 16,
+          marginBottom: 3,
+        }}
+        highlightStyle={{ color: "#1DB954" }}
+      />
+
+      {/* Description with highlighted match */}
+      {item.description ? (
+        <HighlightedText
+          text={item.description}
+          query={query}
+          style={{
+            color: "#a7a7a7",
+            fontFamily: "CircularStd",
+            fontSize: 13,
+            marginBottom: 6,
+          }}
+          highlightStyle={{ color: "#1DB954" }}
+        />
+      ) : null}
+
+      {/* Breadcrumb path */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 4,
+        }}
+      >
+        <Ionicons name="settings-outline" size={12} color="#777777" />
+        {item.breadcrumb.map((crumb, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && (
+              <Text
+                style={{
+                  color: "#777777",
+                  fontFamily: "CircularStd",
+                  fontSize: 12,
+                }}
+              >
+                ›
+              </Text>
+            )}
+            <Text
+              style={{
+                color: "#777777",
+                fontFamily: "CircularStd",
+                fontSize: 12,
+              }}
+            >
+              {crumb}
+            </Text>
+          </React.Fragment>
+        ))}
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function SettingsSearchScreen() {
   const router = useRouter();
@@ -87,10 +135,10 @@ export default function SettingsSearchScreen() {
 
   const results =
     query.trim().length > 0
-      ? ALL_SETTINGS.filter(
+      ? SEARCHABLE_SETTINGS.filter(
           (item) =>
             item.label.toLowerCase().includes(query.toLowerCase()) ||
-            item.subtitle.toLowerCase().includes(query.toLowerCase()),
+            item.description.toLowerCase().includes(query.toLowerCase()),
         )
       : [];
 
@@ -143,7 +191,7 @@ export default function SettingsSearchScreen() {
             onPress={() => setQuery("")}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="close-circle" size={20} color="#777" />
+            <Ionicons name="close" size={22} color="#ffffff" />
           </TouchableOpacity>
         )}
       </View>
@@ -207,37 +255,17 @@ export default function SettingsSearchScreen() {
           data={results}
           keyExtractor={(_, i) => String(i)}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 120 }}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              activeOpacity={0.7}
+          renderItem={({ item }) => <ResultItem item={item} query={query} />}
+          ItemSeparatorComponent={() => (
+            <View
               style={{
-                paddingHorizontal: 20,
-                paddingVertical: 16,
-                borderBottomWidth: 1,
-                borderBottomColor: "#1e1e1e",
+                height: 1,
+                backgroundColor: "#1e1e1e",
+                marginHorizontal: 20,
               }}
-            >
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontFamily: "CircularStd",
-                  fontSize: 16,
-                  marginBottom: 3,
-                }}
-              >
-                {item.label}
-              </Text>
-              <Text
-                style={{
-                  color: "#a7a7a7",
-                  fontFamily: "CircularStd",
-                  fontSize: 13,
-                }}
-              >
-                {item.section} · {item.subtitle}
-              </Text>
-            </TouchableOpacity>
+            />
           )}
         />
       )}

@@ -1,3 +1,4 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -249,6 +250,7 @@ export default function AppsDevicesScreen() {
         </Text>
         <TouchableOpacity
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
         >
           <Ionicons name="search" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -261,21 +263,25 @@ export default function AppsDevicesScreen() {
         {/* Connected apps */}
         <SectionHeader title="Connected apps" />
 
-        <AppRow
-          name="Google Maps"
-          description="Connect your Streambeat account to play directly in the Google Maps app."
-          actionLabel="Connect"
-          iconBg="#4285F4"
-          iconName="map-outline"
-        />
+        <SettingHighlightRow label="Google Maps">
+          <AppRow
+            name="Google Maps"
+            description="Connect your Streambeat account to play directly in the Google Maps app."
+            actionLabel="Connect"
+            iconBg="#4285F4"
+            iconName="map-outline"
+          />
+        </SettingHighlightRow>
 
-        <AppRow
-          name="Waze"
-          description="Connect your Streambeat account to play directly in the Waze app."
-          actionLabel="Get app"
-          iconBg="#33CCFF"
-          iconName="navigate-outline"
-        />
+        <SettingHighlightRow label="Waze">
+          <AppRow
+            name="Waze"
+            description="Connect your Streambeat account to play directly in the Waze app."
+            actionLabel="Get app"
+            iconBg="#33CCFF"
+            iconName="navigate-outline"
+          />
+        </SettingHighlightRow>
 
         <ToggleRow
           title="Voice assistant suggestions"
@@ -290,12 +296,14 @@ export default function AppsDevicesScreen() {
         {/* Other devices */}
         <SectionHeader title="Other devices" />
 
-        <ToggleRow
-          title="Streambeat Connect control"
-          description="Lets you control Streambeat from your phone's lock screen when listening on another device."
-          value={connectControl}
-          onToggle={() => setConnectControl((v) => !v)}
-        />
+        <SettingHighlightRow label="Streambeat Connect control">
+          <ToggleRow
+            title="Streambeat Connect control"
+            description="Lets you control Streambeat from your phone's lock screen when listening on another device."
+            value={connectControl}
+            onToggle={() => setConnectControl((v) => !v)}
+          />
+        </SettingHighlightRow>
 
         <ToggleRow
           title="Local device visibility"
@@ -304,12 +312,14 @@ export default function AppsDevicesScreen() {
           onToggle={() => setLocalVisibility((v) => !v)}
         />
 
-        <ToggleRow
-          title="Local audio files"
-          description="Lets you add tracks from this device to Your Library."
-          value={localAudioFiles}
-          onToggle={() => setLocalAudioFiles((v) => !v)}
-        />
+        <SettingHighlightRow label="Local audio files">
+          <ToggleRow
+            title="Local audio files"
+            description="Lets you add tracks from this device to Your Library."
+            value={localAudioFiles}
+            onToggle={() => setLocalAudioFiles((v) => !v)}
+          />
+        </SettingHighlightRow>
 
         {/* Divider */}
         <View style={{ height: 1, backgroundColor: "#2a2a2a", marginTop: 8 }} />
@@ -346,12 +356,14 @@ export default function AppsDevicesScreen() {
           </Text>
         </View>
 
-        <ToggleRow
-          title="Keep Streambeat open"
-          description="Prevents your phone from going to sleep whenever you're controlling Streambeat in the car."
-          value={keepOpen}
-          onToggle={() => setKeepOpen((v) => !v)}
-        />
+        <SettingHighlightRow label="Keep Streambeat open">
+          <ToggleRow
+            title="Keep Streambeat open"
+            description="Prevents your phone from going to sleep whenever you're controlling Streambeat in the car."
+            value={keepOpen}
+            onToggle={() => setKeepOpen((v) => !v)}
+          />
+        </SettingHighlightRow>
       </ScrollView>
     </SafeAreaView>
   );
