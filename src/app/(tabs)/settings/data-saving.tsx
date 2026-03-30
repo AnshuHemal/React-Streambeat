@@ -1,12 +1,13 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -250,6 +251,7 @@ export default function DataSavingScreen() {
         </Text>
         <TouchableOpacity
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
         >
           <Ionicons name="search" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -260,33 +262,35 @@ export default function DataSavingScreen() {
         contentContainerStyle={{ paddingBottom: 120 }}
       >
         {/* Data saver mode */}
-        <View
-          style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 }}
-        >
-          <Text
-            style={{
-              color: "#ffffff",
-              fontSize: 16,
-              fontWeight: "600",
-              fontFamily: "CircularStd",
-              marginBottom: 6,
-            }}
+        <SettingHighlightRow label="Data saver mode">
+          <View
+            style={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 8 }}
           >
-            Data saver mode
-          </Text>
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontSize: 12,
-              fontFamily: "CircularStd",
-              lineHeight: 18,
-            }}
-          >
-            Choose if you'd like to optimize your data usage. "On" lowers
-            streaming quality and disables other features that use a lot of
-            data, like video previews.
-          </Text>
-        </View>
+            <Text
+              style={{
+                color: "#ffffff",
+                fontSize: 16,
+                fontWeight: "600",
+                fontFamily: "CircularStd",
+                marginBottom: 6,
+              }}
+            >
+              Data saver mode
+            </Text>
+            <Text
+              style={{
+                color: "#a7a7a7",
+                fontSize: 12,
+                fontFamily: "CircularStd",
+                lineHeight: 18,
+              }}
+            >
+              Choose if you'd like to optimize your data usage. "On" lowers
+              streaming quality and disables other features that use a lot of
+              data, like video previews.
+            </Text>
+          </View>
+        </SettingHighlightRow>
 
         <RadioOption
           label="Always on"
@@ -323,12 +327,14 @@ export default function DataSavingScreen() {
           Downloads and streaming
         </Text>
 
-        <ToggleRow
-          title="Downloads over cellular"
-          description="Downloads start or continue when you're not connected to Wi-Fi."
-          value={downloadsOverCellular}
-          onToggle={() => setDownloadsOverCellular((v) => !v)}
-        />
+        <SettingHighlightRow label="Downloads over cellular">
+          <ToggleRow
+            title="Downloads over cellular"
+            description="Downloads start or continue when you're not connected to Wi-Fi."
+            value={downloadsOverCellular}
+            onToggle={() => setDownloadsOverCellular((v) => !v)}
+          />
+        </SettingHighlightRow>
 
         <ToggleRow
           title="Audio-only downloads for video podcasts"
@@ -449,170 +455,13 @@ export default function DataSavingScreen() {
         </View>
 
         {/* Remove all downloads */}
-        <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 16,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 16,
-                  fontWeight: "600",
-                  fontFamily: "CircularStd",
-                  marginBottom: 4,
-                }}
-              >
-                Remove all downloads
-              </Text>
-              <Text
-                style={{
-                  color: "#a7a7a7",
-                  fontSize: 12,
-                  fontFamily: "CircularStd",
-                  lineHeight: 18,
-                }}
-              >
-                Remove all the Streambeat content you've downloaded to free up
-                space.
-              </Text>
-            </View>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={{
-                borderWidth: 1,
-                borderColor: "#ffffff",
-                borderRadius: 50,
-                paddingVertical: 8,
-                paddingHorizontal: 18,
-                alignSelf: "flex-start",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 14,
-                  fontWeight: "600",
-                  fontFamily: "CircularStd",
-                }}
-              >
-                Remove
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Clear cache */}
-        <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 16,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 16,
-                  fontWeight: "600",
-                  fontFamily: "CircularStd",
-                  marginBottom: 4,
-                }}
-              >
-                Clear cache
-              </Text>
-              <Text
-                style={{
-                  color: "#a7a7a7",
-                  fontSize: 12,
-                  fontFamily: "CircularStd",
-                  lineHeight: 18,
-                }}
-              >
-                Free up space by clearing your data. (Your downloads won't be
-                removed.)
-              </Text>
-            </View>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={{
-                borderWidth: 1,
-                borderColor: "#ffffff",
-                borderRadius: 50,
-                paddingVertical: 8,
-                paddingHorizontal: 18,
-                alignSelf: "flex-start",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 14,
-                  fontWeight: "600",
-                  fontFamily: "CircularStd",
-                }}
-              >
-                Clear
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Storage location */}
-        <View
-          style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}
-        >
-          <Text
-            style={{
-              color: "#ffffff",
-              fontSize: 16,
-              fontWeight: "600",
-              fontFamily: "CircularStd",
-              marginBottom: 4,
-            }}
-          >
-            Storage location
-          </Text>
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontSize: 12,
-              fontFamily: "CircularStd",
-              lineHeight: 18,
-              marginBottom: 16,
-            }}
-          >
-            Choose where you'd like your downloads to be stored.
-          </Text>
-
-          {[
-            {
-              path: "/data/user/999/com.streambeat.music",
-              info: "Currently using: 3.4 MB\nAvailable: 49.9 GB\nTotal: 105.0 GB",
-              selected: true,
-            },
-            {
-              path: "/storage/emulated/999",
-              info: "Available: 49.9 GB\nTotal: 105.0 GB",
-              selected: false,
-            },
-          ].map((loc, i) => (
-            <TouchableOpacity
-              key={i}
-              activeOpacity={0.7}
+        <SettingHighlightRow label="Remove all downloads">
+          <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
+            <View
               style={{
                 flexDirection: "row",
                 alignItems: "flex-start",
                 justifyContent: "space-between",
-                marginBottom: 20,
                 gap: 16,
               }}
             >
@@ -620,13 +469,13 @@ export default function DataSavingScreen() {
                 <Text
                   style={{
                     color: "#ffffff",
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: "600",
                     fontFamily: "CircularStd",
                     marginBottom: 4,
                   }}
                 >
-                  SD card
+                  Remove all downloads
                 </Text>
                 <Text
                   style={{
@@ -636,37 +485,200 @@ export default function DataSavingScreen() {
                     lineHeight: 18,
                   }}
                 >
-                  {loc.path}
-                  {"\n"}
-                  {loc.info}
+                  Remove all the Streambeat content you've downloaded to free up
+                  space.
                 </Text>
               </View>
-              <View
+              <TouchableOpacity
+                activeOpacity={0.8}
                 style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 12,
-                  borderWidth: 2,
-                  borderColor: loc.selected ? "#1DB954" : "#888888",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginTop: 2,
+                  borderWidth: 1,
+                  borderColor: "#ffffff",
+                  borderRadius: 50,
+                  paddingVertical: 8,
+                  paddingHorizontal: 18,
+                  alignSelf: "flex-start",
                 }}
               >
-                {loc.selected && (
-                  <View
-                    style={{
-                      width: 12,
-                      height: 12,
-                      borderRadius: 6,
-                      backgroundColor: "#1DB954",
-                    }}
-                  />
-                )}
+                <Text
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 14,
+                    fontWeight: "600",
+                    fontFamily: "CircularStd",
+                  }}
+                >
+                  Remove
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SettingHighlightRow>
+
+        {/* Clear cache */}
+        <SettingHighlightRow label="Clear cache">
+          <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 16,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 16,
+                    fontWeight: "600",
+                    fontFamily: "CircularStd",
+                    marginBottom: 4,
+                  }}
+                >
+                  Clear cache
+                </Text>
+                <Text
+                  style={{
+                    color: "#a7a7a7",
+                    fontSize: 12,
+                    fontFamily: "CircularStd",
+                    lineHeight: 18,
+                  }}
+                >
+                  Free up space by clearing your data. (Your downloads won't be
+                  removed.)
+                </Text>
               </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#ffffff",
+                  borderRadius: 50,
+                  paddingVertical: 8,
+                  paddingHorizontal: 18,
+                  alignSelf: "flex-start",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 14,
+                    fontWeight: "600",
+                    fontFamily: "CircularStd",
+                  }}
+                >
+                  Clear
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </SettingHighlightRow>
+
+        {/* Storage location */}
+        <SettingHighlightRow label="Storage location">
+          <View
+            style={{ paddingHorizontal: 20, paddingTop: 8, paddingBottom: 8 }}
+          >
+            <Text
+              style={{
+                color: "#ffffff",
+                fontSize: 16,
+                fontWeight: "600",
+                fontFamily: "CircularStd",
+                marginBottom: 4,
+              }}
+            >
+              Storage location
+            </Text>
+            <Text
+              style={{
+                color: "#a7a7a7",
+                fontSize: 12,
+                fontFamily: "CircularStd",
+                lineHeight: 18,
+                marginBottom: 16,
+              }}
+            >
+              Choose where you'd like your downloads to be stored.
+            </Text>
+
+            {[
+              {
+                path: "/data/user/999/com.streambeat.music",
+                info: "Currently using: 3.4 MB\nAvailable: 49.9 GB\nTotal: 105.0 GB",
+                selected: true,
+              },
+              {
+                path: "/storage/emulated/999",
+                info: "Available: 49.9 GB\nTotal: 105.0 GB",
+                selected: false,
+              },
+            ].map((loc, i) => (
+              <TouchableOpacity
+                key={i}
+                activeOpacity={0.7}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  marginBottom: 20,
+                  gap: 16,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      color: "#ffffff",
+                      fontSize: 15,
+                      fontWeight: "600",
+                      fontFamily: "CircularStd",
+                      marginBottom: 4,
+                    }}
+                  >
+                    SD card
+                  </Text>
+                  <Text
+                    style={{
+                      color: "#a7a7a7",
+                      fontSize: 12,
+                      fontFamily: "CircularStd",
+                      lineHeight: 18,
+                    }}
+                  >
+                    {loc.path}
+                    {"\n"}
+                    {loc.info}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 12,
+                    borderWidth: 2,
+                    borderColor: loc.selected ? "#1DB954" : "#888888",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginTop: 2,
+                  }}
+                >
+                  {loc.selected && (
+                    <View
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 6,
+                        backgroundColor: "#1DB954",
+                      }}
+                    />
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </SettingHighlightRow>
       </ScrollView>
     </SafeAreaView>
   );

@@ -1,3 +1,4 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -222,6 +223,7 @@ export default function PrivacySocialScreen() {
         </Text>
         <TouchableOpacity
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
         >
           <Ionicons name="search" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -234,27 +236,33 @@ export default function PrivacySocialScreen() {
         {/* Listening activity */}
         <SectionHeader title="Listening activity" />
 
-        <ToggleRow
-          title="Private session"
-          description="Temporarily hides your listening activity everywhere, and ends after 6 hours."
-          value={privateSession}
-          onToggle={() => setPrivateSession((v) => !v)}
-          learnMore
-        />
+        <SettingHighlightRow label="Private session">
+          <ToggleRow
+            title="Private session"
+            description="Temporarily hides your listening activity everywhere, and ends after 6 hours."
+            value={privateSession}
+            onToggle={() => setPrivateSession((v) => !v)}
+            learnMore
+          />
+        </SettingHighlightRow>
 
-        <ToggleRow
-          title="Listening activity"
-          description="Your followers can see what you're listening to in real time."
-          value={listeningActivity}
-          onToggle={() => setListeningActivity((v) => !v)}
-        />
+        <SettingHighlightRow label="Listening activity">
+          <ToggleRow
+            title="Listening activity"
+            description="Your followers can see what you're listening to in real time."
+            value={listeningActivity}
+            onToggle={() => setListeningActivity((v) => !v)}
+          />
+        </SettingHighlightRow>
 
-        <ToggleRow
-          title="Recently played artists"
-          description="People can see who you recently listened to on your profile."
-          value={recentlyPlayedArtists}
-          onToggle={() => setRecentlyPlayedArtists((v) => !v)}
-        />
+        <SettingHighlightRow label="Recently played artists">
+          <ToggleRow
+            title="Recently played artists"
+            description="People can see who you recently listened to on your profile."
+            value={recentlyPlayedArtists}
+            onToggle={() => setRecentlyPlayedArtists((v) => !v)}
+          />
+        </SettingHighlightRow>
 
         {/* Divider */}
         <View style={{ height: 1, backgroundColor: "#2a2a2a", marginTop: 8 }} />
@@ -262,13 +270,15 @@ export default function PrivacySocialScreen() {
         {/* Playlist visibility */}
         <SectionHeader title="Playlist visibility" />
 
-        <ToggleRow
-          title="Public playlists"
-          description="New playlists you create will be viewable by others by default, and can be added to your profile."
-          value={publicPlaylists}
-          onToggle={() => setPublicPlaylists((v) => !v)}
-          note="Only playlists that you make after changing this setting will be affected."
-        />
+        <SettingHighlightRow label="Public playlists">
+          <ToggleRow
+            title="Public playlists"
+            description="New playlists you create will be viewable by others by default, and can be added to your profile."
+            value={publicPlaylists}
+            onToggle={() => setPublicPlaylists((v) => !v)}
+            note="Only playlists that you make after changing this setting will be affected."
+          />
+        </SettingHighlightRow>
 
         <ToggleRow
           title="Playlists appear on your profile"
@@ -299,32 +309,34 @@ export default function PrivacySocialScreen() {
         />
 
         {/* Blocked users — nav row */}
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={{ paddingHorizontal: 20, paddingVertical: 14 }}
-        >
-          <Text
-            style={{
-              color: "#ffffff",
-              fontSize: 16,
-              fontWeight: "600",
-              fontFamily: "CircularStd",
-              marginBottom: 4,
-            }}
+        <SettingHighlightRow label="Blocked users">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{ paddingHorizontal: 20, paddingVertical: 14 }}
           >
-            Blocked users
-          </Text>
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontSize: 12,
-              fontFamily: "CircularStd",
-              lineHeight: 18,
-            }}
-          >
-            Manage who you've blocked from viewing your profile.
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={{
+                color: "#ffffff",
+                fontSize: 16,
+                fontWeight: "600",
+                fontFamily: "CircularStd",
+                marginBottom: 4,
+              }}
+            >
+              Blocked users
+            </Text>
+            <Text
+              style={{
+                color: "#a7a7a7",
+                fontSize: 13,
+                fontFamily: "CircularStd",
+                lineHeight: 18,
+              }}
+            >
+              Manage who you've blocked from viewing your profile.
+            </Text>
+          </TouchableOpacity>
+        </SettingHighlightRow>
 
         {/* Divider */}
         <View style={{ height: 1, backgroundColor: "#2a2a2a", marginTop: 8 }} />
@@ -332,63 +344,65 @@ export default function PrivacySocialScreen() {
         {/* Social features */}
         <SectionHeader title="Social features" />
 
-        <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 16,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 16,
-                  fontWeight: "600",
-                  fontFamily: "CircularStd",
-                  marginBottom: 4,
-                }}
-              >
-                Jam access with Bluetooth
-              </Text>
-              <Text
-                style={{
-                  color: "#a7a7a7",
-                  fontSize: 12,
-                  fontFamily: "CircularStd",
-                  lineHeight: 18,
-                }}
-              >
-                Use Bluetooth to connect to nearby devices and listen along with
-                others.
-              </Text>
-            </View>
-            <TouchableOpacity
-              activeOpacity={0.8}
+        <SettingHighlightRow label="Jam access with Bluetooth">
+          <View style={{ paddingHorizontal: 20, paddingVertical: 14 }}>
+            <View
               style={{
-                borderWidth: 1,
-                borderColor: "#ffffff",
-                borderRadius: 50,
-                paddingVertical: 8,
-                paddingHorizontal: 18,
-                alignSelf: "center",
+                flexDirection: "row",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 16,
               }}
             >
-              <Text
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 16,
+                    fontWeight: "600",
+                    fontFamily: "CircularStd",
+                    marginBottom: 4,
+                  }}
+                >
+                  Jam access with Bluetooth
+                </Text>
+                <Text
+                  style={{
+                    color: "#a7a7a7",
+                    fontSize: 12,
+                    fontFamily: "CircularStd",
+                    lineHeight: 18,
+                  }}
+                >
+                  Use Bluetooth to connect to nearby devices and listen along
+                  with others.
+                </Text>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.8}
                 style={{
-                  color: "#ffffff",
-                  fontSize: 12,
-                  fontWeight: "600",
-                  fontFamily: "CircularStd",
+                  borderWidth: 1,
+                  borderColor: "#ffffff",
+                  borderRadius: 50,
+                  paddingVertical: 8,
+                  paddingHorizontal: 18,
+                  alignSelf: "center",
                 }}
               >
-                Activate
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 13,
+                    fontWeight: "600",
+                    fontFamily: "CircularStd",
+                  }}
+                >
+                  Activate
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </SettingHighlightRow>
 
         {/* Divider */}
         <View

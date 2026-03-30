@@ -1,3 +1,4 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
@@ -112,9 +113,9 @@ export default function LanguagesMusicScreen() {
         style={{
           flexDirection: "row",
           alignItems: "center",
+          justifyContent: "space-between",
           paddingHorizontal: 16,
           paddingVertical: 14,
-          gap: 12,
         }}
       >
         <TouchableOpacity
@@ -125,25 +126,29 @@ export default function LanguagesMusicScreen() {
         </TouchableOpacity>
         <Text
           style={{
-            flex: 1,
             color: "#ffffff",
             fontSize: 18,
             fontWeight: "600",
             fontFamily: "CircularStd",
-            textAlign: "center",
-            marginRight: 36, // balance the back button
           }}
         >
           Languages for music
         </Text>
-        {saving && (
-          <ActivityIndicator
-            size="small"
-            color="#1DB954"
-            style={{ position: "absolute", right: 16 }}
-          />
-        )}
+        <TouchableOpacity
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
+        >
+          <Ionicons name="search" size={24} color="#ffffff" />
+        </TouchableOpacity>
       </View>
+
+      {saving && (
+        <ActivityIndicator
+          size="small"
+          color="#1DB954"
+          style={{ position: "absolute", top: 20, right: 16 }}
+        />
+      )}
 
       {loading ? (
         <View
@@ -156,18 +161,20 @@ export default function LanguagesMusicScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 120 }}
         >
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontSize: 12,
-              fontFamily: "CircularStd",
-              paddingHorizontal: 20,
-              paddingTop: 8,
-              paddingBottom: 16,
-            }}
-          >
-            What are your preferred languages for music?
-          </Text>
+          <SettingHighlightRow label="Languages for music">
+            <Text
+              style={{
+                color: "#a7a7a7",
+                fontSize: 12,
+                fontFamily: "CircularStd",
+                paddingHorizontal: 20,
+                paddingTop: 8,
+                paddingBottom: 16,
+              }}
+            >
+              What are your preferred languages for music?
+            </Text>
+          </SettingHighlightRow>
 
           {genres.map((genre) => (
             <TouchableOpacity

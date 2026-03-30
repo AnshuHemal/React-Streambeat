@@ -1,3 +1,4 @@
+import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -238,6 +239,7 @@ export default function MediaQualityScreen() {
         </Text>
         <TouchableOpacity
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          onPress={() => router.push("/(tabs)/settings/search" as any)}
         >
           <Ionicons name="search" size={24} color="#ffffff" />
         </TouchableOpacity>
@@ -293,10 +295,12 @@ export default function MediaQualityScreen() {
         </View>
 
         {/* Wi-Fi streaming quality */}
-        <SectionTitle
-          title="Wi-Fi streaming quality"
-          description="Choose the quality of your audio streaming when you're connected to the internet."
-        />
+        <SettingHighlightRow label="Wi-Fi streaming quality">
+          <SectionTitle
+            title="Wi-Fi streaming quality"
+            description="Choose the quality of your audio streaming when you're connected to the internet."
+          />
+        </SettingHighlightRow>
         {QUALITY_OPTIONS.map((opt) => (
           <RadioOption
             key={opt.value}
@@ -311,10 +315,12 @@ export default function MediaQualityScreen() {
         <View style={{ height: 1, backgroundColor: "#2a2a2a", marginTop: 8 }} />
 
         {/* Cellular streaming quality */}
-        <SectionTitle
-          title="Cellular streaming quality"
-          description="Choose the quality of your audio streaming when you're using cellular data."
-        />
+        <SettingHighlightRow label="Cellular streaming quality">
+          <SectionTitle
+            title="Cellular streaming quality"
+            description="Choose the quality of your audio streaming when you're using cellular data."
+          />
+        </SettingHighlightRow>
         {QUALITY_OPTIONS.map((opt) => (
           <RadioOption
             key={opt.value}
@@ -369,52 +375,13 @@ export default function MediaQualityScreen() {
         {/* Divider */}
         <View style={{ height: 1, backgroundColor: "#2a2a2a", marginTop: 8 }} />
 
-        {/* Download quality */}
-        <Text
-          style={{
-            color: "#ffffff",
-            fontSize: 22,
-            fontWeight: "600",
-            fontFamily: "CircularStd",
-            paddingHorizontal: 20,
-            paddingTop: 28,
-            paddingBottom: 8,
-          }}
-        >
-          Download quality
-        </Text>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "flex-start",
-            gap: 8,
-            paddingHorizontal: 20,
-            paddingBottom: 8,
-          }}
-        >
-          <Ionicons
-            name="information-circle-outline"
-            size={16}
-            color="#a7a7a7"
-            style={{ marginTop: 2 }}
+        {/* Audio download quality */}
+        <SettingHighlightRow label="Audio download quality">
+          <SectionTitle
+            title="Audio download quality"
+            description="Choose the quality of your audio downloads."
           />
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontSize: 12,
-              fontFamily: "CircularStd",
-              flex: 1,
-              lineHeight: 18,
-            }}
-          >
-            Higher-quality downloads take up more space.
-          </Text>
-        </View>
-
-        <SectionTitle
-          title="Audio download quality"
-          description="Choose the quality of all your audio downloads."
-        />
+        </SettingHighlightRow>
         {DOWNLOAD_OPTIONS.map((opt) => (
           <RadioOption
             key={opt.value}
