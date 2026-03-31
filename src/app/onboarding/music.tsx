@@ -1,6 +1,7 @@
 import LoadingDots from "@/components/LoadingDots";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { Genre } from "@/types";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -15,14 +16,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
-
-type Genre = {
-  id: string;
-  slug: string;
-  label: string;
-  color: string;
-  image_url: string | null;
-};
 
 const CARD_HEIGHT = (Dimensions.get("window").width / 2) * 0.5;
 
