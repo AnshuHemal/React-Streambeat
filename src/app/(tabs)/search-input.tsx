@@ -55,6 +55,10 @@ export default function SearchInputScreen() {
   // Only active when this screen is focused
   useFocusEffect(
     useCallback(() => {
+      // Reset search when screen comes into focus
+      setQuery("");
+      setFlatItems([]);
+      
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
         router.navigate("/(tabs)/search" as any);
         return true;
