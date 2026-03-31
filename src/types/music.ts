@@ -26,6 +26,7 @@ export type Album = {
   artist: Artist;
   image_url: string | null;
   release_date: string | null;
+  album_type: string | null;
 };
 
 export type Song = {

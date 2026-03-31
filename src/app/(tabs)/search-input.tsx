@@ -58,7 +58,7 @@ export default function SearchInputScreen() {
       // Reset search when screen comes into focus
       setQuery("");
       setFlatItems([]);
-      
+
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
         router.navigate("/(tabs)/search" as any);
         return true;
@@ -85,10 +85,12 @@ export default function SearchInputScreen() {
           .limit(5),
         supabase
           .from("albums")
-          .select("id, title, artist_id, image_url, release_date, artists(name)")
+          .select(
+            "id, title, album_type, artist_id, image_url, release_date, artists(name), artist:artists(id, name, slug, image_url)",
+          )
           .ilike("title", `%${q}%`)
           .eq("is_active", true)
-          .limit(5),
+          .limit(10),
         supabase
           .from("songs")
           .select(
@@ -102,7 +104,8 @@ export default function SearchInputScreen() {
       const items: ResultItem[] = [];
 
       const artists: Artist[] = artistsRes.data ?? [];
-      const albums = albumsRes.data ?? [];
+      const albums: any[] = albumsRes.data ?? [];
+      console.log("Albums data:", JSON.stringify(albums.slice(0, 2), null, 2));
       const songs = songsRes.data ?? [];
 
       if (artists.length > 0) {
@@ -110,16 +113,24 @@ export default function SearchInputScreen() {
           items.push({ kind: "artist", data: a, id: `artist-${a.id}` }),
         );
       }
-      // if (albums.length > 0) {
-      //   items.push({ kind: "header", title: "Albums", id: "h-albums" });
-      //   albums.forEach((a) =>
-      //     items.push({
-      //       kind: "album",
-      //       data: { ...a, artist_name: a.artists?.[0]?.name },
-      //       id: `album-${a.id}`,
-      //     }),
-      //   );
-      // }
+      if (albums.length > 0) {
+        albums.forEach((a) =>
+          items.push({
+            kind: "album",
+            data: {
+              ...a,
+              artist_name: a.artists?.name || "",
+              artist: a.artist || {
+                id: "",
+                name: a.artists?.name || "",
+                slug: "",
+                image_url: null,
+              },
+            },
+            id: `album-${a.id}`,
+          }),
+        );
+      }
       // if (songs.length > 0) {
       //   items.push({ kind: "header", title: "Songs", id: "h-songs" });
       //   songs.forEach((s) =>
@@ -227,7 +238,9 @@ export default function SearchInputScreen() {
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
               <Text
                 style={{
                   color: "#ffffff",
@@ -256,6 +269,9 @@ export default function SearchInputScreen() {
 
     if (item.kind === "album") {
       const al = item.data;
+      const albumType =
+        (al.album_type || "Album").charAt(0).toUpperCase() +
+        (al.album_type || "Album").slice(1);
       return (
         <TouchableOpacity
           activeOpacity={0.7}
@@ -263,8 +279,8 @@ export default function SearchInputScreen() {
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: 20,
-            paddingVertical: 8,
-            gap: 12,
+            paddingVertical: 10,
+            gap: 16,
           }}
         >
           {al.image_url ? (
@@ -274,14 +290,25 @@ export default function SearchInputScreen() {
               resizeMode="cover"
             />
           ) : (
-            <Placeholder />
+            <View
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 4,
+                backgroundColor: "#2a2a2a",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="disc" size={28} color="#535353" />
+            </View>
           )}
           <View style={{ flex: 1 }}>
             <Text
               style={{
                 color: "#ffffff",
                 fontFamily: "CircularStd",
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: "600",
               }}
               numberOfLines={1}
@@ -292,13 +319,20 @@ export default function SearchInputScreen() {
               style={{
                 color: "#a7a7a7",
                 fontFamily: "CircularStd",
-                fontSize: 13,
+                fontSize: 12,
+                marginTop: 8,
               }}
+              numberOfLines={1}
             >
-              Album {al.artist_name ? `• ${al.artist_name}` : ""}
+              {albumType}
+              {al.artist_name ? ` • ${al.artist_name}` : ""}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color="#a7a7a7" />
+          <Image
+            source={require("../../../assets/images/ico-32-plus-circle.png")}
+            style={{ width: 24, height: 24 }}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
       );
     }
