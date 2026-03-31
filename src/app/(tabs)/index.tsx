@@ -1,15 +1,15 @@
 import ProfileDrawerContent from "@/components/ProfileDrawer";
+import TabScreenHeader from "@/components/TabScreenHeader";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-    BackHandler,
-    Dimensions,
-    Image,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  BackHandler,
+  Dimensions,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -99,78 +99,11 @@ export default function HomeScreen() {
           contentContainerStyle={{ paddingBottom: 120 }}
         >
           {/* Header */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingHorizontal: 20,
-              paddingTop: 16,
-              paddingBottom: 20,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                flex: 1,
-              }}
-            >
-              <TouchableOpacity
-                onPress={() => setOpen(true)}
-                activeOpacity={0.8}
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 17,
-                  backgroundColor: avatarColor,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text
-                  style={{
-                    color: "#ffffff",
-                    fontSize: 15,
-                    fontWeight: "600",
-                    fontFamily: "CircularStd",
-                  }}
-                >
-                  {avatarLetter}
-                </Text>
-              </TouchableOpacity>
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 22,
-                  fontWeight: "600",
-                  fontFamily: "CircularStd",
-                }}
-              >
-                {getGreeting()}
-              </Text>
-            </View>
-
-            <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 16 }}
-            >
-              <TouchableOpacity activeOpacity={0.7}>
-                <Ionicons
-                  name="notifications-outline"
-                  size={26}
-                  color="white"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity activeOpacity={0.7}>
-                <Image
-                  source={require("@/assets/images/ico-32-cronology.png")}
-                  style={{ width: 32, height: 32, tintColor: "#ffffff" }}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+          <TabScreenHeader
+            title={getGreeting()}
+            onAvatarPress={() => setOpen(true)}
+            rightIcon="notifications-outline"
+          />
 
           {/* Filter tabs */}
           <View
