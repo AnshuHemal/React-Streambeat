@@ -4,12 +4,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Redirect, Tabs } from "expo-router";
 import React from "react";
 import {
-  ActivityIndicator,
-  Image,
-  Platform,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Image,
+    Platform,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -162,6 +162,10 @@ export default function TabsLayout() {
       <Tabs.Screen name="premium" />
       <Tabs.Screen
         name="settings"
+        options={{ tabBarButton: () => null, animation: "fade" }}
+      />
+      <Tabs.Screen
+        name="search-input"
         options={{ tabBarButton: () => null, animation: "fade" }}
       />
     </Tabs>

@@ -1,6 +1,7 @@
 import LoadingDots from "@/components/LoadingDots";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { Artist } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -17,13 +18,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
-
-type Artist = {
-  id: string;
-  slug: string;
-  name: string;
-  image_url: string | null;
-};
 
 const COLUMN_COUNT = 3;
 const SCREEN_WIDTH = Dimensions.get("window").width;

@@ -1,16 +1,17 @@
 import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { GenreBase } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -55,13 +56,12 @@ function Toggle({ value, onToggle }: { value: boolean; onToggle: () => void }) {
 }
 
 // ── Screen ─────────────────────────────────────────────────────
-type Genre = { id: string; slug: string; label: string };
 
 export default function LanguagesMusicScreen() {
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
 
-  const [genres, setGenres] = useState<Genre[]>([]);
+  const [genres, setGenres] = useState<GenreBase[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
