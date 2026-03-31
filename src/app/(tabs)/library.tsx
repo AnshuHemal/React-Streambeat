@@ -1,9 +1,14 @@
+import LoadingDots from "@/components/LoadingDots";
 import ProfileDrawerContent from "@/components/ProfileDrawer";
+import SortBottomSheet, { SortOption } from "@/components/SortBottomSheet";
 import TabScreenHeader from "@/components/TabScreenHeader";
+import { useAuth } from "@/context/AuthContext";
+import { useLibraryData } from "@/hooks/useLibraryData";
 import { LibraryItem, LibraryItemType } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   BackHandler,
@@ -31,102 +36,13 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+const VIEW_MODE_KEY = "library_view_mode";
+
 const FILTERS: { label: string; value: LibraryItemType | "all" }[] = [
   { label: "Playlists", value: "playlist" },
   { label: "Podcasts", value: "podcast" },
   { label: "Albums", value: "album" },
   { label: "Artists", value: "artist" },
-];
-
-const MOCK_ITEMS: LibraryItem[] = [
-  {
-    id: "1",
-    title: "Liked Songs",
-    subtitle: "Playlist • 16 songs",
-    type: "playlist",
-    image_url: null,
-  },
-  {
-    id: "2",
-    title: "Your Episodes",
-    subtitle: "Saved & downloaded",
-    type: "podcast",
-    image_url: null,
-  },
-  {
-    id: "3",
-    title: "Arctic Monkeys",
-    subtitle: "Artist",
-    type: "artist",
-    image_url: null,
-    is_circular: true,
-  },
-  {
-    id: "4",
-    title: "Blur",
-    subtitle: "Artist",
-    type: "artist",
-    image_url: null,
-    is_circular: true,
-  },
-  {
-    id: "5",
-    title: "Brit Pop: 100 best songs",
-    subtitle: "Playlist",
-    type: "playlist",
-    image_url: null,
-  },
-  {
-    id: "6",
-    title: "David Bowie",
-    subtitle: "Artist",
-    type: "artist",
-    image_url: null,
-    is_circular: true,
-  },
-  {
-    id: "7",
-    title: "Leisure (Special Edition)",
-    subtitle: "Album • Blur",
-    type: "album",
-    image_url: null,
-  },
-  {
-    id: "8",
-    title: "The Ballad of Darren",
-    subtitle: "Album • Blur",
-    type: "album",
-    image_url: null,
-  },
-  {
-    id: "9",
-    title: "Solved Murders: True Crime Mysteries",
-    subtitle: "Podcast • Spotify",
-    type: "podcast",
-    image_url: null,
-  },
-  {
-    id: "10",
-    title: "Massive Attack",
-    subtitle: "Artist",
-    type: "artist",
-    image_url: null,
-    is_circular: true,
-  },
-  {
-    id: "11",
-    title: "New Episodes",
-    subtitle: "Updates 5 Aug 2004",
-    type: "podcast",
-    image_url: null,
-  },
-  {
-    id: "12",
-    title: "The Smiths",
-    subtitle: "Album • The Smiths",
-    type: "album",
-    image_url: null,
-  },
 ];
 
 function ItemPlaceholder({ item, size }: { item: LibraryItem; size: number }) {
@@ -229,6 +145,18 @@ function LibraryItemCard({
             style={{ width: s, height: s, borderRadius: isCircle ? s / 2 : 6 }}
             resizeMode="cover"
           />
+        ) : item.id === "liked-songs" ? (
+          <Image
+            source={require("@/assets/images/liked-placeholder.png")}
+            style={{ width: s, height: s, borderRadius: 6 }}
+            resizeMode="cover"
+          />
+        ) : item.id === "your-episodes" ? (
+          <Image
+            source={require("@/assets/images/episodes-placeholder.png")}
+            style={{ width: s, height: s, borderRadius: 6 }}
+            resizeMode="cover"
+          />
         ) : (
           <ItemPlaceholder item={item} size={s} />
         )}
@@ -269,6 +197,18 @@ function LibraryItemCard({
         <Image
           source={{ uri: item.image_url }}
           style={{ width: s, height: s, borderRadius: isCircle ? s / 2 : 8 }}
+          resizeMode="cover"
+        />
+      ) : item.id === "liked-songs" ? (
+        <Image
+          source={require("@/assets/images/liked-placeholder.png")}
+          style={{ width: s, height: s, borderRadius: 8 }}
+          resizeMode="cover"
+        />
+      ) : item.id === "your-episodes" ? (
+        <Image
+          source={require("@/assets/images/episodes-placeholder.png")}
+          style={{ width: s, height: s, borderRadius: 8 }}
           resizeMode="cover"
         />
       ) : (
@@ -375,12 +315,27 @@ function FilterChip({
 
 export default function LibraryScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<LibraryItemType | "all">(
     "all",
   );
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortSheetVisible, setSortSheetVisible] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>("recents");
   const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Load saved view mode preference
+  useEffect(() => {
+    AsyncStorage.getItem(VIEW_MODE_KEY).then((saved) => {
+      if (saved === "list" || saved === "grid") {
+        setViewMode(saved);
+      }
+    });
+  }, []);
+
+  // Fetch user's selected artists from Supabase
+  const { libraryItems, loading } = useLibraryData(user?.id);
 
   useFocusEffect(
     useCallback(() => {
@@ -407,29 +362,123 @@ export default function LibraryScreen() {
   };
 
   const toggleViewMode = () => {
-    // Snap to 0, switch layout immediately, then fade in
-    fadeAnim.setValue(0);
+    // Configure layout animation for smooth native layout transition
     LayoutAnimation.configureNext({
-      duration: 220,
+      duration: 250,
       create: { type: "easeInEaseOut", property: "opacity" },
-      update: { type: "easeInEaseOut", property: "opacity" },
+      update: { type: "spring", springDamping: 0.9 },
       delete: { type: "easeInEaseOut", property: "opacity" },
     });
-    setViewMode((v) => (v === "grid" ? "list" : "grid"));
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 220,
-      useNativeDriver: true,
-    }).start();
+    
+    // Quick opacity dip for visual feedback
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0.6,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
+    const newMode = viewMode === "grid" ? "list" : "grid";
+    setViewMode(newMode);
+    AsyncStorage.setItem(VIEW_MODE_KEY, newMode);
   };
 
   const filtered = useMemo(
     () =>
       activeFilter === "all"
-        ? MOCK_ITEMS
-        : MOCK_ITEMS.filter((i) => i.type === activeFilter),
-    [activeFilter],
+        ? libraryItems
+        : libraryItems.filter((i) => i.type === activeFilter),
+    [activeFilter, libraryItems],
   );
+
+  // Dynamically generate available filters based on library data
+  const availableFilters = useMemo(() => {
+    const typesPresent = libraryItems.reduce<Set<LibraryItemType>>((acc, item) => {
+      acc.add(item.type);
+      return acc;
+    }, new Set());
+    return FILTERS.filter((f): f is typeof f & { value: LibraryItemType } => 
+      f.value !== "all" && typesPresent.has(f.value)
+    );
+  }, [libraryItems]);
+
+  const ListHeader = () => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const handleTogglePress = () => {
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 0.85,
+          duration: 80,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          friction: 5,
+          tension: 100,
+        }),
+      ]).start();
+      toggleViewMode();
+    };
+
+    return (
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <TouchableOpacity
+            onPress={() => setSortSheetVisible(true)}
+            activeOpacity={0.7}
+            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+          >
+            <Image
+              source={require("@/assets/images/ico-24-arrow-up-dw.png")}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+            <Text
+              style={{
+                color: "#ffffff",
+                fontFamily: "CircularStd",
+                fontSize: 14,
+                fontWeight: "600",
+              }}
+            >
+              {sortOption === "recents" && "Recents"}
+              {sortOption === "recently_added" && "Recently added"}
+              {sortOption === "alphabetical" && "Alphabetical"}
+              {sortOption === "creator" && "Creator"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity onPress={handleTogglePress} activeOpacity={0.7}>
+            <Image
+              source={
+                viewMode === "grid"
+                  ? require("@/assets/images/ico-24-paragraph.png")
+                  : require("@/assets/images/ico-24-grid.png")
+              }
+              style={{ width: 26, height: 26 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    );
+  };
 
   return (
     <Drawer
@@ -477,13 +526,13 @@ export default function LibraryScreen() {
             <>
               <FilterChip isClose onPress={() => selectFilter("all")} />
               <FilterChip
-                label={FILTERS.find((f) => f.value === activeFilter)?.label}
+                label={availableFilters.find((f) => f.value === activeFilter)?.label}
                 active
                 onPress={() => {}}
               />
             </>
           ) : (
-            FILTERS.map((f) => (
+            availableFilters.map((f) => (
               <FilterChip
                 key={f.value}
                 label={f.label}
@@ -495,60 +544,66 @@ export default function LibraryScreen() {
 
         {/* List */}
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-          <FlatList
-            key={viewMode}
-            data={filtered}
-            keyExtractor={(item) => item.id}
-            numColumns={viewMode === "grid" ? 3 : 1}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingHorizontal: 20,
-              paddingBottom: 140,
-            }}
-            columnWrapperStyle={
-              viewMode === "grid"
-                ? { justifyContent: "space-between", marginBottom: 4 }
-                : undefined
-            }
-            renderItem={({ item }) => (
-              <LibraryItemCard item={item} viewMode={viewMode} />
-            )}
-            ListHeaderComponent={
-              <View
+          {loading ? (
+            <View
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <LoadingDots color="#a7a7a7" size={8} gap={8} />
+            </View>
+          ) : filtered.length === 0 ? (
+            <View
+              style={{
+                flex: 1,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingHorizontal: 40,
+              }}
+            >
+              <Text
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 16,
+                  color: "#a7a7a7",
+                  fontFamily: "CircularStd",
+                  fontSize: 16,
+                  textAlign: "center",
                 }}
               >
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-                >
-                  <Ionicons name="swap-vertical" size={18} color="#ffffff" />
-                  <Text
-                    style={{
-                      color: "#ffffff",
-                      fontFamily: "CircularStd",
-                      fontSize: 14,
-                      fontWeight: "600",
-                    }}
-                  >
-                    Recents
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={toggleViewMode} activeOpacity={0.7}>
-                  <Ionicons
-                    name={viewMode === "grid" ? "list" : "grid-outline"}
-                    size={22}
-                    color="#ffffff"
-                  />
-                </TouchableOpacity>
-              </View>
-            }
-          />
+                No items found
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              key={viewMode}
+              data={filtered}
+              keyExtractor={(item) => item.id}
+              numColumns={viewMode === "grid" ? 3 : 1}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingHorizontal: 20,
+                paddingBottom: 140,
+              }}
+              columnWrapperStyle={
+                viewMode === "grid"
+                  ? { gap: 12, marginBottom: 4 }
+                  : undefined
+              }
+              renderItem={({ item }) => (
+                <LibraryItemCard item={item} viewMode={viewMode} />
+              )}
+              ListHeaderComponent={<ListHeader />}
+            />
+          )}
         </Animated.View>
+
+        <SortBottomSheet
+          visible={sortSheetVisible}
+          selected={sortOption}
+          onSelect={setSortOption}
+          onClose={() => setSortSheetVisible(false)}
+        />
       </SafeAreaView>
     </Drawer>
   );

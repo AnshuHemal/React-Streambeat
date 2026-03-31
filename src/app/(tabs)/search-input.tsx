@@ -4,22 +4,23 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    BackHandler,
-    FlatList,
-    Image,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  BackHandler,
+  FlatList,
+  Image,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type ResultItem =
+  | { kind: "suggestion"; title: string; id: string }
   | { kind: "header"; title: string; id: string }
   | { kind: "artist"; data: Artist; id: string }
-  | { kind: "album"; data: Album; id: string }
-  | { kind: "song"; data: Song; id: string };
+  | { kind: "album"; data: Album & { artist_name?: string }; id: string }
+  | { kind: "song"; data: Song & { artist_name?: string }; id: string };
 
 function formatDuration(ms: number | null): string {
   if (!ms) return "";
@@ -63,7 +64,7 @@ export default function SearchInputScreen() {
   );
 
   useEffect(() => {
-    if (query.trim().length === 0) {
+    if (query.trim().length < 2) {
       setFlatItems([]);
       return;
     }
@@ -80,14 +81,14 @@ export default function SearchInputScreen() {
           .limit(5),
         supabase
           .from("albums")
-          .select("id, title, artist_id, image_url, release_date")
+          .select("id, title, artist_id, image_url, release_date, artists(name)")
           .ilike("title", `%${q}%`)
           .eq("is_active", true)
           .limit(5),
         supabase
           .from("songs")
           .select(
-            "id, title, artist_id, album_id, duration_ms, image_url, audio_url",
+            "id, title, artist_id, album_id, duration_ms, image_url, audio_url, artists(name)",
           )
           .ilike("title", `%${q}%`)
           .eq("is_active", true)
@@ -97,27 +98,34 @@ export default function SearchInputScreen() {
       const items: ResultItem[] = [];
 
       const artists: Artist[] = artistsRes.data ?? [];
-      const albums: Album[] = albumsRes.data ?? [];
-      const songs: Song[] = songsRes.data ?? [];
+      const albums = albumsRes.data ?? [];
+      const songs = songsRes.data ?? [];
 
       if (artists.length > 0) {
-        items.push({ kind: "header", title: "Artists", id: "h-artists" });
         artists.forEach((a) =>
           items.push({ kind: "artist", data: a, id: `artist-${a.id}` }),
         );
       }
-      if (albums.length > 0) {
-        items.push({ kind: "header", title: "Albums", id: "h-albums" });
-        albums.forEach((a) =>
-          items.push({ kind: "album", data: a, id: `album-${a.id}` }),
-        );
-      }
-      if (songs.length > 0) {
-        items.push({ kind: "header", title: "Songs", id: "h-songs" });
-        songs.forEach((s) =>
-          items.push({ kind: "song", data: s, id: `song-${s.id}` }),
-        );
-      }
+      // if (albums.length > 0) {
+      //   items.push({ kind: "header", title: "Albums", id: "h-albums" });
+      //   albums.forEach((a) =>
+      //     items.push({
+      //       kind: "album",
+      //       data: { ...a, artist_name: a.artists?.[0]?.name },
+      //       id: `album-${a.id}`,
+      //     }),
+      //   );
+      // }
+      // if (songs.length > 0) {
+      //   items.push({ kind: "header", title: "Songs", id: "h-songs" });
+      //   songs.forEach((s) =>
+      //     items.push({
+      //       kind: "song",
+      //       data: { ...s, artist_name: s.artists?.[0]?.name },
+      //       id: `song-${s.id}`,
+      //     }),
+      //   );
+      // }
 
       setFlatItems(items);
       setLoading(false);
@@ -130,21 +138,48 @@ export default function SearchInputScreen() {
   const hasResults = flatItems.length > 0;
 
   const renderItem = ({ item }: { item: ResultItem }) => {
+    if (item.kind === "suggestion") {
+      return (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setQuery(item.title)}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 20,
+            paddingVertical: 12,
+            gap: 12,
+          }}
+        >
+          <Ionicons name="search" size={20} color="#a7a7a7" />
+          <Text
+            style={{
+              color: "#ffffff",
+              fontFamily: "CircularStd",
+              fontSize: 15,
+            }}
+            numberOfLines={1}
+          >
+            {item.title}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+
     if (item.kind === "header") {
       return (
         <View
           style={{
             paddingHorizontal: 20,
-            paddingTop: 20,
+            paddingTop: 16,
             paddingBottom: 8,
-            backgroundColor: "#121212",
           }}
         >
           <Text
             style={{
               color: "#ffffff",
               fontFamily: "CircularStd",
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: "600",
             }}
           >
@@ -163,47 +198,49 @@ export default function SearchInputScreen() {
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: 20,
-            paddingVertical: 10,
-            gap: 14,
+            paddingVertical: 8,
+            gap: 12,
           }}
         >
           {a.image_url ? (
             <Image
               source={{ uri: a.image_url }}
-              style={{ width: 44, height: 44, borderRadius: 22 }}
+              style={{ width: 48, height: 48, borderRadius: 24 }}
               resizeMode="cover"
             />
           ) : (
             <View
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
+                width: 48,
+                height: 48,
+                borderRadius: 24,
                 backgroundColor: "#2a2a2a",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Ionicons name="person" size={22} color="#535353" />
+              <Ionicons name="person" size={24} color="#535353" />
             </View>
           )}
           <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                color: "#ffffff",
-                fontFamily: "CircularStd",
-                fontSize: 15,
-                fontWeight: "600",
-              }}
-              numberOfLines={1}
-            >
-              {a.name}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text
+                style={{
+                  color: "#ffffff",
+                  fontFamily: "CircularStd",
+                  fontSize: 15,
+                  fontWeight: "600",
+                }}
+                numberOfLines={1}
+              >
+                {a.name}
+              </Text>
+            </View>
             <Text
               style={{
                 color: "#a7a7a7",
                 fontFamily: "CircularStd",
-                fontSize: 12,
+                fontSize: 13,
               }}
             >
               Artist
@@ -222,14 +259,14 @@ export default function SearchInputScreen() {
             flexDirection: "row",
             alignItems: "center",
             paddingHorizontal: 20,
-            paddingVertical: 10,
-            gap: 14,
+            paddingVertical: 8,
+            gap: 12,
           }}
         >
           {al.image_url ? (
             <Image
               source={{ uri: al.image_url }}
-              style={{ width: 44, height: 44, borderRadius: 4 }}
+              style={{ width: 48, height: 48, borderRadius: 4 }}
               resizeMode="cover"
             />
           ) : (
@@ -251,12 +288,13 @@ export default function SearchInputScreen() {
               style={{
                 color: "#a7a7a7",
                 fontFamily: "CircularStd",
-                fontSize: 12,
+                fontSize: 13,
               }}
             >
-              Album
+              Album {al.artist_name ? `• ${al.artist_name}` : ""}
             </Text>
           </View>
+          <Ionicons name="chevron-forward" size={20} color="#a7a7a7" />
         </TouchableOpacity>
       );
     }
@@ -270,14 +308,14 @@ export default function SearchInputScreen() {
           flexDirection: "row",
           alignItems: "center",
           paddingHorizontal: 20,
-          paddingVertical: 10,
-          gap: 14,
+          paddingVertical: 8,
+          gap: 12,
         }}
       >
         {s.image_url ? (
           <Image
             source={{ uri: s.image_url }}
-            style={{ width: 44, height: 44, borderRadius: 4 }}
+            style={{ width: 48, height: 48, borderRadius: 4 }}
             resizeMode="cover"
           />
         ) : (
@@ -299,23 +337,13 @@ export default function SearchInputScreen() {
             style={{
               color: "#a7a7a7",
               fontFamily: "CircularStd",
-              fontSize: 12,
+              fontSize: 13,
             }}
           >
-            Song
+            Song {s.artist_name ? `• ${s.artist_name}` : ""}
           </Text>
         </View>
-        {s.duration_ms && (
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontFamily: "CircularStd",
-              fontSize: 12,
-            }}
-          >
-            {formatDuration(s.duration_ms)}
-          </Text>
-        )}
+        <Ionicons name="chevron-forward" size={20} color="#a7a7a7" />
       </TouchableOpacity>
     );
   };
@@ -436,7 +464,7 @@ export default function SearchInputScreen() {
           renderItem={renderItem}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          contentContainerStyle={{ paddingTop: 16, paddingBottom: 120 }}
         />
       )}
     </SafeAreaView>
