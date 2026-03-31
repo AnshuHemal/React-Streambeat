@@ -2,14 +2,15 @@ import ProfileDrawerContent from "@/components/ProfileDrawer";
 import TabScreenHeader from "@/components/TabScreenHeader";
 import { useAuth } from "@/context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  BackHandler,
-  Dimensions,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View
+    BackHandler,
+    Dimensions,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -44,6 +45,7 @@ function getGreeting(): string {
 }
 
 export default function HomeScreen() {
+  const router = useRouter();
   const { user, profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<
@@ -103,6 +105,7 @@ export default function HomeScreen() {
             title={getGreeting()}
             onAvatarPress={() => setOpen(true)}
             rightIcon="notifications-outline"
+            onRightPress={() => router.push("/admin" as any)}
           />
 
           {/* Filter tabs */}
