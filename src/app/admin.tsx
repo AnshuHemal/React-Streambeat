@@ -260,8 +260,6 @@ export default function AdminPanelScreen() {
           }));
           setSongsList(transformed);
         } catch (error) {
-          // song_artists table doesn't exist - fetch songs without artists
-          console.log("song_artists table not found - fetching songs without artist data");
           const { data } = await supabase
             .from("songs")
             .select(`
@@ -277,7 +275,6 @@ export default function AdminPanelScreen() {
         }
       }
     } catch (error) {
-      console.error("Error fetching list data:", error);
     } finally {
       setLoading(false);
     }
@@ -341,7 +338,6 @@ export default function AdminPanelScreen() {
         .select("*", { count: "exact", head: true })
         .eq("album_id", albumId);
       if (countError) {
-        console.error("Error counting songs:", countError);
         return;
       }
       const { error: updateError } = await supabase
@@ -349,10 +345,8 @@ export default function AdminPanelScreen() {
         .update({ total_tracks: count || 0 })
         .eq("id", albumId);
       if (updateError) {
-        console.error("Error updating album track count:", updateError);
       }
     } catch (err) {
-      console.error("Failed to update album track count:", err);
     }
   };
 
@@ -366,17 +360,14 @@ export default function AdminPanelScreen() {
           return;
         }
         if (editingId) {
-          console.log("Updating artist:", editingId, formData.artist);
           const { data, error } = await supabase.from("artists").update({
             name: formData.artist.name.trim(),
             slug: formData.artist.slug.trim() || formData.artist.name.toLowerCase().replace(/\s+/g, "-"),
             image_url: formData.artist.image_url.trim() || null,
           }).eq("id", editingId).select();
           if (error) {
-            console.error("Artist update error:", error);
             throw error;
           }
-          console.log("Artist update result:", data);
           toast.success("Artist updated successfully!");
         } else {
           const { data, error } = await supabase.from("artists").insert({
@@ -386,10 +377,8 @@ export default function AdminPanelScreen() {
             is_active: true,
           }).select();
           if (error) {
-            console.error("Artist insert error:", error);
             throw error;
           }
-          console.log("Artist insert result:", data);
           toast.success("Artist created successfully!");
         }
         fetchDropdownData();
@@ -414,7 +403,6 @@ export default function AdminPanelScreen() {
             const albumArtists = formData.album.artist_ids.map((id, i) => ({ album_id: editingId, artist_id: id, artist_order: i }));
             await supabase.from("album_artists").insert(albumArtists);
           } catch {
-            console.log("album_artists table not found - album updated without junction table");
           }
           toast.success("Album updated successfully!");
         } else {
@@ -434,8 +422,6 @@ export default function AdminPanelScreen() {
             const albumArtists = formData.album.artist_ids.map((id, i) => ({ album_id: data?.id, artist_id: id, artist_order: i }));
             await supabase.from("album_artists").insert(albumArtists);
           } catch {
-            // Junction table doesn't exist - album created with primary artist only
-            console.log("album_artists table not found - album created with primary artist only");
           }
 
           toast.success("Album created successfully!");
@@ -473,11 +459,9 @@ export default function AdminPanelScreen() {
             const songArtists = formData.song.artist_ids.map((id, i) => ({ song_id: editingId, artist_id: id, artist_order: i }));
             const { error: junctionError } = await supabase.from("song_artists").insert(songArtists);
             if (junctionError) {
-              console.error("song_artists insert error:", junctionError);
               toast.warning("Song saved but artist links failed", { description: junctionError.message });
             }
           } catch (err) {
-            console.error("song_artists exception:", err);
             toast.warning("Song saved without artist links");
           }
 
@@ -516,13 +500,11 @@ export default function AdminPanelScreen() {
             const songArtists = formData.song.artist_ids.map((id, i) => ({ song_id: data?.id, artist_id: id, artist_order: i }));
             const { error: junctionError } = await supabase.from("song_artists").insert(songArtists);
             if (junctionError) {
-              console.error("song_artists insert error:", junctionError);
               toast.warning("Song created but artist links failed", { description: junctionError.message });
             } else {
               toast.success("Song created with artists!");
             }
           } catch (err) {
-            console.error("song_artists exception:", err);
             toast.warning("Song created without artist links");
           }
 
@@ -640,7 +622,6 @@ export default function AdminPanelScreen() {
       // Hard delete the record
       const { error } = await supabase.from(table).delete().eq("id", deleteItem.id);
       if (error) {
-        console.error("Delete error:", error);
         throw error;
       }
 
@@ -652,7 +633,6 @@ export default function AdminPanelScreen() {
       toast.success("Deleted successfully!");
       fetchListData();
     } catch (error: any) {
-      console.error("Delete failed:", error);
       toast.error("Failed to delete", { description: error.message || "Unknown error" });
     } finally {
       setLoading(false);

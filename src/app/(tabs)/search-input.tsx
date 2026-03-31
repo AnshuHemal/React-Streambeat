@@ -105,7 +105,6 @@ export default function SearchInputScreen() {
 
       const artists: Artist[] = artistsRes.data ?? [];
       const albums: any[] = albumsRes.data ?? [];
-      console.log("Albums data:", JSON.stringify(albums.slice(0, 2), null, 2));
       const songs = songsRes.data ?? [];
 
       if (artists.length > 0) {

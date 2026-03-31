@@ -1,16 +1,20 @@
 import React, { useEffect, useRef } from "react";
 import {
-  Animated,
-  Dimensions,
-  Image,
-  Modal,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View
+    Animated,
+    Dimensions,
+    Image,
+    Modal,
+    Text,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 
-export type SortOption = "recents" | "recently_added" | "alphabetical" | "creator";
+export type SortOption =
+  | "recents"
+  | "recently_added"
+  | "alphabetical"
+  | "creator";
 
 type Props = {
   visible: boolean;
@@ -159,7 +163,7 @@ export default function SortBottomSheet({
             style={{
               color: "#ffffff",
               fontSize: 16,
-              fontWeight: "700",
+              fontWeight: "600",
               fontFamily: "CircularStd",
               textAlign: "center",
               marginBottom: 20,
