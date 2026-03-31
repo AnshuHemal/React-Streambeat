@@ -244,79 +244,83 @@ export default function SearchScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Explore your musical type */}
-          <View style={{ marginBottom: 28 }}>
-            <Text
-              style={{
-                color: "#ffffff",
-                fontFamily: "CircularStd",
-                fontSize: 16,
-                fontWeight: "600",
-                paddingHorizontal: 20,
-                marginBottom: 14,
-              }}
-            >
-              Explore your musical type
-            </Text>
-            {loadingMoods ? (
-              <View
+          {/* Explore your musical type - only show if data exists */}
+          {(loadingMoods || moods.length > 0) && (
+            <View style={{ marginBottom: 28 }}>
+              <Text
                 style={{
-                  height: MOOD_CARD_W * 1.4,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  color: "#ffffff",
+                  fontFamily: "CircularStd",
+                  fontSize: 16,
+                  fontWeight: "600",
+                  paddingHorizontal: 20,
+                  marginBottom: 14,
                 }}
               >
-                <LoadingDots color="#a7a7a7" size={8} gap={8} />
-              </View>
-            ) : moods.length > 0 ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 20 }}
-              >
-                {moods.map((mood) => (
-                  <MoodCard key={mood.id} item={mood} />
-                ))}
-              </ScrollView>
-            ) : null}
-          </View>
-
-          {/* Browse all */}
-          <View style={{ paddingHorizontal: 20 }}>
-            <Text
-              style={{
-                color: "#ffffff",
-                fontFamily: "CircularStd",
-                fontSize: 16,
-                fontWeight: "600",
-                marginBottom: 14,
-              }}
-            >
-              Browse all
-            </Text>
-            {loadingCategories ? (
-              <View
-                style={{
-                  height: 200,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <LoadingDots color="#a7a7a7" size={8} gap={8} />
-              </View>
-            ) : (
-              categoryPairs.map((pair, i) => (
-                <View key={i} style={{ flexDirection: "row", gap: 12 }}>
-                  {pair.map((cat) => (
-                    <CategoryCard key={cat.id} item={cat} />
-                  ))}
-                  {pair.length === 1 && (
-                    <View style={{ width: CATEGORY_CARD_W }} />
-                  )}
+                Explore your musical type
+              </Text>
+              {loadingMoods ? (
+                <View
+                  style={{
+                    height: MOOD_CARD_W * 1.4,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <LoadingDots color="#a7a7a7" size={8} gap={8} />
                 </View>
-              ))
-            )}
-          </View>
+              ) : (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 20 }}
+                >
+                  {moods.map((mood) => (
+                    <MoodCard key={mood.id} item={mood} />
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          )}
+
+          {/* Browse all - only show if data exists */}
+          {(loadingCategories || categories.length > 0) && (
+            <View style={{ paddingHorizontal: 20 }}>
+              <Text
+                style={{
+                  color: "#ffffff",
+                  fontFamily: "CircularStd",
+                  fontSize: 16,
+                  fontWeight: "600",
+                  marginBottom: 14,
+                }}
+              >
+                Browse all
+              </Text>
+              {loadingCategories ? (
+                <View
+                  style={{
+                    height: 200,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <LoadingDots color="#a7a7a7" size={8} gap={8} />
+                </View>
+              ) : (
+                categoryPairs.map((pair, i) => (
+                  <View key={i} style={{ flexDirection: "row", gap: 12 }}>
+                    {pair.map((cat) => (
+                      <CategoryCard key={cat.id} item={cat} />
+                    ))}
+                    {pair.length === 1 && (
+                      <View style={{ width: CATEGORY_CARD_W }} />
+                    )}
+                  </View>
+                ))
+              )}
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </Drawer>
