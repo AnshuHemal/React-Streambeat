@@ -23,7 +23,7 @@ export type Artist = {
 export type Album = {
   id: string;
   title: string;
-  artist_id: string;
+  artist: Artist;
   image_url: string | null;
   release_date: string | null;
 };
