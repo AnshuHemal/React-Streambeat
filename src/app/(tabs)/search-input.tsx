@@ -86,7 +86,8 @@ export default function SearchInputScreen() {
         supabase
           .from("albums")
           .select(
-            "id, title, album_type, artist_id, image_url, release_date, artists(name), artist:artists(id, name, slug, image_url)",
+            `id, title, album_type, artist_id, image_url, release_date,
+            album_artists!inner(artists(id, name, slug, image_url))`,
           )
           .ilike("title", `%${q}%`)
           .eq("is_active", true)
@@ -118,13 +119,20 @@ export default function SearchInputScreen() {
             kind: "album",
             data: {
               ...a,
-              artist_name: a.artists?.name || "",
-              artist: a.artist || {
-                id: "",
-                name: a.artists?.name || "",
-                slug: "",
-                image_url: null,
-              },
+              artist_name: Array.isArray(a.album_artists)
+                ? a.album_artists
+                    .map((aa: any) => aa.artists?.name)
+                    .filter(Boolean)
+                    .join(", ")
+                : "",
+              artist: Array.isArray(a.album_artists) && a.album_artists.length > 0
+                ? {
+                    id: a.album_artists[0].artists?.id || "",
+                    name: a.album_artists[0].artists?.name || "",
+                    slug: a.album_artists[0].artists?.slug || "",
+                    image_url: a.album_artists[0].artists?.image_url || null,
+                  }
+                : { id: "", name: "", slug: "", image_url: null },
             },
             id: `album-${a.id}`,
           }),
