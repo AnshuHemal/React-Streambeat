@@ -219,7 +219,7 @@ export default function SearchScreen() {
           {/* Search bar — tappable, navigates to search-input screen */}
           <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
             <TouchableOpacity
-              onPress={() => router.push("/(tabs)/search-input" as any)}
+              onPress={() => router.push("/search-input" as any)}
               activeOpacity={0.8}
               style={{
                 flexDirection: "row",

@@ -1,17 +1,18 @@
 import { supabase } from "@/lib/supabase";
-import { Album, Artist, Song } from "@/types";
+import { Album, Artist } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  BackHandler,
-  FlatList,
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    BackHandler,
+    FlatList,
+    Image,
+    Keyboard,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -19,31 +20,7 @@ type ResultItem =
   | { kind: "suggestion"; title: string; id: string }
   | { kind: "header"; title: string; id: string }
   | { kind: "artist"; data: Artist; id: string }
-  | { kind: "album"; data: Album & { artist_name?: string }; id: string }
-  | { kind: "song"; data: Song & { artist_name?: string }; id: string };
-
-function formatDuration(ms: number | null): string {
-  if (!ms) return "";
-  const s = Math.floor(ms / 1000);
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
-
-function Placeholder() {
-  return (
-    <View
-      style={{
-        width: 44,
-        height: 44,
-        borderRadius: 4,
-        backgroundColor: "#2a2a2a",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <Ionicons name="musical-notes" size={20} color="#535353" />
-    </View>
-  );
-}
+  | { kind: "album"; data: Album & { artist_name?: string }; id: string };
 
 export default function SearchInputScreen() {
   const router = useRouter();
@@ -60,7 +37,7 @@ export default function SearchInputScreen() {
       setFlatItems([]);
 
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-        router.navigate("/(tabs)/search" as any);
+        router.back();
         return true;
       });
       return () => sub.remove();
@@ -121,33 +98,49 @@ export default function SearchInputScreen() {
               ...a,
               artist_name: Array.isArray(a.album_artists)
                 ? a.album_artists
-                    .map((aa: any) => aa.artists?.name)
+                    .map((aa: any) => {
+                      const artist = Array.isArray(aa.artists)
+                        ? aa.artists[0]
+                        : aa.artists;
+                      return artist?.name;
+                    })
                     .filter(Boolean)
                     .join(", ")
                 : "",
-              artist: Array.isArray(a.album_artists) && a.album_artists.length > 0
-                ? {
-                    id: a.album_artists[0].artists?.id || "",
-                    name: a.album_artists[0].artists?.name || "",
-                    slug: a.album_artists[0].artists?.slug || "",
-                    image_url: a.album_artists[0].artists?.image_url || null,
-                  }
-                : { id: "", name: "", slug: "", image_url: null },
+              artist:
+                Array.isArray(a.album_artists) && a.album_artists.length > 0
+                  ? {
+                      id: (() => {
+                        const artist = Array.isArray(a.album_artists[0].artists)
+                          ? a.album_artists[0].artists[0]
+                          : a.album_artists[0].artists;
+                        return artist?.id || "";
+                      })(),
+                      name: (() => {
+                        const artist = Array.isArray(a.album_artists[0].artists)
+                          ? a.album_artists[0].artists[0]
+                          : a.album_artists[0].artists;
+                        return artist?.name || "";
+                      })(),
+                      slug: (() => {
+                        const artist = Array.isArray(a.album_artists[0].artists)
+                          ? a.album_artists[0].artists[0]
+                          : a.album_artists[0].artists;
+                        return artist?.slug || "";
+                      })(),
+                      image_url: (() => {
+                        const artist = Array.isArray(a.album_artists[0].artists)
+                          ? a.album_artists[0].artists[0]
+                          : a.album_artists[0].artists;
+                        return artist?.image_url || null;
+                      })(),
+                    }
+                  : { id: "", name: "", slug: "", image_url: null },
             },
             id: `album-${a.id}`,
           }),
         );
       }
-      // if (songs.length > 0) {
-      //   items.push({ kind: "header", title: "Songs", id: "h-songs" });
-      //   songs.forEach((s) =>
-      //     items.push({
-      //       kind: "song",
-      //       data: { ...s, artist_name: s.artists?.[0]?.name },
-      //       id: `song-${s.id}`,
-      //     }),
-      //   );
-      // }
 
       setFlatItems(items);
       setLoading(false);
@@ -282,6 +275,10 @@ export default function SearchInputScreen() {
       return (
         <TouchableOpacity
           activeOpacity={0.7}
+          onPress={() => {
+            Keyboard.dismiss();
+            router.push(`/album/${al.id}` as any);
+          }}
           style={{
             flexDirection: "row",
             alignItems: "center",
@@ -336,7 +333,7 @@ export default function SearchInputScreen() {
             </Text>
           </View>
           <Image
-            source={require("../../../assets/images/ico-32-plus-circle.png")}
+            source={require("@/assets/images/ico-32-plus-circle.png")}
             style={{ width: 24, height: 24 }}
             resizeMode="contain"
           />
@@ -344,53 +341,8 @@ export default function SearchInputScreen() {
       );
     }
 
-    // song
-    const s = item.data;
-    return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          paddingHorizontal: 20,
-          paddingVertical: 8,
-          gap: 12,
-        }}
-      >
-        {s.image_url ? (
-          <Image
-            source={{ uri: s.image_url }}
-            style={{ width: 48, height: 48, borderRadius: 4 }}
-            resizeMode="cover"
-          />
-        ) : (
-          <Placeholder />
-        )}
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              color: "#ffffff",
-              fontFamily: "CircularStd",
-              fontSize: 15,
-              fontWeight: "600",
-            }}
-            numberOfLines={1}
-          >
-            {s.title}
-          </Text>
-          <Text
-            style={{
-              color: "#a7a7a7",
-              fontFamily: "CircularStd",
-              fontSize: 13,
-            }}
-          >
-            Song {s.artist_name ? `• ${s.artist_name}` : ""}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={20} color="#a7a7a7" />
-      </TouchableOpacity>
-    );
+    // Default fallback - should not reach here
+    return null;
   };
 
   return (
@@ -410,7 +362,7 @@ export default function SearchInputScreen() {
         }}
       >
         <TouchableOpacity
-          onPress={() => router.navigate("/(tabs)/search" as any)}
+          onPress={() => router.back()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="arrow-back" size={24} color="#ffffff" />
