@@ -9,6 +9,7 @@ import { Platform, Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 import "../../global.css";
+import PersistentTabBar from "@/components/PersistentTabBar";
 
 // Set CircularStd as the default font for all Text and TextInput components
 const defaultTextStyle = { fontFamily: "CircularStd" };
@@ -50,7 +51,15 @@ export default function RootLayout() {
             animation: "fade",
             contentStyle: { backgroundColor: "#121212" },
           }}
-        />
+        >
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="search-input" options={{ animation: "fade" }} />
+          <Stack.Screen
+            name="album/[albumId]/index"
+            options={{ animation: "fade" }}
+          />
+        </Stack>
+        <PersistentTabBar />
         <Toaster
           position="bottom-center"
           toastOptions={{
