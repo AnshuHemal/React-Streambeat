@@ -8,20 +8,26 @@ import { LibraryItem, LibraryItemType } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import {
-  Animated,
-  BackHandler,
-  Dimensions,
-  FlatList,
-  Image,
-  LayoutAnimation,
-  Platform,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  UIManager,
-  View,
+    Animated,
+    BackHandler,
+    Dimensions,
+    FlatList,
+    Image,
+    LayoutAnimation,
+    Platform,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -369,7 +375,7 @@ export default function LibraryScreen() {
       update: { type: "spring", springDamping: 0.9 },
       delete: { type: "easeInEaseOut", property: "opacity" },
     });
-    
+
     // Quick opacity dip for visual feedback
     Animated.sequence([
       Animated.timing(fadeAnim, {
@@ -383,7 +389,7 @@ export default function LibraryScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-    
+
     const newMode = viewMode === "grid" ? "list" : "grid";
     setViewMode(newMode);
     AsyncStorage.setItem(VIEW_MODE_KEY, newMode);
@@ -399,12 +405,16 @@ export default function LibraryScreen() {
 
   // Dynamically generate available filters based on library data
   const availableFilters = useMemo(() => {
-    const typesPresent = libraryItems.reduce<Set<LibraryItemType>>((acc, item) => {
-      acc.add(item.type);
-      return acc;
-    }, new Set());
-    return FILTERS.filter((f): f is typeof f & { value: LibraryItemType } => 
-      f.value !== "all" && typesPresent.has(f.value)
+    const typesPresent = libraryItems.reduce<Set<LibraryItemType>>(
+      (acc, item) => {
+        acc.add(item.type);
+        return acc;
+      },
+      new Set(),
+    );
+    return FILTERS.filter(
+      (f): f is typeof f & { value: LibraryItemType } =>
+        f.value !== "all" && typesPresent.has(f.value),
     );
   }, [libraryItems]);
 
@@ -503,7 +513,7 @@ export default function LibraryScreen() {
           title="Your Library"
           onAvatarPress={() => setOpen(true)}
           rightIcon="search"
-          onRightPress={() => router.push("/(tabs)/search-input" as any)}
+          onRightPress={() => router.push("/search-input" as any)}
           rightIcon2="add"
           onRightPress2={() => {}}
           paddingBottom={8}
@@ -526,7 +536,9 @@ export default function LibraryScreen() {
             <>
               <FilterChip isClose onPress={() => selectFilter("all")} />
               <FilterChip
-                label={availableFilters.find((f) => f.value === activeFilter)?.label}
+                label={
+                  availableFilters.find((f) => f.value === activeFilter)?.label
+                }
                 active
                 onPress={() => {}}
               />
@@ -586,9 +598,7 @@ export default function LibraryScreen() {
                 paddingBottom: 140,
               }}
               columnWrapperStyle={
-                viewMode === "grid"
-                  ? { gap: 12, marginBottom: 4 }
-                  : undefined
+                viewMode === "grid" ? { gap: 12, marginBottom: 4 } : undefined
               }
               renderItem={({ item }) => (
                 <LibraryItemCard item={item} viewMode={viewMode} />
