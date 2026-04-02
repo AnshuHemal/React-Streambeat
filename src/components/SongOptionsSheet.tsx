@@ -1,3 +1,5 @@
+import ArtistsSheet, { ArtistItem } from "@/components/ArtistsSheet";
+import StreambeatCodeModal from "@/components/StreambeatCodeModal";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -37,6 +39,7 @@ type Props = {
   artistName: string;
   albumTitle: string;
   imageUrl: string | null;
+  artists?: ArtistItem[];
 };
 
 const MENU_ITEMS: MenuItem[] = [
@@ -81,15 +84,16 @@ export default function SongOptionsSheet({
   artistName,
   albumTitle,
   imageUrl,
+  artists = [],
 }: Props) {
   const insets = useSafeAreaInsets();
-  // translateY drives the sheet position: SCREEN_H = hidden, HALF_POSITION = half, 0 = full
   const translateY = useRef(new Animated.Value(SCREEN_H)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragY = useRef(new Animated.Value(0)).current;
-  // Track current snap position so pan logic knows where we are
   const currentSnap = useRef<"half" | "full">("half");
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showCode, setShowCode] = useState(false);
+  const [showArtists, setShowArtists] = useState(false);
 
   const snapTo = (position: number, callback?: () => void) => {
     Animated.spring(translateY, {
@@ -214,228 +218,263 @@ export default function SongOptionsSheet({
   const combinedTranslateY = Animated.add(translateY, dragY);
 
   return (
-    <Modal
-      transparent
-      animationType="none"
-      visible={visible}
-      onRequestClose={onClose}
-      statusBarTranslucent
-    >
-      {/* Backdrop */}
-      <TouchableWithoutFeedback onPress={onClose}>
-        <Animated.View
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.6)",
-            opacity: backdropOpacity,
-          }}
-        />
-      </TouchableWithoutFeedback>
-
-      {/* Sheet */}
-      <View style={{ flex: 1, justifyContent: "flex-end" }}>
-        <Animated.View
-          style={{
-            backgroundColor: "#1a1a1a",
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
-            paddingBottom: insets.bottom + 16,
-            maxHeight: SCREEN_H * 0.92,
-            transform: [{ translateY: combinedTranslateY }],
-          }}
-        >
-          {/* Drag handle — always draggable */}
-          <View
-            {...panResponder.panHandlers}
-            style={{ alignItems: "center", paddingTop: 10, paddingBottom: 4 }}
-          >
-            <View
-              style={{
-                width: 36,
-                height: 4,
-                backgroundColor: "#535353",
-                borderRadius: 2,
-              }}
-            />
-          </View>
-
-          {/* Song header — also draggable */}
-          <View
-            {...panResponder.panHandlers}
+    <>
+      <Modal
+        transparent
+        animationType="none"
+        visible={visible}
+        onRequestClose={onClose}
+        statusBarTranslucent
+      >
+        {/* Backdrop */}
+        <TouchableWithoutFeedback onPress={onClose}>
+          <Animated.View
             style={{
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              borderBottomWidth: 1,
-              borderBottomColor: "#2a2a2a",
-              marginBottom: 4,
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.6)",
+              opacity: backdropOpacity,
+            }}
+          />
+        </TouchableWithoutFeedback>
+
+        {/* Sheet */}
+        <View style={{ flex: 1, justifyContent: "flex-end" }}>
+          <Animated.View
+            style={{
+              backgroundColor: "#1a1a1a",
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
+              paddingBottom: insets.bottom + 16,
+              maxHeight: SCREEN_H * 0.92,
+              transform: [{ translateY: combinedTranslateY }],
             }}
           >
-            {imageUrl ? (
-              <Image
-                source={{ uri: imageUrl }}
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 4,
-                  marginRight: 14,
-                }}
-                resizeMode="cover"
-              />
-            ) : (
+            {/* Drag handle — always draggable */}
+            <View
+              {...panResponder.panHandlers}
+              style={{ alignItems: "center", paddingTop: 10, paddingBottom: 4 }}
+            >
               <View
                 style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 4,
-                  backgroundColor: "#2a2a2a",
-                  marginRight: 14,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: 36,
+                  height: 4,
+                  backgroundColor: "#535353",
+                  borderRadius: 2,
                 }}
-              >
-                <Ionicons name="musical-note" size={24} color="#535353" />
-              </View>
-            )}
-            <View style={{ flex: 1 }}>
-              <Text
-                style={{
-                  color: "#ffffff",
-                  fontSize: 15,
-                  fontFamily: "CircularStd",
-                  fontWeight: "600",
-                  marginBottom: 3,
-                }}
-                numberOfLines={1}
-              >
-                {songTitle}
-              </Text>
-              <Text
-                style={{
-                  color: "#a7a7a7",
-                  fontSize: 13,
-                  fontFamily: "CircularStd",
-                }}
-                numberOfLines={1}
-              >
-                {artistName} • {albumTitle}
-              </Text>
+              />
             </View>
-          </View>
 
-          {/* Scrollable menu — scrolling up expands the sheet */}
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            scrollEnabled={isExpanded}
-            onScrollBeginDrag={() => {
-              // When user starts scrolling up in half mode, expand to full
-              if (currentSnap.current === "half") {
-                currentSnap.current = "full";
-                setIsExpanded(true);
-                snapTo(FULL_POSITION);
-              }
-            }}
-          >
-            {MENU_ITEMS.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                activeOpacity={0.65}
-                onPress={() => {
-                  item.onPress?.();
-                  onClose();
-                }}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  paddingHorizontal: 20,
-                  paddingVertical: 15,
-                }}
-              >
-                {item.customImage && !item.iconBg ? (
-                  // Custom image with no background — render at icon size
-                  <Image
-                    source={item.customImage}
-                    style={{ width: 34, height: 34, marginRight: 18 }}
-                    resizeMode="contain"
-                  />
-                ) : item.iconBg ? (
-                  <View
-                    style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 6,
-                      backgroundColor: item.iconBg,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginRight: 18,
-                    }}
-                  >
-                    {item.customImage ? (
-                      <Image
-                        source={item.customImage}
-                        style={{ width: 22, height: 22 }}
-                        resizeMode="contain"
-                      />
-                    ) : (
-                      <Ionicons name={item.icon!} size={18} color="#ffffff" />
-                    )}
-                  </View>
-                ) : (
-                  <Ionicons
-                    name={item.icon!}
-                    size={24}
-                    color="#e3e3e3"
-                    style={{ marginRight: 18, width: 34, textAlign: "center" }}
-                  />
-                )}
-
-                <Text
+            {/* Song header — also draggable */}
+            <View
+              {...panResponder.panHandlers}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingHorizontal: 16,
+                paddingVertical: 14,
+                borderBottomWidth: 1,
+                borderBottomColor: "#2a2a2a",
+                marginBottom: 4,
+              }}
+            >
+              {imageUrl ? (
+                <Image
+                  source={{ uri: imageUrl }}
                   style={{
-                    color: "#e3e3e3",
-                    fontSize: 16,
-                    fontFamily: "CircularStd",
-                    flex: 1,
+                    width: 52,
+                    height: 52,
+                    borderRadius: 4,
+                    marginRight: 14,
+                  }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 4,
+                    backgroundColor: "#2a2a2a",
+                    marginRight: 14,
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  {item.label}
+                  <Ionicons name="musical-note" size={24} color="#535353" />
+                </View>
+              )}
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 15,
+                    fontFamily: "CircularStd",
+                    fontWeight: "600",
+                    marginBottom: 3,
+                  }}
+                  numberOfLines={1}
+                >
+                  {songTitle}
                 </Text>
+                <Text
+                  style={{
+                    color: "#a7a7a7",
+                    fontSize: 13,
+                    fontFamily: "CircularStd",
+                  }}
+                  numberOfLines={1}
+                >
+                  {artistName} • {albumTitle}
+                </Text>
+              </View>
+            </View>
 
-                {item.badge === "premium" && (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
+            {/* Scrollable menu — scrolling up expands the sheet */}
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              scrollEnabled={isExpanded}
+              onScrollBeginDrag={() => {
+                // When user starts scrolling up in half mode, expand to full
+                if (currentSnap.current === "half") {
+                  currentSnap.current = "full";
+                  setIsExpanded(true);
+                  snapTo(FULL_POSITION);
+                }
+              }}
+            >
+              {MENU_ITEMS.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.65}
+                  onPress={() => {
+                    if (item.id === "code") {
+                      animateOut(() => {
+                        dragY.setValue(0);
+                        onClose();
+                        setShowCode(true);
+                      });
+                      return;
+                    }
+                    if (item.id === "go-artist") {
+                      animateOut(() => {
+                        dragY.setValue(0);
+                        onClose();
+                        setShowArtists(true);
+                      });
+                      return;
+                    }
+                    item.onPress?.();
+                    onClose();
+                  }}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingHorizontal: 20,
+                    paddingVertical: 15,
+                  }}
+                >
+                  {item.customImage && !item.iconBg ? (
+                    // Custom image with no background — render at icon size
                     <Image
-                      source={require("@/assets/images/logo.png")}
-                      style={{ width: 14, height: 14, tintColor: "#1DB954" }}
+                      source={item.customImage}
+                      style={{ width: 34, height: 34, marginRight: 18 }}
                       resizeMode="contain"
                     />
-                    <Text
+                  ) : item.iconBg ? (
+                    <View
                       style={{
-                        color: "#1DB954",
-                        fontSize: 12,
-                        fontFamily: "CircularStd",
-                        fontWeight: "600",
+                        width: 34,
+                        height: 34,
+                        borderRadius: 6,
+                        backgroundColor: item.iconBg,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: 18,
                       }}
                     >
-                      Premium
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </Animated.View>
-      </View>
-    </Modal>
+                      {item.customImage ? (
+                        <Image
+                          source={item.customImage}
+                          style={{ width: 22, height: 22 }}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Ionicons name={item.icon!} size={18} color="#ffffff" />
+                      )}
+                    </View>
+                  ) : (
+                    <Ionicons
+                      name={item.icon!}
+                      size={24}
+                      color="#e3e3e3"
+                      style={{
+                        marginRight: 18,
+                        width: 34,
+                        textAlign: "center",
+                      }}
+                    />
+                  )}
+
+                  <Text
+                    style={{
+                      color: "#e3e3e3",
+                      fontSize: 16,
+                      fontFamily: "CircularStd",
+                      flex: 1,
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+
+                  {item.badge === "premium" && (
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <Image
+                        source={require("@/assets/images/logo.png")}
+                        style={{ width: 14, height: 14, tintColor: "#1DB954" }}
+                        resizeMode="contain"
+                      />
+                      <Text
+                        style={{
+                          color: "#1DB954",
+                          fontSize: 12,
+                          fontFamily: "CircularStd",
+                          fontWeight: "600",
+                        }}
+                      >
+                        Premium
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Animated.View>
+        </View>
+      </Modal>
+
+      <StreambeatCodeModal
+        visible={showCode}
+        onClose={() => setShowCode(false)}
+        songTitle={songTitle}
+        artistName={artistName}
+        imageUrl={imageUrl}
+      />
+      <ArtistsSheet
+        visible={showArtists}
+        onClose={() => setShowArtists(false)}
+        artists={artists}
+      />
+    </>
   );
 }

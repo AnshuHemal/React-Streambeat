@@ -5,14 +5,13 @@ import { Genre } from "@/types";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  Image,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    FlatList,
+    Image,
+    RefreshControl,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -217,7 +216,7 @@ export default function OnboardingMusicScreen() {
           activeOpacity={0.85}
         >
           {saving ? (
-            <ActivityIndicator color="#121212" />
+            <LoadingDots />
           ) : (
             <Text
               style={{
