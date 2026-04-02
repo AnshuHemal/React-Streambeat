@@ -6,15 +6,14 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  BackHandler,
-  Dimensions,
-  FlatList,
-  Image,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    BackHandler,
+    Dimensions,
+    FlatList,
+    Image,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -384,7 +383,7 @@ export default function OnboardingArtistsScreen() {
           activeOpacity={0.85}
         >
           {saving ? (
-            <ActivityIndicator color="#121212" />
+            <LoadingDots />
           ) : (
             <Text
               style={{

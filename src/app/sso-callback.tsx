@@ -1,16 +1,13 @@
+import LoadingDots from "@/components/LoadingDots";
 import { useAuth } from "@/context/AuthContext";
 import { Redirect } from "expo-router";
-import { ActivityIndicator, View } from "react-native";
+import React from "react";
 
 export default function SSOCallbackScreen() {
   const { isLoaded, session } = useAuth();
 
   if (!isLoaded) {
-    return (
-      <View className="flex-1 items-center justify-center bg-[#121212]">
-        <ActivityIndicator color="#1DB954" />
-      </View>
-    );
+    return <LoadingDots />;
   }
 
   if (session) {

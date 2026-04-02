@@ -4,7 +4,16 @@ import React from "react";
 import { Image, Platform, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Routes where the tab bar should be hidden
+// Only show the tab bar on these routes (and their sub-paths)
+const TAB_ROUTES = [
+  "/",
+  "/search",
+  "/library",
+  "/premium",
+  "/settings",
+  "/album",
+  "/artist",
+];
 
 type TabItem = {
   name: string;
@@ -50,9 +59,11 @@ export default function PersistentTabBar() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
 
-  // Hide on album and search-input screens
-  // const shouldHide = HIDDEN_ROUTES.some((r) => pathname.startsWith(r));
-  // if (shouldHide) return null;
+  // Show only on known tab routes
+  const shouldShow = TAB_ROUTES.some((r) =>
+    r === "/" ? pathname === "/" || pathname === "" : pathname.startsWith(r),
+  );
+  if (!shouldShow) return null;
 
   const bottomPad = insets.bottom + (Platform.OS === "android" ? 8 : 4);
 

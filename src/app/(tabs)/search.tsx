@@ -267,7 +267,7 @@ export default function SearchScreen() {
                     justifyContent: "center",
                   }}
                 >
-                  <LoadingDots color="#a7a7a7" size={8} gap={8} />
+                  <LoadingDots />
                 </View>
               ) : (
                 <ScrollView
@@ -305,7 +305,7 @@ export default function SearchScreen() {
                     justifyContent: "center",
                   }}
                 >
-                  <LoadingDots color="#a7a7a7" size={8} gap={8} />
+                  <LoadingDots />
                 </View>
               ) : (
                 categoryPairs.map((pair, i) => (
