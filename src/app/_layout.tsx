@@ -1,7 +1,8 @@
-import { AuthProvider } from "@/context/AuthContext";
+import PersistentTabBar from "@/components/PersistentTabBar";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
@@ -9,9 +10,7 @@ import { Platform, Text, TextInput } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 import "../../global.css";
-import PersistentTabBar from "@/components/PersistentTabBar";
 
-// Set CircularStd as the default font for all Text and TextInput components
 const defaultTextStyle = { fontFamily: "CircularStd" };
 const RNText = Text as any;
 const RNTextInput = TextInput as any;
@@ -22,6 +21,23 @@ RNTextInput.defaultProps.style = defaultTextStyle;
 
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * Watches auth state — imperatively navigates to sign-in when session is null.
+ * Must be rendered inside AuthProvider.
+ */
+function NavigationGuard({ children }: { children: React.ReactNode }) {
+  const { isLoaded, session } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && !session) {
+      router.replace("/(auth)/sign-in" as any);
+    }
+  }, [isLoaded, session]);
+
+  return <>{children}</>;
+}
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     CircularStd: require("@/assets/fonts/Circular-Std.ttf"),
@@ -31,7 +47,6 @@ export default function RootLayout() {
     if (fontsLoaded) SplashScreen.hideAsync();
   }, [fontsLoaded]);
 
-  // Set navigation bar style for Android to match dark theme
   useEffect(() => {
     if (Platform.OS === "android") {
       NavigationBar.setBackgroundColorAsync("#121212");
@@ -45,43 +60,49 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#121212" }}>
       <StatusBar style="light" translucent={false} />
       <AuthProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: "fade",
-            contentStyle: { backgroundColor: "#121212" },
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="search-input" options={{ animation: "fade" }} />
-          <Stack.Screen
-            name="album/[albumId]/index"
-            options={{ animation: "fade" }}
+        <NavigationGuard>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: "fade",
+              contentStyle: { backgroundColor: "#121212" },
+            }}
+          >
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="search-input" options={{ animation: "fade" }} />
+            <Stack.Screen
+              name="album/[albumId]/index"
+              options={{ animation: "fade" }}
+            />
+            <Stack.Screen
+              name="artist/[artistId]/index"
+              options={{ animation: "fade" }}
+            />
+          </Stack>
+          <PersistentTabBar />
+          <Toaster
+            position="bottom-center"
+            toastOptions={{
+              style: {
+                backgroundColor: "#1e1e1e",
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: "#2a2a2a",
+              },
+              titleStyle: {
+                color: "#ffffff",
+                fontFamily: "CircularStd",
+                fontSize: 14,
+                fontWeight: "600",
+              },
+              descriptionStyle: {
+                color: "#a7a7a7",
+                fontFamily: "CircularStd",
+                fontSize: 12,
+              },
+            }}
           />
-        </Stack>
-        <PersistentTabBar />
-        <Toaster
-          position="bottom-center"
-          toastOptions={{
-            style: {
-              backgroundColor: "#1e1e1e",
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: "#2a2a2a",
-            },
-            titleStyle: {
-              color: "#ffffff",
-              fontFamily: "CircularStd",
-              fontSize: 14,
-              fontWeight: "600",
-            },
-            descriptionStyle: {
-              color: "#a7a7a7",
-              fontFamily: "CircularStd",
-              fontSize: 12,
-            },
-          }}
-        />
+        </NavigationGuard>
       </AuthProvider>
     </GestureHandlerRootView>
   );

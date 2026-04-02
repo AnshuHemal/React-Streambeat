@@ -1,4 +1,6 @@
 import AlbumOptionsSheet from "@/components/AlbumOptionsSheet";
+import ArtistsSheet from "@/components/ArtistsSheet";
+import LoadingDots from "@/components/LoadingDots";
 import ShuffleSheet from "@/components/ShuffleSheet";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
 import { fallbackAlbumColor, useAlbumColor } from "@/hooks/useImageColor";
@@ -8,17 +10,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 type Song = {
@@ -68,6 +69,7 @@ export default function AlbumDetailScreen() {
   const [showOptions, setShowOptions] = useState(false);
   const [showShuffleSheet, setShowShuffleSheet] = useState(false);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+  const [showArtistsSheet, setShowArtistsSheet] = useState(false);
 
   // ref to the action row for screen-relative measurement
   const actionRowRef = useRef<View>(null);
@@ -229,15 +231,7 @@ export default function AlbumDetailScreen() {
   }, [albumId]);
 
   if (loading) {
-    return (
-      <View className="flex-1 bg-[#121212]">
-        <SafeAreaView className="flex-1" edges={["top"]}>
-          <View className="flex-1 items-center justify-center">
-            <ActivityIndicator color="#1DB954" size="large" />
-          </View>
-        </SafeAreaView>
-      </View>
-    );
+    return <LoadingDots />;
   }
 
   if (!album) {
@@ -308,8 +302,12 @@ export default function AlbumDetailScreen() {
           {album.title}
         </Text>
 
-        {/* Artists Row with Avatars */}
-        <View className="flex-row items-center mb-1">
+        {/* Artists Row with Avatars — tappable to open artists sheet */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setShowArtistsSheet(true)}
+          className="flex-row items-center mb-1"
+        >
           {artists.slice(0, 3).map((artist, index) => (
             <View
               key={artist.id}
@@ -334,7 +332,7 @@ export default function AlbumDetailScreen() {
           >
             {artistsNames}
           </Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Meta Info */}
         <Text className="text-white/60 text-[13px] font-CircularStd mb-5 mt-2">
@@ -760,6 +758,22 @@ export default function AlbumDetailScreen() {
         artistName={selectedSong?.artist_name ?? artistsNames}
         albumTitle={album.title}
         imageUrl={album.image_url}
+        artists={artists.map((a) => ({
+          id: a.id,
+          name: a.name,
+          image_url: a.image_url,
+        }))}
+      />
+
+      {/* Artists sheet — opened from artists row */}
+      <ArtistsSheet
+        visible={showArtistsSheet}
+        onClose={() => setShowArtistsSheet(false)}
+        artists={artists.map((a) => ({
+          id: a.id,
+          name: a.name,
+          image_url: a.image_url,
+        }))}
       />
     </View>
   );
