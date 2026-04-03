@@ -3,6 +3,7 @@ import ArtistsSheet from "@/components/ArtistsSheet";
 import LoadingDots from "@/components/LoadingDots";
 import ShuffleSheet from "@/components/ShuffleSheet";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
+import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import { fallbackAlbumColor, useAlbumColor } from "@/hooks/useImageColor";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,16 +11,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 type Song = {
@@ -28,6 +29,9 @@ type Song = {
   duration_ms: number | null;
   track_number: number | null;
   artist_name?: string;
+  song_artists?: { id: string; name: string; image_url: string | null }[];
+  audio_url: string | null;
+  preview_url: string | null;
 };
 
 type AlbumArtist = {
@@ -61,15 +65,17 @@ function formatDate(dateStr: string | null): string {
 export default function AlbumDetailScreen() {
   const { albumId } = useLocalSearchParams<{ albumId: string }>();
   const router = useRouter();
+  const { playSong, setQueue, currentSong, isPlaying } = useMusicPlayer();
   const [album, setAlbum] = useState<AlbumData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [recommendedAlbums, setRecommendedAlbums] = useState<AlbumData[]>([]);
   const [actionRowScreenY, setActionRowScreenY] = useState(0);
   const [showOptions, setShowOptions] = useState(false);
   const [showShuffleSheet, setShowShuffleSheet] = useState(false);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [showArtistsSheet, setShowArtistsSheet] = useState(false);
+  const [showArtists, setShowArtists] = useState(false);
+  const [songOptionArtists, setSongOptionArtists] = useState<{ id: string; name: string; image_url: string | null }[]>([]);
 
   // ref to the action row for screen-relative measurement
   const actionRowRef = useRef<View>(null);
@@ -160,7 +166,7 @@ export default function AlbumDetailScreen() {
         const { data: songsData, error: songsError } = await supabase
           .from("songs")
           .select(
-            "id, title, duration_ms, track_number, song_artists(artists(name))",
+            "id, title, duration_ms, track_number, audio_url, preview_url, song_artists(artists(id, name, image_url))",
           )
           .eq("album_id", albumId)
           .eq("is_active", true)
@@ -174,16 +180,21 @@ export default function AlbumDetailScreen() {
           }),
         );
 
-        const transformedSongs = (songsData || []).map((song: any) => ({
-          ...song,
-          artist_name:
+        const transformedSongs = (songsData || []).map((song: any) => {
+          const songArtistList =
             Array.isArray(song.song_artists) && song.song_artists.length > 0
-              ? song.song_artists
-                  .map((sa: any) => sa.artists?.name)
-                  .filter(Boolean)
-                  .join(", ")
-              : "",
-        }));
+              ? song.song_artists.map((sa: any) => sa.artists).filter(Boolean)
+              : [];
+          return {
+            ...song,
+            artist_name: songArtistList.map((a: any) => a.name).join(", "),
+            song_artists: songArtistList.map((a: any) => ({
+              id: a.id,
+              name: a.name,
+              image_url: a.image_url ?? null,
+            })),
+          };
+        });
 
         setAlbum({
           ...albumData,
@@ -220,7 +231,6 @@ export default function AlbumDetailScreen() {
           setRecommendedAlbums(uniqueAlbums);
         }
       } catch (err) {
-        console.error("Error fetching album:", err);
         setAlbum(null);
       } finally {
         setLoading(false);
@@ -415,30 +425,60 @@ export default function AlbumDetailScreen() {
     </View>
   );
 
-  const renderSong = ({ item }: { item: Song }) => (
-    <TouchableOpacity className="flex-row items-center justify-between px-6 py-3">
-      <View className="flex-1">
-        <Text
-          className="text-white text-[15px] font-CircularStd font-medium mb-0.5"
-          numberOfLines={1}
-        >
-          {item.title}
-        </Text>
-        <Text
-          className="text-white/60 text-[13px] font-CircularStd"
-          numberOfLines={1}
-        >
-          {item.artist_name || artistsNames}
-        </Text>
-      </View>
-      <TouchableOpacity
-        className="p-2 ml-2"
-        onPress={() => setSelectedSong(item)}
+  const renderSong = ({ item, index }: { item: Song; index: number }) => {
+    const isCurrentSong = currentSong?.id === item.id;
+    
+    return (
+      <TouchableOpacity 
+        className="flex-row items-center justify-between px-6 py-3"
+        onPress={() => {
+          // Set queue to all album songs and play this one
+          const songsWithAlbumData = album?.songs.map(song => ({
+            ...song,
+            album_title: album?.title,
+            image_url: album?.image_url,
+          })) || [];
+          setQueue(songsWithAlbumData, index);
+          playSong({
+            ...item,
+            album_title: album?.title,
+            image_url: album?.image_url,
+          });
+        }}
       >
-        <Ionicons name="ellipsis-vertical" size={20} color="#a7a7a7" />
+        <View className="flex-1">
+          <Text
+            className={`text-[15px] font-CircularStd font-medium mb-0.5 ${
+              isCurrentSong ? "text-[#1DB954]" : "text-white"
+            }`}
+            numberOfLines={1}
+          >
+            {isCurrentSong && isPlaying ? "▶ " : ""}
+            {item.title}
+          </Text>
+          <Text
+            className="text-white/60 text-[13px] font-CircularStd"
+            numberOfLines={1}
+          >
+            {item.artist_name || artistsNames}
+          </Text>
+        </View>
+        <TouchableOpacity
+          className="p-2 ml-2"
+          onPress={() => {
+            setSelectedSong(item);
+            setSongOptionArtists(
+              item.song_artists?.length
+                ? item.song_artists
+                : artists.map((a) => ({ id: a.id, name: a.name, image_url: a.image_url }))
+            );
+          }}
+        >
+          <Ionicons name="ellipsis-vertical" size={20} color="#a7a7a7" />
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   const renderClipsSection = () => {
     if (artists.length === 0) return null;
@@ -706,14 +746,21 @@ export default function AlbumDetailScreen() {
             shadowRadius: 10,
             elevation: 12,
           }}
-          onPress={() => setIsPlaying(!isPlaying)}
+          onPress={() => {
+            // Play first song of album
+            if (album?.songs && album.songs.length > 0) {
+              const songsWithAlbumData = album.songs.map((song) => ({
+                ...song,
+                album_title: album.title,
+                image_url: album.image_url,
+              }));
+              setQueue(songsWithAlbumData, 0);
+              playSong(songsWithAlbumData[0]);
+            }
+          }}
         >
           <Image
-            source={
-              isPlaying
-                ? require("@/assets/images/ico-32-pause.png")
-                : require("@/assets/images/ico-32-play.png")
-            }
+            source={require("@/assets/images/ico-32-play.png")}
             style={{ width: 28, height: 28, tintColor: "#000000" }}
             resizeMode="contain"
           />
@@ -754,15 +801,29 @@ export default function AlbumDetailScreen() {
       <SongOptionsSheet
         visible={selectedSong !== null}
         onClose={() => setSelectedSong(null)}
+        onShowArtists={() => {
+          setShowArtists(true);
+        }}
         songTitle={selectedSong?.title ?? ""}
         artistName={selectedSong?.artist_name ?? artistsNames}
         albumTitle={album.title}
         imageUrl={album.image_url}
-        artists={artists.map((a) => ({
-          id: a.id,
-          name: a.name,
-          image_url: a.image_url,
-        }))}
+        artists={
+          selectedSong?.song_artists && selectedSong.song_artists.length > 0
+            ? selectedSong.song_artists
+            : artists.map((a) => ({
+                id: a.id,
+                name: a.name,
+                image_url: a.image_url,
+              }))
+        }
+      />
+
+      {/* Artists sheet — opened from song options */}
+      <ArtistsSheet
+        visible={showArtists}
+        onClose={() => setShowArtists(false)}
+        artists={songOptionArtists}
       />
 
       {/* Artists sheet — opened from artists row */}

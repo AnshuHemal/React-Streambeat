@@ -333,7 +333,6 @@ export default function ArtistScreen() {
         setSongs(songsData && songsData.length > 0 ? songsData : DUMMY_SONGS);
         setClips(DUMMY_CLIPS);
       } catch (e) {
-        console.error("Artist fetch error:", e);
         setArtist(null);
       } finally {
         setLoading(false);
