@@ -1,12 +1,19 @@
 import { ArtistCreationModal } from "@/components/ArtistCreationModal";
+import AudioUploadForm from "@/components/AudioUploadForm";
 import BottomDialog from "@/components/BottomDialog";
 import { supabase } from "@/lib/supabase";
+import {
+  AudioUploadResult,
+  generateAudioQualityUrls,
+  uploadAudioToCloudinary,
+} from "@/services/cloudinary";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { useRouter } from "expo-router";
 import * as SystemUI from "expo-system-ui";
+import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -26,7 +33,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
 
 type TabType = "artist" | "album" | "song";
-type ViewMode = "list" | "form";
+type ViewMode = "list" | "form" | "audio-upload";
 
 interface FormData {
   artist: {
@@ -150,6 +157,14 @@ export default function AdminPanelScreen() {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_DATA);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // State for audio file selection during song edit
+  const [editAudioFile, setEditAudioFile] = useState<{
+    uri: string;
+    name: string;
+    size: number;
+  } | null>(null);
+  const [editAudioUploading, setEditAudioUploading] = useState(false);
 
   // List data
   const [artistsList, setArtistsList] = useState<ArtistItem[]>([]);
@@ -559,15 +574,15 @@ export default function AdminPanelScreen() {
           return;
         }
         if (editingId) {
-          // Get current song's album_id before update
           const { data: currentSong } = await supabase
             .from("songs")
-            .select("album_id")
+            .select("album_id, cloudinary_public_id")
             .eq("id", editingId)
             .single();
           const oldAlbumId = currentSong?.album_id;
+          const oldPublicId = currentSong?.cloudinary_public_id;
 
-          const updateData: any = {
+          let updateData: any = {
             title: formData.song.title,
             album_id: formData.song.album_id || null,
             duration_ms: parseInt(formData.song.duration_ms) || null,
@@ -576,10 +591,42 @@ export default function AdminPanelScreen() {
             explicit: formData.song.explicit,
             image_url: formData.song.image_url || null,
           };
-          if (formData.song.audio_url)
-            updateData.audio_url = formData.song.audio_url;
-          if (formData.song.preview_url)
-            updateData.preview_url = formData.song.preview_url;
+
+          // If new audio file selected, upload it and update URLs
+          if (editAudioFile) {
+            setEditAudioUploading(true);
+            toast.info("Uploading new audio file...");
+
+            const uploadResult: AudioUploadResult = await uploadAudioToCloudinary(
+              editAudioFile.uri,
+              {
+                title: formData.song.title,
+                artist_id: formData.song.primary_artist_id || formData.song.artist_ids[0],
+                album_id: formData.song.album_id || undefined,
+              }
+            );
+
+            const qualityUrls = generateAudioQualityUrls(uploadResult.public_id);
+
+            updateData.cloudinary_public_id = uploadResult.public_id;
+            updateData.audio_url = qualityUrls.medium;
+            updateData.preview_url = qualityUrls.preview;
+            updateData.quality_urls = {
+              medium: qualityUrls.medium,
+              high: qualityUrls.high,
+              preview: qualityUrls.preview,
+            };
+            updateData.duration_ms = Math.round(uploadResult.duration * 1000);
+
+            setEditAudioUploading(false);
+            toast.success("New audio uploaded successfully!");
+          } else {
+            // Only update audio URLs if manually edited
+            if (formData.song.audio_url)
+              updateData.audio_url = formData.song.audio_url;
+            if (formData.song.preview_url)
+              updateData.preview_url = formData.song.preview_url;
+          }
 
           const { error: updateError } = await supabase
             .from("songs")
@@ -679,6 +726,7 @@ export default function AdminPanelScreen() {
       setFormData(INITIAL_FORM_DATA);
       setViewMode("list");
       setEditingId(null);
+      setEditAudioFile(null);
       fetchListData();
     } catch (error: any) {
       toast.error("Failed to save item", { description: error.message });
@@ -970,6 +1018,29 @@ export default function AdminPanelScreen() {
   const openArtistModal = (target: "album" | "song") => {
     setArtistModalTarget(target);
     setArtistModalVisible(true);
+  };
+
+  const pickEditAudioFile = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["audio/mpeg", "audio/mp3", "audio/wav", "audio/aac"],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        setEditAudioFile({
+          uri: file.uri,
+          name: file.name,
+          size: file.size || 0,
+        });
+        toast.success("New audio file selected", {
+          description: file.name,
+        });
+      }
+    } catch (error) {
+      toast.error("Failed to pick audio file");
+    }
   };
 
   const updateFormField = (
@@ -1698,6 +1769,102 @@ export default function AdminPanelScreen() {
         (text) => updateFormField("song", "image_url", text),
         "image",
       )}
+
+      {/* Audio File Upload - Only when editing */}
+      {editingId && (
+        <View style={{ marginBottom: 16 }}>
+          <Text
+            style={{
+              color: "#FFFFFF",
+              fontSize: 14,
+              fontFamily: "CircularStd",
+              fontWeight: "600",
+              marginBottom: 8,
+            }}
+          >
+            Audio File
+          </Text>
+          <TouchableOpacity
+            onPress={pickEditAudioFile}
+            disabled={editAudioUploading}
+            style={{
+              backgroundColor: editAudioFile ? "#1a3a1a" : "#2a2a2a",
+              borderWidth: 2,
+              borderColor: editAudioFile ? "#1DB954" : "#3a3a3a",
+              borderStyle: "dashed",
+              borderRadius: 8,
+              padding: 16,
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <Ionicons
+              name={editAudioFile ? "checkmark-circle" : "cloud-upload"}
+              size={24}
+              color={editAudioFile ? "#1DB954" : "#B3B3B3"}
+            />
+            <Text
+              style={{
+                color: editAudioFile ? "#1DB954" : "#FFFFFF",
+                fontSize: 14,
+                fontFamily: "CircularStd",
+                fontWeight: "600",
+              }}
+            >
+              {editAudioFile
+                ? editAudioFile.name
+                : "Select New MP3 (optional)"}
+            </Text>
+          </TouchableOpacity>
+          {editAudioFile && (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginTop: 8,
+              }}
+            >
+              <Text
+                style={{
+                  color: "#7A7A7A",
+                  fontSize: 12,
+                  fontFamily: "CircularStd",
+                }}
+              >
+                {(editAudioFile.size / 1024 / 1024).toFixed(2)} MB
+              </Text>
+              <TouchableOpacity
+                onPress={() => setEditAudioFile(null)}
+                style={{ padding: 4 }}
+              >
+                <Text
+                  style={{
+                    color: "#E91429",
+                    fontSize: 12,
+                    fontFamily: "CircularStd",
+                  }}
+                >
+                  Remove
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          <Text
+            style={{
+              color: "#7A7A7A",
+              fontSize: 11,
+              fontFamily: "CircularStd",
+              marginTop: 8,
+            }}
+          >
+            Leave empty to keep current audio. New file will generate Medium (192kbps) + High (320kbps) versions.
+          </Text>
+        </View>
+      )}
+
       {renderInput(
         "Audio URL (optional)",
         formData.song.audio_url,
@@ -2012,37 +2179,104 @@ export default function AdminPanelScreen() {
       </View>
 
       {/* Add Button */}
-      <TouchableOpacity
-        onPress={() => {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          setEditingId(null);
-          setFormData(INITIAL_FORM_DATA);
-          setViewMode("form");
-        }}
-        activeOpacity={0.7}
-        style={{
-          backgroundColor: "#1DB954",
-          paddingVertical: 14,
-          borderRadius: 8,
-          alignItems: "center",
-          flexDirection: "row",
-          justifyContent: "center",
-          gap: 8,
-          marginBottom: 16,
-        }}
-      >
-        <Ionicons name="add-circle" size={20} color="#000000" />
-        <Text
+      {activeTab === "song" ? (
+        // Two buttons for Songs tab: Create Manual and Upload Audio
+        <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
+          <TouchableOpacity
+            onPress={() => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              setEditingId(null);
+              setFormData(INITIAL_FORM_DATA);
+              setViewMode("form");
+            }}
+            activeOpacity={0.7}
+            style={{
+              flex: 1,
+              backgroundColor: "#282828",
+              paddingVertical: 14,
+              borderRadius: 8,
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <Ionicons name="create" size={20} color="#FFFFFF" />
+            <Text
+              style={{
+                color: "#FFFFFF",
+                fontSize: 14,
+                fontFamily: "CircularStd",
+                fontWeight: "600",
+              }}
+            >
+              Manual Entry
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              setEditingId(null);
+              setViewMode("audio-upload");
+            }}
+            activeOpacity={0.7}
+            style={{
+              flex: 1,
+              backgroundColor: "#1DB954",
+              paddingVertical: 14,
+              borderRadius: 8,
+              alignItems: "center",
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <Ionicons name="cloud-upload" size={20} color="#000000" />
+            <Text
+              style={{
+                color: "#000000",
+                fontSize: 14,
+                fontFamily: "CircularStd",
+                fontWeight: "600",
+              }}
+            >
+              Upload Audio
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          onPress={() => {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setEditingId(null);
+            setFormData(INITIAL_FORM_DATA);
+            setViewMode("form");
+          }}
+          activeOpacity={0.7}
           style={{
-            color: "#000000",
-            fontSize: 16,
-            fontFamily: "CircularStd",
-            fontWeight: "600",
+            backgroundColor: "#1DB954",
+            paddingVertical: 14,
+            borderRadius: 8,
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 8,
+            marginBottom: 16,
           }}
         >
-          Add New {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-        </Text>
-      </TouchableOpacity>
+          <Ionicons name="add-circle" size={20} color="#000000" />
+          <Text
+            style={{
+              color: "#000000",
+              fontSize: 16,
+              fontFamily: "CircularStd",
+              fontWeight: "600",
+            }}
+          >
+            Add New {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* List */}
       {loading ? (
@@ -2093,6 +2327,7 @@ export default function AdminPanelScreen() {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           setViewMode("list");
           setEditingId(null);
+          setEditAudioFile(null);
           setFormData(INITIAL_FORM_DATA);
         }}
         activeOpacity={0.7}
@@ -2182,6 +2417,7 @@ export default function AdminPanelScreen() {
           onPress={() => {
             setViewMode("list");
             setEditingId(null);
+            setEditAudioFile(null);
             setFormData(INITIAL_FORM_DATA);
           }}
           activeOpacity={0.7}
@@ -2258,14 +2494,18 @@ export default function AdminPanelScreen() {
               fontFamily: "CircularStd",
             }}
           >
-            {viewMode === "list" ? "View Mode" : "Edit Mode"}
+            {viewMode === "list" 
+              ? "View Mode" 
+              : viewMode === "audio-upload"
+              ? "Upload Mode"
+              : "Edit Mode"}
           </Text>
           <View
             style={{
               width: 8,
               height: 8,
               borderRadius: 4,
-              backgroundColor: viewMode === "list" ? "#1DB954" : "#FFA500",
+              backgroundColor: viewMode === "list" ? "#1DB954" : viewMode === "audio-upload" ? "#3B82F6" : "#FFA500",
             }}
           />
         </View>
@@ -2330,6 +2570,19 @@ export default function AdminPanelScreen() {
         {viewMode === "list" ? (
           <View style={{ flex: 1, paddingHorizontal: 20 }}>
             {renderListView()}
+          </View>
+        ) : viewMode === "audio-upload" ? (
+          <View style={{ flex: 1 }}>
+            <AudioUploadForm
+              artists={artists}
+              albums={albums}
+              onSuccess={() => {
+                setViewMode("list");
+                fetchListData();
+                toast.success("Song uploaded successfully!");
+              }}
+              onCancel={() => setViewMode("list")}
+            />
           </View>
         ) : (
           <ScrollView

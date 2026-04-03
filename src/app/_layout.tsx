@@ -1,5 +1,7 @@
+import MiniPlayer from "@/components/MiniPlayer";
 import PersistentTabBar from "@/components/PersistentTabBar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { MusicPlayerProvider } from "@/context/MusicPlayerContext";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import { Stack, useRouter } from "expo-router";
@@ -59,51 +61,54 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#121212" }}>
       <StatusBar style="light" translucent={false} />
-      <AuthProvider>
-        <NavigationGuard>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: "fade",
-              contentStyle: { backgroundColor: "#121212" },
-            }}
-          >
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="search-input" options={{ animation: "fade" }} />
-            <Stack.Screen
-              name="album/[albumId]/index"
-              options={{ animation: "fade" }}
+      <MusicPlayerProvider>
+        <AuthProvider>
+          <NavigationGuard>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: "fade",
+                contentStyle: { backgroundColor: "#121212" },
+              }}
+            >
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="search-input" options={{ animation: "fade" }} />
+              <Stack.Screen
+                name="album/[albumId]/index"
+                options={{ animation: "fade" }}
+              />
+              <Stack.Screen
+                name="artist/[artistId]/index"
+                options={{ animation: "fade" }}
+              />
+            </Stack>
+            <PersistentTabBar />
+            <MiniPlayer />
+            <Toaster
+              position="bottom-center"
+              toastOptions={{
+                style: {
+                  backgroundColor: "#1e1e1e",
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: "#2a2a2a",
+                },
+                titleStyle: {
+                  color: "#ffffff",
+                  fontFamily: "CircularStd",
+                  fontSize: 14,
+                  fontWeight: "600",
+                },
+                descriptionStyle: {
+                  color: "#a7a7a7",
+                  fontFamily: "CircularStd",
+                  fontSize: 12,
+                },
+              }}
             />
-            <Stack.Screen
-              name="artist/[artistId]/index"
-              options={{ animation: "fade" }}
-            />
-          </Stack>
-          <PersistentTabBar />
-          <Toaster
-            position="bottom-center"
-            toastOptions={{
-              style: {
-                backgroundColor: "#1e1e1e",
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: "#2a2a2a",
-              },
-              titleStyle: {
-                color: "#ffffff",
-                fontFamily: "CircularStd",
-                fontSize: 14,
-                fontWeight: "600",
-              },
-              descriptionStyle: {
-                color: "#a7a7a7",
-                fontFamily: "CircularStd",
-                fontSize: 12,
-              },
-            }}
-          />
-        </NavigationGuard>
-      </AuthProvider>
+          </NavigationGuard>
+        </AuthProvider>
+      </MusicPlayerProvider>
     </GestureHandlerRootView>
   );
 }

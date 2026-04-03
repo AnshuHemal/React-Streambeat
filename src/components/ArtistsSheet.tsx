@@ -202,6 +202,19 @@ export default function ArtistsSheet({ visible, onClose, artists }: Props) {
           </View>
 
           {/* Artist list */}
+          {artists.length === 0 && (
+            <Text
+              style={{
+                color: "#7a7a7a",
+                fontSize: 14,
+                fontFamily: "CircularStd",
+                textAlign: "center",
+                paddingVertical: 20,
+              }}
+            >
+              No artists available
+            </Text>
+          )}
           {artists.map((artist) => (
             <TouchableOpacity
               key={artist.id}

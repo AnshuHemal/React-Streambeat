@@ -1,4 +1,4 @@
-import ArtistsSheet, { ArtistItem } from "@/components/ArtistsSheet";
+import { ArtistItem } from "@/components/ArtistsSheet";
 import StreambeatCodeModal from "@/components/StreambeatCodeModal";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
@@ -35,6 +35,7 @@ type MenuItem = {
 type Props = {
   visible: boolean;
   onClose: () => void;
+  onShowArtists?: () => void;
   songTitle: string;
   artistName: string;
   albumTitle: string;
@@ -80,6 +81,7 @@ const MENU_ITEMS: MenuItem[] = [
 export default function SongOptionsSheet({
   visible,
   onClose,
+  onShowArtists,
   songTitle,
   artistName,
   albumTitle,
@@ -93,7 +95,6 @@ export default function SongOptionsSheet({
   const currentSnap = useRef<"half" | "full">("half");
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCode, setShowCode] = useState(false);
-  const [showArtists, setShowArtists] = useState(false);
 
   const snapTo = (position: number, callback?: () => void) => {
     Animated.spring(translateY, {
@@ -142,8 +143,11 @@ export default function SongOptionsSheet({
   };
 
   useEffect(() => {
-    if (visible) animateIn();
-    else animateOut();
+    if (visible) {
+      animateIn();
+    } else {
+      animateOut();
+    }
   }, [visible]);
 
   const panResponder = useRef(
@@ -364,7 +368,7 @@ export default function SongOptionsSheet({
                       animateOut(() => {
                         dragY.setValue(0);
                         onClose();
-                        setShowArtists(true);
+                        onShowArtists?.();
                       });
                       return;
                     }
@@ -469,11 +473,6 @@ export default function SongOptionsSheet({
         songTitle={songTitle}
         artistName={artistName}
         imageUrl={imageUrl}
-      />
-      <ArtistsSheet
-        visible={showArtists}
-        onClose={() => setShowArtists(false)}
-        artists={artists}
       />
     </>
   );
