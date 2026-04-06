@@ -161,7 +161,7 @@ export default function ArtistsSheet({ visible, onClose, artists }: Props) {
       <View style={{ flex: 1, justifyContent: "flex-end" }}>
         <Animated.View
           style={{
-            backgroundColor: "#1a1a1a",
+            backgroundColor: "#1e1e1e",
             borderTopLeftRadius: 12,
             borderTopRightRadius: 12,
             paddingBottom: insets.bottom + 24,
