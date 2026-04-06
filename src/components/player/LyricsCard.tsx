@@ -7,34 +7,63 @@ const LINES = [
   "saponon se jaataa nahin",
   "mil jae, kya hee baath thi",
   "kamil ho jaataa vaheen",
-  "jaanaa, mere savaalon ka\nmanzar too",
+  "jaanaa, mere savaalon ka manzar too",
 ];
 
 type Props = { bgColor: string };
 
-export const LyricsCard = React.memo(function LyricsCard({ bgColor }: Props) {
-  const [active, setActive] = useState(0);
-  const scales = useRef(LINES.map(() => new Animated.Value(1))).current;
-  const opacities = useRef(LINES.map(() => new Animated.Value(0.55))).current;
+const LyricLine = React.memo(
+  function LyricLine({ text, isActive }: { text: string; isActive: boolean }) {
+    const opacity = useRef(new Animated.Value(isActive ? 1 : 0.38)).current;
+    const translateX = useRef(new Animated.Value(isActive ? 6 : 0)).current;
 
-  useEffect(() => {
-    LINES.forEach((_, i) => {
+    useEffect(() => {
       Animated.parallel([
-        Animated.timing(scales[i], {
-          toValue: i === active ? 1.08 : 1,
-          duration: 350,
+        Animated.timing(opacity, {
+          toValue: isActive ? 1 : 0.38,
+          duration: 450,
           useNativeDriver: true,
         }),
-        Animated.timing(opacities[i], {
-          toValue: i === active ? 1 : 0.55,
-          duration: 350,
+        Animated.timing(translateX, {
+          toValue: isActive ? 6 : 0,
+          duration: 450,
           useNativeDriver: true,
         }),
       ]).start();
-    });
+    }, [isActive]);
+
+    return (
+      <Animated.View
+        style={{
+          opacity,
+          transform: [{ translateX }],
+          marginBottom: 16,
+        }}
+      >
+        <Text
+          style={{
+            color: "#fff",
+            fontSize: 17,
+            fontFamily: "CircularStd",
+            fontWeight: "600",
+            lineHeight: 26,
+          }}
+        >
+          {text}
+        </Text>
+      </Animated.View>
+    );
+  },
+  (prev, next) => prev.isActive === next.isActive && prev.text === next.text,
+);
+
+export const LyricsCard = React.memo(function LyricsCard({ bgColor }: Props) {
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
     const t = setInterval(() => setActive((p) => (p + 1) % LINES.length), 2500);
     return () => clearInterval(t);
-  }, [active]);
+  }, []);
 
   return (
     <View style={{ borderRadius: 16, overflow: "hidden" }}>
@@ -55,28 +84,11 @@ export const LyricsCard = React.memo(function LyricsCard({ bgColor }: Props) {
         >
           Lyrics preview
         </Text>
+
         {LINES.map((line, i) => (
-          <Animated.View
-            key={i}
-            style={{
-              transform: [{ scale: scales[i] }],
-              opacity: opacities[i],
-              marginBottom: 14,
-            }}
-          >
-            <Text
-              style={{
-                color: "#fff",
-                fontSize: 16,
-                fontFamily: "CircularStd",
-                fontWeight: "600",
-                lineHeight: 24,
-              }}
-            >
-              {line}
-            </Text>
-          </Animated.View>
+          <LyricLine key={i} text={line} isActive={i === active} />
         ))}
+
         <TouchableOpacity
           activeOpacity={0.85}
           style={{
