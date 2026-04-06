@@ -24,7 +24,6 @@ import { useRouter } from "expo-router";
 import * as SystemUI from "expo-system-ui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Animated,
   FlatList,
   Image,
@@ -69,6 +68,7 @@ interface FormData {
     image_url: string;
     audio_url: string;
     preview_url: string;
+    lyrics: string;
   };
 }
 
@@ -94,6 +94,7 @@ const INITIAL_FORM_DATA: FormData = {
     image_url: "",
     audio_url: "",
     preview_url: "",
+    lyrics: "",
   },
 };
 
@@ -130,6 +131,7 @@ interface SongItem {
   disc_number?: number | null;
   audio_url?: string | null;
   preview_url?: string | null;
+  lyrics?: string | null;
 }
 
 export default function AdminPanelScreen() {
@@ -146,7 +148,8 @@ export default function AdminPanelScreen() {
     name: string;
     size: number;
   } | null>(null);
-  const [editAudioUploading, setEditAudioUploading] = useState(false);
+  // Tracks the current step shown in the submit button during a song edit with new audio
+  const [uploadStep, setUploadStep] = useState<string | null>(null);
 
   // Credits for the song form (create + edit)
   const [songCredits, setSongCredits] = useState<CreditDraft[]>([]);
@@ -303,7 +306,8 @@ export default function AdminPanelScreen() {
             .from("songs")
             .select(
               `
-              id, title, duration_ms, explicit, image_url, album_id,
+              id, title, duration_ms, explicit, image_url, album_id, lyrics,
+              track_number, disc_number, audio_url, preview_url,
               album:albums(id, title),
               song_artists(artists(name))
             `,
@@ -322,6 +326,7 @@ export default function AdminPanelScreen() {
             .select(
               `
               id, title, duration_ms, explicit, image_url, album_id,
+              track_number, disc_number, audio_url, preview_url,
               album:albums(id, title)
             `,
             )
@@ -569,12 +574,12 @@ export default function AdminPanelScreen() {
             disc_number: parseInt(formData.song.disc_number) || 1,
             explicit: formData.song.explicit,
             image_url: formData.song.image_url || null,
+            lyrics: formData.song.lyrics.trim() || null,
           };
 
           // If new audio file selected, upload it and update URLs
           if (editAudioFile) {
-            setEditAudioUploading(true);
-            toast.info("Uploading new audio file...");
+            setUploadStep("Uploading audio to Cloudinary...");
 
             const uploadResult: AudioUploadResult =
               await uploadAudioToCloudinary(editAudioFile.uri, {
@@ -598,9 +603,7 @@ export default function AdminPanelScreen() {
               preview: qualityUrls.preview,
             };
             updateData.duration_ms = Math.round(uploadResult.duration * 1000);
-
-            setEditAudioUploading(false);
-            toast.success("New audio uploaded successfully!");
+            setUploadStep("Saving to database...");
           } else {
             // Only update audio URLs if manually edited
             if (formData.song.audio_url)
@@ -676,6 +679,8 @@ export default function AdminPanelScreen() {
             insertData.audio_url = formData.song.audio_url;
           if (formData.song.preview_url)
             insertData.preview_url = formData.song.preview_url;
+          if (formData.song.lyrics.trim())
+            insertData.lyrics = formData.song.lyrics.trim();
 
           const { data, error: insertError } = await supabase
             .from("songs")
@@ -735,6 +740,7 @@ export default function AdminPanelScreen() {
       toast.error("Failed to save item", { description: error.message });
     } finally {
       setLoading(false);
+      setUploadStep(null);
     }
   };
 
@@ -804,6 +810,7 @@ export default function AdminPanelScreen() {
           image_url: song.image_url || "",
           audio_url: song.audio_url || "",
           preview_url: song.preview_url || "",
+          lyrics: (song as any).lyrics || "",
         },
       }));
 
@@ -1804,7 +1811,7 @@ export default function AdminPanelScreen() {
           </Text>
           <TouchableOpacity
             onPress={pickEditAudioFile}
-            disabled={editAudioUploading}
+            disabled={loading}
             style={{
               backgroundColor: editAudioFile ? "#1a3a1a" : "#2a2a2a",
               borderWidth: 2,
@@ -1894,6 +1901,77 @@ export default function AdminPanelScreen() {
         (text) => updateFormField("song", "preview_url", text),
         "musical-notes",
       )}
+
+      {/* LRC Lyrics */}
+      <View style={{ marginBottom: 16 }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+            marginLeft: 4,
+          }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Ionicons name="musical-notes-outline" size={16} color="#1DB954" />
+            <Text
+              style={{
+                color: "#B3B3B3",
+                fontSize: 13,
+                fontFamily: "CircularStd",
+              }}
+            >
+              Synced Lyrics (LRC format)
+            </Text>
+          </View>
+          {formData.song.lyrics.trim().length > 0 && (
+            <TouchableOpacity
+              onPress={() => updateFormField("song", "lyrics", "")}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="close-circle" size={18} color="#7A7A7A" />
+            </TouchableOpacity>
+          )}
+        </View>
+        <View
+          style={{
+            backgroundColor: "#282828",
+            borderRadius: 8,
+            padding: 14,
+            borderWidth: formData.song.lyrics.trim() ? 1 : 0,
+            borderColor: "#1DB954",
+          }}
+        >
+          <TextInput
+            placeholder={`[00:12.50] First lyric line\n[00:15.80] Second lyric line\n[00:19.20] ...`}
+            placeholderTextColor="#4a4a4a"
+            value={formData.song.lyrics}
+            onChangeText={(text) => updateFormField("song", "lyrics", text)}
+            multiline
+            numberOfLines={8}
+            textAlignVertical="top"
+            style={{
+              color: "#FFFFFF",
+              fontSize: 13,
+              fontFamily: "CircularStd",
+              minHeight: 140,
+              lineHeight: 20,
+            }}
+          />
+        </View>
+        <Text
+          style={{
+            color: "#535353",
+            fontSize: 11,
+            fontFamily: "CircularStd",
+            marginTop: 6,
+            marginLeft: 4,
+          }}
+        >
+          Paste LRC format. Leave empty to auto-fetch from LRCLIB.
+        </Text>
+      </View>
     </Animated.View>
   );
 
@@ -2353,6 +2431,7 @@ export default function AdminPanelScreen() {
           setEditAudioFile(null);
           setSongCredits([]);
           setSongSources([]);
+          setUploadStep(null);
           setFormData(INITIAL_FORM_DATA);
         }}
         activeOpacity={0.7}
@@ -2409,11 +2488,26 @@ export default function AdminPanelScreen() {
           justifyContent: "center",
           gap: 8,
           marginTop: 8,
-          opacity: loading ? 0.7 : 1,
+          opacity: loading ? 0.85 : 1,
         }}
       >
         {loading ? (
-          <LoadingDots />
+          <View style={{ alignItems: "center", gap: 6 }}>
+            <LoadingDots />
+            {uploadStep ? (
+              <Text
+                style={{
+                  color: "#000000",
+                  fontSize: 12,
+                  fontFamily: "CircularStd",
+                  fontWeight: "500",
+                  marginTop: 4,
+                }}
+              >
+                {uploadStep}
+              </Text>
+            ) : null}
+          </View>
         ) : (
           <>
             <Ionicons
@@ -2445,6 +2539,7 @@ export default function AdminPanelScreen() {
             setEditAudioFile(null);
             setSongCredits([]);
             setSongSources([]);
+            setUploadStep(null);
             setFormData(INITIAL_FORM_DATA);
           }}
           activeOpacity={0.7}

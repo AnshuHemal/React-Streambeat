@@ -33,6 +33,7 @@ type Song = {
   song_artists?: { id: string; name: string; image_url: string | null }[];
   audio_url: string | null;
   preview_url: string | null;
+  lyrics?: string | null;
 };
 
 type AlbumArtist = {
@@ -164,7 +165,7 @@ export default function AlbumDetailScreen() {
         const { data: songsData, error: songsError } = await supabase
           .from("songs")
           .select(
-            "id, title, duration_ms, track_number, audio_url, preview_url, song_artists(artists(id, name, image_url))",
+            "id, title, duration_ms, track_number, audio_url, preview_url, lyrics, song_artists(artists(id, name, image_url))",
           )
           .eq("album_id", albumId)
           .eq("is_active", true)
@@ -446,9 +447,19 @@ export default function AlbumDetailScreen() {
         }}
       >
         <View className="flex-1">
-          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2, paddingRight: 8 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 2,
+              paddingRight: 8,
+            }}
+          >
             {isCurrentSong && (
-              <PlayingIndicator isPlaying={isPlaying} style={{ marginRight: 6 }} />
+              <PlayingIndicator
+                isPlaying={isPlaying}
+                style={{ marginRight: 6 }}
+              />
             )}
             <Text
               className={`text-[15px] font-CircularStd font-medium ${
