@@ -39,9 +39,10 @@ export default function OnboardingArtistsScreen() {
       .from("artists")
       .select("id, slug, name, image_url")
       .eq("is_active", true)
-      .order("sort_order")
       .then(({ data }) => {
-        setArtists(data ?? []);
+        // Shuffle for random order on each visit
+        const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
+        setArtists(shuffled);
         setLoading(false);
       });
   }, []);
