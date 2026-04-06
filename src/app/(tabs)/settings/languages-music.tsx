@@ -1,3 +1,4 @@
+import LoadingDots from "@/components/LoadingDots";
 import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -154,7 +155,7 @@ export default function LanguagesMusicScreen() {
         <View
           style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
         >
-          <ActivityIndicator color="#1DB954" size="large" />
+          <LoadingDots />
         </View>
       ) : (
         <ScrollView

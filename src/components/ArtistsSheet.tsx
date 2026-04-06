@@ -1,5 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
+import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import React, { useEffect, useRef } from "react";
 import {
     Animated,
@@ -32,6 +34,8 @@ type Props = {
 export default function ArtistsSheet({ visible, onClose, artists }: Props) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile } = useAuth();
+  const { setIsExpanded } = useMusicPlayer();
   const translateY = useRef(new Animated.Value(SCREEN_H)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragY = useRef(new Animated.Value(0)).current;
@@ -221,6 +225,7 @@ export default function ArtistsSheet({ visible, onClose, artists }: Props) {
               activeOpacity={0.7}
               onPress={() => {
                 onClose();
+                setIsExpanded(false);
                 router.push(`/artist/${artist.id}` as any);
               }}
               style={{

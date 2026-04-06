@@ -1,6 +1,9 @@
+import ArtistsSheet from "@/components/ArtistsSheet";
+import SongOptionsSheet from "@/components/SongOptionsSheet";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import { useBluetoothDevice } from "@/hooks/useAudioDevice";
 import { usePlayerColor } from "@/hooks/usePlayerColor";
+import { fetchSongCredits, ResolvedCredit, SongCreditsPayload } from "@/services/credits";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
@@ -16,13 +19,13 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArtistCard } from "./ArtistCard";
 import { Controls } from "./Controls";
+import { CreditsCard } from "./CreditsCard";
+import CreditsSheet from "./CreditsSheet";
 import { LyricsCard } from "./LyricsCard";
 import { MiniProgressBar } from "./ProgressBar";
 import { SeekBar } from "./SeekBar";
 import { SleepTimerSheet } from "./SleepTimerSheet";
 import { StickyHeader } from "./StickyHeader";
-import SongOptionsSheet from "@/components/SongOptionsSheet";
-import ArtistsSheet from "@/components/ArtistsSheet";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const MINI_H = 64;
@@ -52,6 +55,12 @@ function PlayerComponent() {
   >(null);
   const [showSongOptions, setShowSongOptions] = useState(false);
   const [showArtistsSheet, setShowArtistsSheet] = useState(false);
+  const [showCreditsSheet, setShowCreditsSheet] = useState(false);
+  const [fetchedArtists, setFetchedArtists] = useState<any[]>([]);
+  const [creditsPayload, setCreditsPayload] = useState<SongCreditsPayload>({
+    credits: [],
+    sources: [],
+  });
 
   const bgColor = usePlayerColor(currentSong?.image_url);
 
@@ -62,7 +71,7 @@ function PlayerComponent() {
         // Only trigger if pulling down from the top of the scrollview
         return (
           scrollYRaw.current <= 0 &&
-          gestureState.dy > 5 &&
+          gestureState.dy > 20 &&
           Math.abs(gestureState.dx) < Math.abs(gestureState.dy)
         );
       },
@@ -116,9 +125,10 @@ function PlayerComponent() {
 
   useEffect(() => {
     if (!currentSong) return;
-    const fromCtx = currentSong.artists?.[0]?.image_url;
-    if (fromCtx) {
-      setArtistImage(fromCtx);
+    const fromCtx = currentSong.artists;
+    if (fromCtx && fromCtx.length > 0) {
+      setArtistImage(fromCtx[0]?.image_url || "");
+      setFetchedArtists(fromCtx);
       return;
     }
     (async () => {
@@ -126,17 +136,31 @@ function PlayerComponent() {
         const { supabase } = await import("@/lib/supabase");
         const { data } = await supabase
           .from("song_artists")
-          .select("artists(image_url)")
-          .eq("song_id", currentSong.id)
-          .limit(1)
-          .single();
-        setArtistImage(
-          (data as any)?.artists?.image_url || currentSong.image_url || "",
-        );
+          .select("artists(id, name, image_url)")
+          .eq("song_id", currentSong.id);
+
+        if (data && data.length > 0) {
+          const valid = data.map((d: any) => d.artists).filter(Boolean);
+          setFetchedArtists(valid);
+          setArtistImage(valid[0]?.image_url || currentSong.image_url || "");
+        } else {
+          setFetchedArtists([]);
+          setArtistImage(currentSong.image_url || "");
+        }
       } catch {
+        setFetchedArtists([]);
         setArtistImage(currentSong.image_url || "");
       }
     })();
+  }, [currentSong?.id]);
+
+  // Fetch real credits from DB whenever the song changes
+  useEffect(() => {
+    if (!currentSong?.id) {
+      setCreditsPayload({ credits: [], sources: [] });
+      return;
+    }
+    fetchSongCredits(currentSong.id).then(setCreditsPayload);
   }, [currentSong?.id]);
 
   useEffect(() => {
@@ -149,13 +173,45 @@ function PlayerComponent() {
 
   if (!currentSong) return null;
 
+  const resolvedArtists =
+    fetchedArtists.length > 0 ? fetchedArtists : currentSong.artists || [];
+
   const artistName =
     currentSong.artist_name ||
-    currentSong.artists?.map((a: any) => a.name).join(", ") ||
+    resolvedArtists.map((a: any) => a.name).join(", ") ||
     "Unknown Artist";
   const firstArtistName =
-    currentSong.artists?.[0]?.name || artistName.split(",")[0].trim();
-  const firstArtistImage = artistImage || currentSong.image_url || "";
+    resolvedArtists[0]?.name || artistName.split(",")[0].trim();
+  const firstArtistImage =
+    typeof artistImage === "string" && artistImage
+      ? artistImage
+      : currentSong.image_url || "";
+
+  // Build credits array — use real DB credits when available, fall back to artist list
+  const creditsData: ResolvedCredit[] =
+    creditsPayload.credits.length > 0
+      ? creditsPayload.credits
+      : resolvedArtists.length > 0
+        ? resolvedArtists.map((a: any, i: number) => ({
+            artistId: a.id,
+            name: a.name,
+            roles:
+              i === 0
+                ? "Main Artist • Author • Composer"
+                : i === 1
+                  ? "Main Artist • Producer"
+                  : "Main Artist • Author",
+          }))
+        : artistName.split(",").map((n: string, i: number) => ({
+            artistId: `unknown-${i}`,
+            name: n.trim(),
+            roles:
+              i === 0
+                ? "Main Artist • Author • Composer"
+                : i === 1
+                  ? "Main Artist • Producer"
+                  : "Main Artist • Author",
+          }));
 
   // Animations
   const miniOpacity = expandAnim.interpolate({
@@ -412,6 +468,7 @@ function PlayerComponent() {
               paddingTop: insets.top + 24,
               paddingBottom: 12,
             }}
+            {...panResponder.panHandlers}
           >
             <TouchableOpacity onPress={toggleExpand} style={{ padding: 8 }}>
               <Image
@@ -598,9 +655,13 @@ function PlayerComponent() {
 
             <LyricsCard bgColor={bgColor} />
             <ArtistCard
-              artistName={artistName}
+              artistName={firstArtistName}
               artistImage={firstArtistImage}
               songTitle={currentSong.title}
+            />
+            <CreditsCard
+              credits={creditsData}
+              onShowAll={() => setShowCreditsSheet(true)}
             />
           </View>
         </Animated.ScrollView>
@@ -619,14 +680,44 @@ function PlayerComponent() {
         onShowArtists={() => setShowArtistsSheet(true)}
         songTitle={currentSong.title}
         artistName={artistName}
-        albumTitle={currentSong.album_title || "Unknown Album"}
-        imageUrl={currentSong.image_url || null}
+        albumTitle={currentSong.album_title || ""}
+        imageUrl={currentSong.image_url}
+        artists={resolvedArtists.map((a: any) => ({
+          id: a.id || `mock-${a.name}`,
+          name: a.name,
+          image_url: a.image_url ?? null,
+        }))}
       />
 
       <ArtistsSheet
         visible={showArtistsSheet}
         onClose={() => setShowArtistsSheet(false)}
-        artists={currentSong.artists || [{ id: "mock", name: artistName, image_url: firstArtistImage }]}
+        artists={
+          resolvedArtists.length > 0
+            ? resolvedArtists.map((a: any) => ({
+                id: a.id,
+                name: a.name,
+                image_url: a.image_url ?? null,
+              }))
+            : [
+                {
+                  id: "mock",
+                  name: firstArtistName,
+                  image_url: firstArtistImage,
+                },
+              ]
+        }
+      />
+
+      <CreditsSheet
+        visible={showCreditsSheet}
+        onClose={() => setShowCreditsSheet(false)}
+        songTitle={currentSong.title}
+        artistNames={creditsData.map((c) => c.name).join(" • ")}
+        payload={{
+          credits: creditsData,
+          sources: creditsPayload.sources,
+        }}
       />
     </>
   );

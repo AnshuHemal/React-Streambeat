@@ -1,3 +1,4 @@
+import LoadingDots from "@/components/LoadingDots";
 import { getCountrySelection } from "@/constants/countryStore";
 import usePhoneAuth from "@/hooks/usePhoneAuth";
 import { Ionicons } from "@expo/vector-icons";
@@ -126,7 +127,7 @@ export default function PhoneAuthScreen() {
                   activeOpacity={0.8}
                 >
                   {loading ? (
-                    <ActivityIndicator color="black" />
+                    <LoadingDots />
                   ) : (
                     <Text className="text-black font-CircularStd text-lg">
                       Next

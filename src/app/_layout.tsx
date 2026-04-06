@@ -8,7 +8,7 @@ import { Stack, useRouter } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
-import { Platform, Text, TextInput } from "react-native";
+import { Platform, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 import "../../global.css";
@@ -84,28 +84,30 @@ export default function RootLayout() {
             </Stack>
             <PersistentTabBar />
             <MiniPlayer />
-            <Toaster
-              position="bottom-center"
-              toastOptions={{
-                style: {
-                  backgroundColor: "#1e1e1e",
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: "#2a2a2a",
-                },
-                titleStyle: {
-                  color: "#ffffff",
-                  fontFamily: "CircularStd",
-                  fontSize: 14,
-                  fontWeight: "600",
-                },
-                descriptionStyle: {
-                  color: "#a7a7a7",
-                  fontFamily: "CircularStd",
-                  fontSize: 12,
-                },
-              }}
-            />
+            <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 99999, elevation: 99999 }} pointerEvents="box-none">
+              <Toaster
+                position="bottom-center"
+                toastOptions={{
+                  style: {
+                    backgroundColor: "#1e1e1e",
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: "#2a2a2a",
+                  },
+                  titleStyle: {
+                    color: "#ffffff",
+                    fontFamily: "CircularStd",
+                    fontSize: 14,
+                    fontWeight: "600",
+                  },
+                  descriptionStyle: {
+                    color: "#a7a7a7",
+                    fontFamily: "CircularStd",
+                    fontSize: 12,
+                  },
+                }}
+              />
+            </View>
           </NavigationGuard>
         </AuthProvider>
       </MusicPlayerProvider>
