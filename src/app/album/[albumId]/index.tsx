@@ -1,6 +1,7 @@
 import AlbumOptionsSheet from "@/components/AlbumOptionsSheet";
 import ArtistsSheet from "@/components/ArtistsSheet";
 import LoadingDots from "@/components/LoadingDots";
+import PlayingIndicator from "@/components/PlayingIndicator";
 import ShuffleSheet from "@/components/ShuffleSheet";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
@@ -445,15 +446,19 @@ export default function AlbumDetailScreen() {
         }}
       >
         <View className="flex-1">
-          <Text
-            className={`text-[15px] font-CircularStd font-medium mb-0.5 ${
-              isCurrentSong ? "text-[#1DB954]" : "text-white"
-            }`}
-            numberOfLines={1}
-          >
-            {isCurrentSong && isPlaying ? "▶ " : ""}
-            {item.title}
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2, paddingRight: 8 }}>
+            {isCurrentSong && (
+              <PlayingIndicator isPlaying={isPlaying} style={{ marginRight: 6 }} />
+            )}
+            <Text
+              className={`text-[15px] font-CircularStd font-medium ${
+                isCurrentSong ? "text-[#1DB954]" : "text-white"
+              }`}
+              numberOfLines={1}
+            >
+              {item.title}
+            </Text>
+          </View>
           <Text
             className="text-white/60 text-[13px] font-CircularStd"
             numberOfLines={1}

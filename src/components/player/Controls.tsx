@@ -25,12 +25,13 @@ export const Controls = React.memo(function Controls({
         marginBottom: 24,
       }}
     >
-      <TouchableOpacity>
+      <TouchableOpacity style={{ alignItems: "center" }}>
         <Image
           source={require("@/assets/images/ico-32-shuffle.png")}
           style={{ width: 28, height: 28, tintColor: "#1DB954" }}
           contentFit="contain"
         />
+        <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: "#1DB954"}} />
       </TouchableOpacity>
       <TouchableOpacity onPress={skipToPrevious}>
         <Image

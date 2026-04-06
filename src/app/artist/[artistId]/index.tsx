@@ -1314,14 +1314,28 @@ export default function ArtistScreen() {
             }}
           >
             {/* Artist Image */}
-            <Image
-              source={{ uri: artist?.image_url || "" }}
-              style={{
-                width: "100%",
-                height: 240,
-              }}
-              resizeMode="cover"
-            />
+            {artist?.image_url ? (
+              <Image
+                source={{ uri: artist.image_url }}
+                style={{
+                  width: "100%",
+                  height: 240,
+                }}
+                resizeMode="cover"
+              />
+            ) : (
+              <View 
+                style={{
+                  width: "100%",
+                  height: 240,
+                  backgroundColor: "#2a2a2a",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                <Ionicons name="person" size={80} color="#535353" />
+              </View>
+            )}
             {/* Info Row */}
             <View
               style={{
@@ -1434,14 +1448,20 @@ export default function ArtistScreen() {
                     overflow: "hidden",
                   }}
                 >
-                  <Image
-                    source={{ uri: playlist.image_url || "" }}
-                    style={{
-                      width: 144,
-                      height: 144,
-                    }}
-                    resizeMode="cover"
-                  />
+                  {playlist.image_url ? (
+                    <Image
+                      source={{ uri: playlist.image_url }}
+                      style={{
+                        width: 144,
+                        height: 144,
+                      }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={{ width: 144, height: 144, backgroundColor: "#2a2a2a", alignItems: "center", justifyContent: "center" }}>
+                      <Ionicons name="musical-note" size={40} color="#535353" />
+                    </View>
+                  )}
                 </View>
                 <Text
                   style={{

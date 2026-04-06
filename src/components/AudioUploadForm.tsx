@@ -1,23 +1,26 @@
 import { supabase } from "@/lib/supabase";
+import { CreditDraft, saveSongCredits, SourceDraft } from "@/services/credits";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { toast } from "sonner-native";
 import {
-    AudioUploadResult,
-    generateAudioQualityUrls,
-    uploadAudioToCloudinary,
+  AudioUploadResult,
+  generateAudioQualityUrls,
+  uploadAudioToCloudinary,
 } from "../services/cloudinary";
+import CreditsEditor from "./CreditsEditor";
+import LoadingDots from "./LoadingDots";
 
 interface Artist {
   id: string;
@@ -64,6 +67,9 @@ export default function AudioUploadForm({
     image_url: "",
   });
 
+  const [credits, setCredits] = useState<CreditDraft[]>([]);
+  const [sources, setSources] = useState<SourceDraft[]>([]);
+
   const [selectedFile, setSelectedFile] = useState<{
     uri: string;
     name: string;
@@ -77,7 +83,7 @@ export default function AudioUploadForm({
 
   const filteredArtists = artistSearchQuery.trim()
     ? artists.filter((a) =>
-        a.name.toLowerCase().includes(artistSearchQuery.toLowerCase())
+        a.name.toLowerCase().includes(artistSearchQuery.toLowerCase()),
       )
     : artists;
 
@@ -174,12 +180,12 @@ export default function AudioUploadForm({
           title: formData.title,
           artist_id: formData.primary_artist_id || formData.artist_ids[0],
           album_id: formData.album_id || undefined,
-        }
+        },
       );
 
       setUploadProgress(50);
 
-        // Generate quality URLs
+      // Generate quality URLs
       const qualityUrls = generateAudioQualityUrls(uploadResult.public_id);
 
       // Insert into database
@@ -237,6 +243,19 @@ export default function AudioUploadForm({
         }
       }
 
+      setUploadProgress(90);
+
+      // Save credits if any were added
+      if (songData && (credits.length > 0 || sources.length > 0)) {
+        try {
+          await saveSongCredits(songData.id, credits, sources);
+        } catch (creditsErr: any) {
+          toast.warning("Song saved but credits failed", {
+            description: creditsErr.message,
+          });
+        }
+      }
+
       setUploadProgress(100);
 
       // Update album track count if album selected
@@ -270,8 +289,7 @@ export default function AudioUploadForm({
         .from("albums")
         .update({ total_tracks: count || 0 })
         .eq("id", albumId);
-    } catch (err) {
-    }
+    } catch (err) {}
   };
 
   const renderInput = (
@@ -279,7 +297,7 @@ export default function AudioUploadForm({
     value: string,
     onChangeText: (text: string) => void,
     icon: keyof typeof Ionicons.glyphMap,
-    keyboardType: "default" | "number-pad" = "default"
+    keyboardType: "default" | "number-pad" = "default",
   ) => (
     <View
       style={{
@@ -303,7 +321,12 @@ export default function AudioUploadForm({
         placeholderTextColor="#7A7A7A"
         value={value}
         onChangeText={onChangeText}
-        style={{ flex: 1, color: "#FFFFFF", fontSize: 15, fontFamily: "CircularStd" }}
+        style={{
+          flex: 1,
+          color: "#FFFFFF",
+          fontSize: 15,
+          fontFamily: "CircularStd",
+        }}
         keyboardType={keyboardType}
         autoCapitalize="sentences"
         selectionColor="#1DB954"
@@ -417,9 +440,11 @@ export default function AudioUploadForm({
         </TouchableOpacity>
 
         {/* Song Title */}
-        {renderInput("Song Title *", formData.title, (text) =>
-          setFormData((prev) => ({ ...prev, title: text })),
-          "musical-note"
+        {renderInput(
+          "Song Title *",
+          formData.title,
+          (text) => setFormData((prev) => ({ ...prev, title: text })),
+          "musical-note",
         )}
 
         {/* Artists Selection */}
@@ -603,9 +628,7 @@ export default function AudioUploadForm({
             contentContainerStyle={{ gap: 8 }}
           >
             <TouchableOpacity
-              onPress={() =>
-                setFormData((prev) => ({ ...prev, album_id: "" }))
-              }
+              onPress={() => setFormData((prev) => ({ ...prev, album_id: "" }))}
               style={{
                 paddingHorizontal: 14,
                 paddingVertical: 8,
@@ -663,26 +686,36 @@ export default function AudioUploadForm({
               (text) =>
                 setFormData((prev) => ({ ...prev, track_number: text })),
               "list",
-              "number-pad"
+              "number-pad",
             )}
           </View>
           <View style={{ flex: 1 }}>
             {renderInput(
               "Disc #",
               formData.disc_number,
-              (text) =>
-                setFormData((prev) => ({ ...prev, disc_number: text })),
+              (text) => setFormData((prev) => ({ ...prev, disc_number: text })),
               "disc",
-              "number-pad"
+              "number-pad",
             )}
           </View>
         </View>
 
         {/* Song Cover Image URL */}
-        {renderInput("Cover Image URL (Optional)", formData.image_url, (text) =>
-          setFormData((prev) => ({ ...prev, image_url: text })),
-          "image"
+        {renderInput(
+          "Cover Image URL (Optional)",
+          formData.image_url,
+          (text) => setFormData((prev) => ({ ...prev, image_url: text })),
+          "image",
         )}
+
+        {/* Credits */}
+        <CreditsEditor
+          credits={credits}
+          onCreditsChange={setCredits}
+          sources={sources}
+          onSourcesChange={setSources}
+          artists={artists}
+        />
 
         {/* Explicit Toggle */}
         <TouchableOpacity
@@ -756,8 +789,20 @@ export default function AudioUploadForm({
           </Text>
           <View style={{ flexDirection: "row", gap: 12 }}>
             {[
-              { label: "Medium", kbps: "192kbps", desc: "Regular", color: "#1DB954", flex: 1 },
-              { label: "High", kbps: "320kbps", desc: "Premium", color: "#535353", flex: 1 },
+              {
+                label: "Medium",
+                kbps: "192kbps",
+                desc: "Regular",
+                color: "#1DB954",
+                flex: 1,
+              },
+              {
+                label: "High",
+                kbps: "320kbps",
+                desc: "Premium",
+                color: "#535353",
+                flex: 1,
+              },
             ].map((quality) => (
               <View
                 key={quality.label}
@@ -863,7 +908,7 @@ export default function AudioUploadForm({
           }}
         >
           {uploading ? (
-            <ActivityIndicator color="#000000" size="small" />
+            <LoadingDots />
           ) : (
             <Text
               style={{

@@ -1,33 +1,41 @@
 import { ArtistCreationModal } from "@/components/ArtistCreationModal";
 import AudioUploadForm from "@/components/AudioUploadForm";
 import BottomDialog from "@/components/BottomDialog";
+import CreditsEditor from "@/components/CreditsEditor";
+import LoadingDots from "@/components/LoadingDots";
 import { supabase } from "@/lib/supabase";
 import {
-    AudioUploadResult,
-    generateAudioQualityUrls,
-    uploadAudioToCloudinary,
+  AudioUploadResult,
+  generateAudioQualityUrls,
+  uploadAudioToCloudinary,
 } from "@/services/cloudinary";
+import {
+  CreditDraft,
+  loadCreditsForEdit,
+  saveSongCredits,
+  SourceDraft,
+} from "@/services/credits";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
-    DateTimePickerEvent,
+  DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import * as SystemUI from "expo-system-ui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    FlatList,
-    Image,
-    KeyboardAvoidingView,
-    LayoutAnimation,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Animated,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -139,6 +147,10 @@ export default function AdminPanelScreen() {
     size: number;
   } | null>(null);
   const [editAudioUploading, setEditAudioUploading] = useState(false);
+
+  // Credits for the song form (create + edit)
+  const [songCredits, setSongCredits] = useState<CreditDraft[]>([]);
+  const [songSources, setSongSources] = useState<SourceDraft[]>([]);
 
   // List data
   const [artistsList, setArtistsList] = useState<ArtistItem[]>([]);
@@ -635,6 +647,15 @@ export default function AdminPanelScreen() {
             await updateAlbumTrackCount(newAlbumId);
           }
 
+          // Save credits (replaces existing)
+          try {
+            await saveSongCredits(editingId, songCredits, songSources);
+          } catch (creditsErr: any) {
+            toast.warning("Song saved but credits failed", {
+              description: creditsErr.message,
+            });
+          }
+
           toast.success("Song updated successfully!");
         } else {
           const primaryArtistId =
@@ -684,6 +705,17 @@ export default function AdminPanelScreen() {
             toast.warning("Song created without artist links");
           }
 
+          // Save credits
+          if (data?.id && (songCredits.length > 0 || songSources.length > 0)) {
+            try {
+              await saveSongCredits(data.id, songCredits, songSources);
+            } catch (creditsErr: any) {
+              toast.warning("Song saved but credits failed", {
+                description: creditsErr.message,
+              });
+            }
+          }
+
           // Update album track count if album is selected
           if (formData.song.album_id) {
             await updateAlbumTrackCount(formData.song.album_id);
@@ -696,6 +728,8 @@ export default function AdminPanelScreen() {
       setViewMode("list");
       setEditingId(null);
       setEditAudioFile(null);
+      setSongCredits([]);
+      setSongSources([]);
       fetchListData();
     } catch (error: any) {
       toast.error("Failed to save item", { description: error.message });
@@ -772,6 +806,12 @@ export default function AdminPanelScreen() {
           preview_url: song.preview_url || "",
         },
       }));
+
+      // Load existing credits for this song
+      const { credits: existingCredits, sources: existingSources } =
+        await loadCreditsForEdit(song.id);
+      setSongCredits(existingCredits);
+      setSongSources(existingSources);
     }
 
     setEditingId(item.id);
@@ -1739,6 +1779,15 @@ export default function AdminPanelScreen() {
         "image",
       )}
 
+      {/* Credits */}
+      <CreditsEditor
+        credits={songCredits}
+        onCreditsChange={setSongCredits}
+        sources={songSources}
+        onSourcesChange={setSongSources}
+        artists={artists}
+      />
+
       {/* Audio File Upload - Only when editing */}
       {editingId && (
         <View style={{ marginBottom: 16 }}>
@@ -2257,7 +2306,7 @@ export default function AdminPanelScreen() {
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
-          <ActivityIndicator color="#1DB954" size="large" />
+          <LoadingDots />
         </View>
       ) : (
         <FlatList
@@ -2302,6 +2351,8 @@ export default function AdminPanelScreen() {
           setViewMode("list");
           setEditingId(null);
           setEditAudioFile(null);
+          setSongCredits([]);
+          setSongSources([]);
           setFormData(INITIAL_FORM_DATA);
         }}
         activeOpacity={0.7}
@@ -2362,7 +2413,7 @@ export default function AdminPanelScreen() {
         }}
       >
         {loading ? (
-          <ActivityIndicator color="#000000" size="small" />
+          <LoadingDots />
         ) : (
           <>
             <Ionicons
@@ -2392,6 +2443,8 @@ export default function AdminPanelScreen() {
             setViewMode("list");
             setEditingId(null);
             setEditAudioFile(null);
+            setSongCredits([]);
+            setSongSources([]);
             setFormData(INITIAL_FORM_DATA);
           }}
           activeOpacity={0.7}

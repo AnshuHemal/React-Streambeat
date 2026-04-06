@@ -1,3 +1,4 @@
+import LoadingDots from "@/components/LoadingDots";
 import useEmailAuth from "@/hooks/useEmailAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -108,7 +109,7 @@ export default function LoginScreen() {
               activeOpacity={0.85}
             >
               {loading ? (
-                <ActivityIndicator color="black" />
+                <LoadingDots />
               ) : (
                 <Text className="text-black font-CircularStd text-base">
                   Log in

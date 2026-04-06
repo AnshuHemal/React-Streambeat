@@ -390,7 +390,7 @@ export default function SearchInputScreen() {
 
         {loading ? (
           <ActivityIndicator size="small" color="#1DB954" />
-        ) : query.length > 0 ? (
+        ) : query.length > 2 ? (
           <TouchableOpacity
             onPress={() => setQuery("")}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
