@@ -5,9 +5,13 @@ import { TouchableOpacity, View } from "react-native";
 
 type Props = {
   onLayout?: (y: number) => void;
+  onTimerPress?: () => void;
 };
 
-export const Controls = React.memo(function Controls({ onLayout }: Props) {
+export const Controls = React.memo(function Controls({
+  onLayout,
+  onTimerPress,
+}: Props) {
   const { isPlaying, togglePlayPause, skipToNext, skipToPrevious } =
     useMusicPlayer();
 
@@ -64,7 +68,7 @@ export const Controls = React.memo(function Controls({ onLayout }: Props) {
           contentFit="contain"
         />
       </TouchableOpacity>
-      <TouchableOpacity>
+      <TouchableOpacity onPress={onTimerPress}>
         <Image
           source={require("@/assets/images/ico-32-cronology.png")}
           style={{ width: 28, height: 28, tintColor: "#fff" }}

@@ -1,6 +1,15 @@
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Animated } from "react-native";
+import { PlayerPositionContext } from "./PlayerPositionContext";
 
 type Song = {
   id: string;
@@ -17,15 +26,6 @@ type Song = {
     high: string;
     preview: string;
   };
-};
-
-type PlayerState = {
-  currentSong: Song | null;
-  isPlaying: boolean;
-  position: number;
-  duration: number;
-  isLoading: boolean;
-  isBuffering: boolean;
 };
 
 type MusicPlayerContextType = {
@@ -51,9 +51,15 @@ type MusicPlayerContextType = {
   setQueue: (songs: Song[], startIndex?: number) => void;
 };
 
-const MusicPlayerContext = createContext<MusicPlayerContextType | undefined>(undefined);
+const MusicPlayerContext = createContext<MusicPlayerContextType | undefined>(
+  undefined,
+);
 
-export function MusicPlayerProvider({ children }: { children: React.ReactNode }) {
+export function MusicPlayerProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
@@ -67,8 +73,15 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   const [optimisticIsPlaying, setOptimisticIsPlaying] = useState(false);
   const isTogglingRef = useRef(false);
   const lastToggleTimeRef = useRef(0);
+  // Suppress playerStatus position updates briefly after a seek
+  const seekLockUntilRef = useRef(0);
+  // Stable ref for duration (used in seekTo without deps)
+  const durationRef = useRef(0);
 
-  const player = useAudioPlayer(audioSource || "");
+  // Use a stable player — never pass empty string, use replace() for source changes
+  const player = useAudioPlayer(null);
+  const playerRef = useRef(player);
+  playerRef.current = player;
   const playerStatus = useAudioPlayerStatus(player);
 
   const expandAnim = useRef(new Animated.Value(0)).current;
@@ -79,18 +92,24 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     if (playerStatus) {
       setIsPlaying(playerStatus.playing);
       setIsBuffering(playerStatus.isBuffering ?? false);
-      
+
       const now = Date.now();
-      if (now - lastUpdateRef.current > 500) {
+      if (now - lastUpdateRef.current > 500 && now > seekLockUntilRef.current) {
         setPosition(playerStatus.currentTime * 1000);
         lastUpdateRef.current = now;
       }
-      
+
       const newDuration = playerStatus.duration * 1000;
-      if (Math.abs(newDuration - duration) > 1000) {
+      // Prevent duration from incorrectly resetting to 0 if native player momentarily loses track info
+      if (
+        !isNaN(newDuration) &&
+        newDuration > 0 &&
+        Math.abs(newDuration - duration) > 1000
+      ) {
         setDuration(newDuration);
+        durationRef.current = newDuration;
       }
-      
+
       const timeSinceLastToggle = Date.now() - lastToggleTimeRef.current;
       if (!isTogglingRef.current && timeSinceLastToggle > 300) {
         setOptimisticIsPlaying(playerStatus.playing);
@@ -98,9 +117,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     }
   }, [playerStatus, duration]);
 
-  // Handle playback completion
+  // Handle playback completion — guard against firing during seek lock
   useEffect(() => {
-    if (playerStatus?.didJustFinish) {
+    if (playerStatus?.didJustFinish && Date.now() > seekLockUntilRef.current) {
       skipToNext();
     }
   }, [playerStatus?.didJustFinish]);
@@ -121,35 +140,46 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
       setCurrentSong(song);
       setPosition(0);
       setDuration(song.duration_ms || 0);
+      durationRef.current = song.duration_ms || 0;
 
-      const audioUrl = song.audio_url || song.quality_urls?.medium || song.preview_url;
-      
+      const audioUrl =
+        song.audio_url || song.quality_urls?.medium || song.preview_url;
+
       if (!audioUrl) {
         setIsLoading(false);
         return;
       }
 
-      setAudioSource(audioUrl);
+      // Use replace() on the stable player instance — no hook re-creation
+      playerRef.current.replace({ uri: audioUrl });
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
     }
   }, []);
 
-  // Play when audio source changes
+  // Keep track of the last song we auto-played to prevent spamming play() when buffering finishes
+  const lastAutoPlayId = useRef<string | null>(null);
+
+  // Auto-play ONLY when a new song is loaded — not after seek/pause
   useEffect(() => {
-    if (audioSource && player) {
-      player.play();
+    if (
+      playerStatus?.isLoaded &&
+      currentSong &&
+      lastAutoPlayId.current !== currentSong.id
+    ) {
+      playerRef.current.play();
+      lastAutoPlayId.current = currentSong.id;
     }
-  }, [audioSource, player]);
+  }, [playerStatus?.isLoaded, currentSong?.id]);
 
   const togglePlayPause = useCallback(async () => {
     if (!player) return;
-    
+
     // Optimistic update - immediately toggle UI state
     const newPlayingState = !optimisticIsPlaying;
     setOptimisticIsPlaying(newPlayingState);
-    
+
     try {
       if (playerStatus?.playing) {
         player.pause();
@@ -166,26 +196,42 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     if (!player) return;
     try {
       player.pause();
-    } catch (error) {
-    }
+    } catch (error) {}
   }, [player]);
 
   const resume = useCallback(async () => {
     if (!player) return;
     try {
       player.play();
-    } catch (error) {
-    }
+    } catch (error) {}
   }, [player]);
 
-  const seekTo = useCallback(async (positionMillis: number) => {
-    if (!player) return;
-    try {
-      player.seekTo(positionMillis / 1000);
-      setPosition(positionMillis);
-    } catch (error) {
-    }
-  }, [player]);
+  const seekTo = useCallback(
+    async (positionMillis: number) => {
+      const p = playerRef.current;
+      if (!p || isNaN(positionMillis)) return;
+      try {
+        // Clamp to valid range carefully
+        const dur = durationRef.current;
+        const clamped = Math.max(
+          0,
+          Math.min(positionMillis, dur > 0 ? dur - 100 : positionMillis),
+        );
+
+        // Final sanity check before passing to Native (which expects seconds)
+        if (!isNaN(clamped)) {
+          p.seekTo(clamped / 1000);
+          setPosition(clamped);
+          // Lock position updates from playerStatus for 2s so audio engine catches up
+          seekLockUntilRef.current = Date.now() + 2000;
+          lastUpdateRef.current = Date.now();
+        }
+      } catch (error) {
+        console.error("[MusicPlayerContext] seek error:", error);
+      }
+    },
+    [], // no deps — uses refs only
+  );
 
   const setQueue = useCallback((songs: Song[], startIndex = 0) => {
     setPlayQueue(songs);
@@ -194,7 +240,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
 
   const skipToNext = useCallback(async () => {
     if (playQueue.length === 0 || currentIndex >= playQueue.length - 1) return;
-    
+
     const nextIndex = currentIndex + 1;
     setCurrentIndex(nextIndex);
     await playSong(playQueue[nextIndex]);
@@ -202,7 +248,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
 
   const skipToPrevious = useCallback(async () => {
     if (playQueue.length === 0 || currentIndex <= 0) return;
-    
+
     const prevIndex = currentIndex - 1;
     setCurrentIndex(prevIndex);
     await playSong(playQueue[prevIndex]);
@@ -235,10 +281,18 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     setQueue,
   };
 
+  // Position context value — memoized separately so it only updates on position/duration change
+  const positionValue = useMemo(
+    () => ({ position, duration }),
+    [position, duration],
+  );
+
   return (
-    <MusicPlayerContext.Provider value={value}>
-      {children}
-    </MusicPlayerContext.Provider>
+    <PlayerPositionContext.Provider value={positionValue}>
+      <MusicPlayerContext.Provider value={value}>
+        {children}
+      </MusicPlayerContext.Provider>
+    </PlayerPositionContext.Provider>
   );
 }
 
