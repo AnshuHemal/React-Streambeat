@@ -1,19 +1,27 @@
 import { ArtistCreationModal } from "@/components/ArtistCreationModal";
 import AudioUploadForm from "@/components/AudioUploadForm";
 import BottomDialog from "@/components/BottomDialog";
+import CreditsEditor from "@/components/CreditsEditor";
+import LoadingDots from "@/components/LoadingDots";
 import { supabase } from "@/lib/supabase";
 import {
   AudioUploadResult,
   generateAudioQualityUrls,
   uploadAudioToCloudinary,
 } from "@/services/cloudinary";
+import {
+  CreditDraft,
+  loadCreditsForEdit,
+  saveSongCredits,
+  SourceDraft,
+} from "@/services/credits";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import * as SystemUI from "expo-system-ui";
-import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -124,32 +132,6 @@ interface SongItem {
   preview_url?: string | null;
 }
 
-/**
- * Calls the Supabase edge function to extract the dominant color from an image URL.
- * Returns a hex color string or null if extraction fails.
- */
-async function extractAlbumColor(imageUrl: string): Promise<string | null> {
-  try {
-    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseKey) return null;
-
-    const res = await fetch(`${supabaseUrl}/functions/v1/extract-album-color`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ image_url: imageUrl }),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.color ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export default function AdminPanelScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("artist");
@@ -165,6 +147,10 @@ export default function AdminPanelScreen() {
     size: number;
   } | null>(null);
   const [editAudioUploading, setEditAudioUploading] = useState(false);
+
+  // Credits for the song form (create + edit)
+  const [songCredits, setSongCredits] = useState<CreditDraft[]>([]);
+  const [songSources, setSongSources] = useState<SourceDraft[]>([]);
 
   // List data
   const [artistsList, setArtistsList] = useState<ArtistItem[]>([]);
@@ -504,11 +490,6 @@ export default function AdminPanelScreen() {
           return;
         }
 
-        // Extract dominant color from image URL via edge function
-        const dominantColor = formData.album.image_url
-          ? await extractAlbumColor(formData.album.image_url)
-          : null;
-
         if (editingId) {
           const { error: updateError } = await supabase
             .from("albums")
@@ -517,7 +498,6 @@ export default function AdminPanelScreen() {
               album_type: formData.album.album_type,
               image_url: formData.album.image_url || null,
               release_date: formData.album.release_date || null,
-              ...(dominantColor ? { dominant_color: dominantColor } : {}),
             })
             .eq("id", editingId);
           if (updateError) throw updateError;
@@ -548,7 +528,6 @@ export default function AdminPanelScreen() {
               release_date: formData.album.release_date || null,
               artist_id: primaryArtistId,
               is_active: true,
-              ...(dominantColor ? { dominant_color: dominantColor } : {}),
             })
             .select("id")
             .single();
@@ -597,16 +576,18 @@ export default function AdminPanelScreen() {
             setEditAudioUploading(true);
             toast.info("Uploading new audio file...");
 
-            const uploadResult: AudioUploadResult = await uploadAudioToCloudinary(
-              editAudioFile.uri,
-              {
+            const uploadResult: AudioUploadResult =
+              await uploadAudioToCloudinary(editAudioFile.uri, {
                 title: formData.song.title,
-                artist_id: formData.song.primary_artist_id || formData.song.artist_ids[0],
+                artist_id:
+                  formData.song.primary_artist_id ||
+                  formData.song.artist_ids[0],
                 album_id: formData.song.album_id || undefined,
-              }
-            );
+              });
 
-            const qualityUrls = generateAudioQualityUrls(uploadResult.public_id);
+            const qualityUrls = generateAudioQualityUrls(
+              uploadResult.public_id,
+            );
 
             updateData.cloudinary_public_id = uploadResult.public_id;
             updateData.audio_url = qualityUrls.medium;
@@ -666,6 +647,15 @@ export default function AdminPanelScreen() {
             await updateAlbumTrackCount(newAlbumId);
           }
 
+          // Save credits (replaces existing)
+          try {
+            await saveSongCredits(editingId, songCredits, songSources);
+          } catch (creditsErr: any) {
+            toast.warning("Song saved but credits failed", {
+              description: creditsErr.message,
+            });
+          }
+
           toast.success("Song updated successfully!");
         } else {
           const primaryArtistId =
@@ -710,9 +700,20 @@ export default function AdminPanelScreen() {
               });
             } else {
               toast.success("Song created with artists!");
-             }
+            }
           } catch (err) {
             toast.warning("Song created without artist links");
+          }
+
+          // Save credits
+          if (data?.id && (songCredits.length > 0 || songSources.length > 0)) {
+            try {
+              await saveSongCredits(data.id, songCredits, songSources);
+            } catch (creditsErr: any) {
+              toast.warning("Song saved but credits failed", {
+                description: creditsErr.message,
+              });
+            }
           }
 
           // Update album track count if album is selected
@@ -727,6 +728,8 @@ export default function AdminPanelScreen() {
       setViewMode("list");
       setEditingId(null);
       setEditAudioFile(null);
+      setSongCredits([]);
+      setSongSources([]);
       fetchListData();
     } catch (error: any) {
       toast.error("Failed to save item", { description: error.message });
@@ -803,6 +806,12 @@ export default function AdminPanelScreen() {
           preview_url: song.preview_url || "",
         },
       }));
+
+      // Load existing credits for this song
+      const { credits: existingCredits, sources: existingSources } =
+        await loadCreditsForEdit(song.id);
+      setSongCredits(existingCredits);
+      setSongSources(existingSources);
     }
 
     setEditingId(item.id);
@@ -1770,6 +1779,15 @@ export default function AdminPanelScreen() {
         "image",
       )}
 
+      {/* Credits */}
+      <CreditsEditor
+        credits={songCredits}
+        onCreditsChange={setSongCredits}
+        sources={songSources}
+        onSourcesChange={setSongSources}
+        artists={artists}
+      />
+
       {/* Audio File Upload - Only when editing */}
       {editingId && (
         <View style={{ marginBottom: 16 }}>
@@ -1813,9 +1831,7 @@ export default function AdminPanelScreen() {
                 fontWeight: "600",
               }}
             >
-              {editAudioFile
-                ? editAudioFile.name
-                : "Select New MP3 (optional)"}
+              {editAudioFile ? editAudioFile.name : "Select New MP3 (optional)"}
             </Text>
           </TouchableOpacity>
           {editAudioFile && (
@@ -1860,7 +1876,8 @@ export default function AdminPanelScreen() {
               marginTop: 8,
             }}
           >
-            Leave empty to keep current audio. New file will generate Medium (192kbps) + High (320kbps) versions.
+            Leave empty to keep current audio. New file will generate Medium
+            (192kbps) + High (320kbps) versions.
           </Text>
         </View>
       )}
@@ -2184,7 +2201,9 @@ export default function AdminPanelScreen() {
         <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
           <TouchableOpacity
             onPress={() => {
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              LayoutAnimation.configureNext(
+                LayoutAnimation.Presets.easeInEaseOut,
+              );
               setEditingId(null);
               setFormData(INITIAL_FORM_DATA);
               setViewMode("form");
@@ -2215,7 +2234,9 @@ export default function AdminPanelScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              LayoutAnimation.configureNext(
+                LayoutAnimation.Presets.easeInEaseOut,
+              );
               setEditingId(null);
               setViewMode("audio-upload");
             }}
@@ -2247,7 +2268,9 @@ export default function AdminPanelScreen() {
       ) : (
         <TouchableOpacity
           onPress={() => {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            LayoutAnimation.configureNext(
+              LayoutAnimation.Presets.easeInEaseOut,
+            );
             setEditingId(null);
             setFormData(INITIAL_FORM_DATA);
             setViewMode("form");
@@ -2283,7 +2306,7 @@ export default function AdminPanelScreen() {
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
-          <ActivityIndicator color="#1DB954" size="large" />
+          <LoadingDots />
         </View>
       ) : (
         <FlatList
@@ -2328,6 +2351,8 @@ export default function AdminPanelScreen() {
           setViewMode("list");
           setEditingId(null);
           setEditAudioFile(null);
+          setSongCredits([]);
+          setSongSources([]);
           setFormData(INITIAL_FORM_DATA);
         }}
         activeOpacity={0.7}
@@ -2388,7 +2413,7 @@ export default function AdminPanelScreen() {
         }}
       >
         {loading ? (
-          <ActivityIndicator color="#000000" size="small" />
+          <LoadingDots />
         ) : (
           <>
             <Ionicons
@@ -2418,6 +2443,8 @@ export default function AdminPanelScreen() {
             setViewMode("list");
             setEditingId(null);
             setEditAudioFile(null);
+            setSongCredits([]);
+            setSongSources([]);
             setFormData(INITIAL_FORM_DATA);
           }}
           activeOpacity={0.7}
@@ -2494,18 +2521,23 @@ export default function AdminPanelScreen() {
               fontFamily: "CircularStd",
             }}
           >
-            {viewMode === "list" 
-              ? "View Mode" 
+            {viewMode === "list"
+              ? "View Mode"
               : viewMode === "audio-upload"
-              ? "Upload Mode"
-              : "Edit Mode"}
+                ? "Upload Mode"
+                : "Edit Mode"}
           </Text>
           <View
             style={{
               width: 8,
               height: 8,
               borderRadius: 4,
-              backgroundColor: viewMode === "list" ? "#1DB954" : viewMode === "audio-upload" ? "#3B82F6" : "#FFA500",
+              backgroundColor:
+                viewMode === "list"
+                  ? "#1DB954"
+                  : viewMode === "audio-upload"
+                    ? "#3B82F6"
+                    : "#FFA500",
             }}
           />
         </View>

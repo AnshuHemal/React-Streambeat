@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import LoadingDots from "./LoadingDots";
 
 interface ArtistCreationModalProps {
   visible: boolean;
@@ -217,7 +218,7 @@ export function ArtistCreationModal({ visible, onClose, onArtistCreated }: Artis
                 }}
               >
                 {loading ? (
-                  <ActivityIndicator color="#000000" size="small" />
+                  <LoadingDots />
                 ) : (
                   <Text
                     style={{
