@@ -1,12 +1,12 @@
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import { Animated } from "react-native";
 import { PlayerPositionContext } from "./PlayerPositionContext";
@@ -21,6 +21,7 @@ type Song = {
   audio_url: string | null;
   preview_url: string | null;
   duration_ms: number | null;
+  lyrics?: string | null;
   quality_urls?: {
     medium: string;
     high: string;

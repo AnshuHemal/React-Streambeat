@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { CreditDraft, saveSongCredits, SourceDraft } from "@/services/credits";
+import { fetchLyricsFromLrclib } from "@/services/lyrics";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
 import React, { useState } from "react";
@@ -48,6 +49,7 @@ interface SongFormData {
   disc_number: string;
   explicit: boolean;
   image_url: string;
+  lyrics: string;
 }
 
 export default function AudioUploadForm({
@@ -65,10 +67,12 @@ export default function AudioUploadForm({
     disc_number: "1",
     explicit: false,
     image_url: "",
+    lyrics: "",
   });
 
   const [credits, setCredits] = useState<CreditDraft[]>([]);
   const [sources, setSources] = useState<SourceDraft[]>([]);
+  const [fetchingLyrics, setFetchingLyrics] = useState(false);
 
   const [selectedFile, setSelectedFile] = useState<{
     uri: string;
@@ -152,6 +156,38 @@ export default function AudioUploadForm({
     });
   };
 
+  const handleAutoFetchLyrics = async () => {
+    if (!formData.title.trim()) {
+      toast.error("Enter a song title first");
+      return;
+    }
+    const artistName = formData.artist_ids
+      .map((id) => artists.find((a) => a.id === id)?.name)
+      .filter(Boolean)
+      .join(", ");
+    if (!artistName) {
+      toast.error("Select at least one artist first");
+      return;
+    }
+    setFetchingLyrics(true);
+    try {
+      const lrc = await fetchLyricsFromLrclib({
+        trackName: formData.title.trim(),
+        artistName,
+      });
+      if (lrc) {
+        setFormData((prev) => ({ ...prev, lyrics: lrc }));
+        toast.success("Lyrics fetched from LRCLIB");
+      } else {
+        toast.info("No lyrics found on LRCLIB");
+      }
+    } catch {
+      toast.error("Failed to fetch lyrics");
+    } finally {
+      setFetchingLyrics(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
       toast.error("Song title is required");
@@ -202,11 +238,11 @@ export default function AudioUploadForm({
         explicit: formData.explicit,
         image_url: formData.image_url.trim() || null,
         is_active: true,
+        lyrics: formData.lyrics.trim() || null,
         // Cloudinary data
         cloudinary_public_id: uploadResult.public_id,
-        audio_url: qualityUrls.medium, // Default to medium (192kbps)
-        preview_url: qualityUrls.preview, // 30sec preview
-        // Store both qualities as JSON
+        audio_url: qualityUrls.medium,
+        preview_url: qualityUrls.preview,
         quality_urls: {
           medium: qualityUrls.medium,
           high: qualityUrls.high,
@@ -716,6 +752,127 @@ export default function AudioUploadForm({
           onSourcesChange={setSources}
           artists={artists}
         />
+
+        {/* Lyrics */}
+        <View style={{ marginBottom: 16 }}>
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 8,
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
+              <Ionicons
+                name="musical-notes-outline"
+                size={16}
+                color="#1DB954"
+              />
+              <Text
+                style={{
+                  color: "#FFFFFF",
+                  fontSize: 14,
+                  fontFamily: "CircularStd",
+                  fontWeight: "600",
+                }}
+              >
+                Synced Lyrics (LRC)
+              </Text>
+            </View>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              {formData.lyrics.trim().length > 0 && (
+                <TouchableOpacity
+                  onPress={() =>
+                    setFormData((prev) => ({ ...prev, lyrics: "" }))
+                  }
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="close-circle" size={18} color="#7A7A7A" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                onPress={handleAutoFetchLyrics}
+                disabled={fetchingLyrics}
+                activeOpacity={0.7}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 4,
+                  backgroundColor: "#1a3a1a",
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: "#1DB954",
+                }}
+              >
+                {fetchingLyrics ? (
+                  <ActivityIndicator size="small" color="#1DB954" />
+                ) : (
+                  <Ionicons
+                    name="cloud-download-outline"
+                    size={14}
+                    color="#1DB954"
+                  />
+                )}
+                <Text
+                  style={{
+                    color: "#1DB954",
+                    fontSize: 12,
+                    fontFamily: "CircularStd",
+                    fontWeight: "600",
+                  }}
+                >
+                  {fetchingLyrics ? "Fetching..." : "Auto-fetch"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View
+            style={{
+              backgroundColor: "#282828",
+              borderRadius: 8,
+              padding: 14,
+              borderWidth: formData.lyrics.trim() ? 1 : 0,
+              borderColor: "#1DB954",
+            }}
+          >
+            <TextInput
+              placeholder={`[00:12.50] First lyric line\n[00:15.80] Second lyric line\n[00:19.20] ...`}
+              placeholderTextColor="#4a4a4a"
+              value={formData.lyrics}
+              onChangeText={(text) =>
+                setFormData((prev) => ({ ...prev, lyrics: text }))
+              }
+              multiline
+              numberOfLines={8}
+              textAlignVertical="top"
+              style={{
+                color: "#FFFFFF",
+                fontSize: 13,
+                fontFamily: "CircularStd",
+                minHeight: 140,
+                lineHeight: 20,
+              }}
+            />
+          </View>
+          <Text
+            style={{
+              color: "#535353",
+              fontSize: 11,
+              fontFamily: "CircularStd",
+              marginTop: 6,
+            }}
+          >
+            Paste LRC format or tap "Auto-fetch" to search LRCLIB.
+          </Text>
+        </View>
 
         {/* Explicit Toggle */}
         <TouchableOpacity
