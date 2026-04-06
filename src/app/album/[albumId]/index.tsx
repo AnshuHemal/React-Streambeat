@@ -4,7 +4,7 @@ import LoadingDots from "@/components/LoadingDots";
 import ShuffleSheet from "@/components/ShuffleSheet";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
-import { fallbackAlbumColor, useAlbumColor } from "@/hooks/useImageColor";
+import { usePlayerColor } from "@/hooks/usePlayerColor";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -46,7 +46,6 @@ type AlbumData = {
   title: string;
   album_type: string | null;
   image_url: string | null;
-  dominant_color: string | null;
   release_date: string | null;
   album_artists: { artists: AlbumArtist }[];
   songs: Song[];
@@ -75,15 +74,15 @@ export default function AlbumDetailScreen() {
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [showArtistsSheet, setShowArtistsSheet] = useState(false);
   const [showArtists, setShowArtists] = useState(false);
-  const [songOptionArtists, setSongOptionArtists] = useState<{ id: string; name: string; image_url: string | null }[]>([]);
+  const [songOptionArtists, setSongOptionArtists] = useState<
+    { id: string; name: string; image_url: string | null }[]
+  >([]);
 
   // ref to the action row for screen-relative measurement
   const actionRowRef = useRef<View>(null);
 
-  // Use pre-computed dominant color from DB, fallback to hash-based color
-  const _stored = useAlbumColor(album?.dominant_color);
-  const dominantColor =
-    _stored !== "#1a1a1a" ? _stored : fallbackAlbumColor(album?.id ?? "");
+  // Color from image URL — same palette hash as mini player
+  const dominantColor = usePlayerColor(album?.image_url);
   const insets = useSafeAreaInsets();
 
   // Where the button docks in the sticky header
@@ -142,9 +141,7 @@ export default function AlbumDetailScreen() {
       try {
         const { data: albumData, error: albumError } = await supabase
           .from("albums")
-          .select(
-            "id, title, album_type, image_url, dominant_color, release_date",
-          )
+          .select("id, title, album_type, image_url, release_date")
           .eq("id", albumId)
           .eq("is_active", true)
           .single();
@@ -427,17 +424,18 @@ export default function AlbumDetailScreen() {
 
   const renderSong = ({ item, index }: { item: Song; index: number }) => {
     const isCurrentSong = currentSong?.id === item.id;
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         className="flex-row items-center justify-between px-6 py-3"
         onPress={() => {
           // Set queue to all album songs and play this one
-          const songsWithAlbumData = album?.songs.map(song => ({
-            ...song,
-            album_title: album?.title,
-            image_url: album?.image_url,
-          })) || [];
+          const songsWithAlbumData =
+            album?.songs.map((song) => ({
+              ...song,
+              album_title: album?.title,
+              image_url: album?.image_url,
+            })) || [];
           setQueue(songsWithAlbumData, index);
           playSong({
             ...item,
@@ -470,7 +468,11 @@ export default function AlbumDetailScreen() {
             setSongOptionArtists(
               item.song_artists?.length
                 ? item.song_artists
-                : artists.map((a) => ({ id: a.id, name: a.name, image_url: a.image_url }))
+                : artists.map((a) => ({
+                    id: a.id,
+                    name: a.name,
+                    image_url: a.image_url,
+                  })),
             );
           }}
         >

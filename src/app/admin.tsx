@@ -3,31 +3,31 @@ import AudioUploadForm from "@/components/AudioUploadForm";
 import BottomDialog from "@/components/BottomDialog";
 import { supabase } from "@/lib/supabase";
 import {
-  AudioUploadResult,
-  generateAudioQualityUrls,
-  uploadAudioToCloudinary,
+    AudioUploadResult,
+    generateAudioQualityUrls,
+    uploadAudioToCloudinary,
 } from "@/services/cloudinary";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
-  DateTimePickerEvent,
+    DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
+import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import * as SystemUI from "expo-system-ui";
-import * as DocumentPicker from "expo-document-picker";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  Animated,
-  FlatList,
-  Image,
-  KeyboardAvoidingView,
-  LayoutAnimation,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Animated,
+    FlatList,
+    Image,
+    KeyboardAvoidingView,
+    LayoutAnimation,
+    Platform,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { toast } from "sonner-native";
@@ -122,32 +122,6 @@ interface SongItem {
   disc_number?: number | null;
   audio_url?: string | null;
   preview_url?: string | null;
-}
-
-/**
- * Calls the Supabase edge function to extract the dominant color from an image URL.
- * Returns a hex color string or null if extraction fails.
- */
-async function extractAlbumColor(imageUrl: string): Promise<string | null> {
-  try {
-    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseKey) return null;
-
-    const res = await fetch(`${supabaseUrl}/functions/v1/extract-album-color`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ image_url: imageUrl }),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.color ?? null;
-  } catch {
-    return null;
-  }
 }
 
 export default function AdminPanelScreen() {
@@ -504,11 +478,6 @@ export default function AdminPanelScreen() {
           return;
         }
 
-        // Extract dominant color from image URL via edge function
-        const dominantColor = formData.album.image_url
-          ? await extractAlbumColor(formData.album.image_url)
-          : null;
-
         if (editingId) {
           const { error: updateError } = await supabase
             .from("albums")
@@ -517,7 +486,6 @@ export default function AdminPanelScreen() {
               album_type: formData.album.album_type,
               image_url: formData.album.image_url || null,
               release_date: formData.album.release_date || null,
-              ...(dominantColor ? { dominant_color: dominantColor } : {}),
             })
             .eq("id", editingId);
           if (updateError) throw updateError;
@@ -548,7 +516,6 @@ export default function AdminPanelScreen() {
               release_date: formData.album.release_date || null,
               artist_id: primaryArtistId,
               is_active: true,
-              ...(dominantColor ? { dominant_color: dominantColor } : {}),
             })
             .select("id")
             .single();
@@ -597,16 +564,18 @@ export default function AdminPanelScreen() {
             setEditAudioUploading(true);
             toast.info("Uploading new audio file...");
 
-            const uploadResult: AudioUploadResult = await uploadAudioToCloudinary(
-              editAudioFile.uri,
-              {
+            const uploadResult: AudioUploadResult =
+              await uploadAudioToCloudinary(editAudioFile.uri, {
                 title: formData.song.title,
-                artist_id: formData.song.primary_artist_id || formData.song.artist_ids[0],
+                artist_id:
+                  formData.song.primary_artist_id ||
+                  formData.song.artist_ids[0],
                 album_id: formData.song.album_id || undefined,
-              }
-            );
+              });
 
-            const qualityUrls = generateAudioQualityUrls(uploadResult.public_id);
+            const qualityUrls = generateAudioQualityUrls(
+              uploadResult.public_id,
+            );
 
             updateData.cloudinary_public_id = uploadResult.public_id;
             updateData.audio_url = qualityUrls.medium;
@@ -710,7 +679,7 @@ export default function AdminPanelScreen() {
               });
             } else {
               toast.success("Song created with artists!");
-             }
+            }
           } catch (err) {
             toast.warning("Song created without artist links");
           }
@@ -1813,9 +1782,7 @@ export default function AdminPanelScreen() {
                 fontWeight: "600",
               }}
             >
-              {editAudioFile
-                ? editAudioFile.name
-                : "Select New MP3 (optional)"}
+              {editAudioFile ? editAudioFile.name : "Select New MP3 (optional)"}
             </Text>
           </TouchableOpacity>
           {editAudioFile && (
@@ -1860,7 +1827,8 @@ export default function AdminPanelScreen() {
               marginTop: 8,
             }}
           >
-            Leave empty to keep current audio. New file will generate Medium (192kbps) + High (320kbps) versions.
+            Leave empty to keep current audio. New file will generate Medium
+            (192kbps) + High (320kbps) versions.
           </Text>
         </View>
       )}
@@ -2184,7 +2152,9 @@ export default function AdminPanelScreen() {
         <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
           <TouchableOpacity
             onPress={() => {
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              LayoutAnimation.configureNext(
+                LayoutAnimation.Presets.easeInEaseOut,
+              );
               setEditingId(null);
               setFormData(INITIAL_FORM_DATA);
               setViewMode("form");
@@ -2215,7 +2185,9 @@ export default function AdminPanelScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              LayoutAnimation.configureNext(
+                LayoutAnimation.Presets.easeInEaseOut,
+              );
               setEditingId(null);
               setViewMode("audio-upload");
             }}
@@ -2247,7 +2219,9 @@ export default function AdminPanelScreen() {
       ) : (
         <TouchableOpacity
           onPress={() => {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            LayoutAnimation.configureNext(
+              LayoutAnimation.Presets.easeInEaseOut,
+            );
             setEditingId(null);
             setFormData(INITIAL_FORM_DATA);
             setViewMode("form");
@@ -2494,18 +2468,23 @@ export default function AdminPanelScreen() {
               fontFamily: "CircularStd",
             }}
           >
-            {viewMode === "list" 
-              ? "View Mode" 
+            {viewMode === "list"
+              ? "View Mode"
               : viewMode === "audio-upload"
-              ? "Upload Mode"
-              : "Edit Mode"}
+                ? "Upload Mode"
+                : "Edit Mode"}
           </Text>
           <View
             style={{
               width: 8,
               height: 8,
               borderRadius: 4,
-              backgroundColor: viewMode === "list" ? "#1DB954" : viewMode === "audio-upload" ? "#3B82F6" : "#FFA500",
+              backgroundColor:
+                viewMode === "list"
+                  ? "#1DB954"
+                  : viewMode === "audio-upload"
+                    ? "#3B82F6"
+                    : "#FFA500",
             }}
           />
         </View>
