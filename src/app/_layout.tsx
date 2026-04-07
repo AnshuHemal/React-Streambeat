@@ -86,6 +86,10 @@ export default function RootLayout() {
                   name="artist/[artistId]/index"
                   options={{ animation: "fade" }}
                 />
+                <Stack.Screen
+                  name="liked-songs/index"
+                  options={{ animation: "fade" }}
+                />
               </Stack>
               <PersistentTabBar />
               <MiniPlayer />
