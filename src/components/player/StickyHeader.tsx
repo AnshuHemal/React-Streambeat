@@ -1,4 +1,6 @@
+import { useLikedSongs } from "@/context/LikedSongsContext";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import React from "react";
 import { Animated, Text, TouchableOpacity, View } from "react-native";
@@ -19,7 +21,12 @@ export const StickyHeader = React.memo(function StickyHeader({
 }: Props) {
   const insets = useSafeAreaInsets();
   const { currentSong, isPlaying, togglePlayPause } = useMusicPlayer();
+  const { isLiked: isLikedFn, toggleLike, getScaleAnim } = useLikedSongs();
+
   if (!currentSong) return null;
+
+  const liked = isLikedFn(currentSong.id);
+  const scaleAnim = getScaleAnim(currentSong.id);
 
   return (
     <Animated.View
@@ -67,13 +74,17 @@ export const StickyHeader = React.memo(function StickyHeader({
       </View>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
         <TouchableOpacity
+          onPress={() => toggleLike(currentSong.id)}
+          activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Image
-            source={require("@/assets/images/ico-32-plus-circle.png")}
-            style={{ width: 26, height: 26 }}
-            contentFit="contain"
-          />
+          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+            <Ionicons
+              name={liked ? "checkmark-circle" : "add-circle-outline"}
+              size={26}
+              color={liked ? "#1DB954" : "#fff"}
+            />
+          </Animated.View>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={togglePlayPause}
