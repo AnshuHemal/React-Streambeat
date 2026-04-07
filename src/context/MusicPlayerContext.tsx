@@ -57,6 +57,8 @@ type MusicPlayerContextType = {
   playQueue: Song[];
   currentIndex: number;
   setQueue: (songs: Song[], startIndex?: number) => void;
+  /** Stops playback, clears the current song, and hides the player */
+  stopPlayer: () => void;
 };
 
 const MusicPlayerContext = createContext<MusicPlayerContextType | undefined>(
@@ -235,6 +237,24 @@ export function MusicPlayerProvider({
     playerRef.current?.play();
   }, []);
 
+  const stopPlayer = useCallback(() => {
+    // Pause native audio
+    playerRef.current?.pause();
+    // Reset all state — this hides the mini player (currentSong === null)
+    setCurrentSong(null);
+    setPosition(0);
+    setDuration(0);
+    setIsPlaying(false);
+    setIsExpanded(false);
+    setPlayQueue([]);
+    setCurrentIndex(0);
+    playQueueRef.current = [];
+    currentIndexRef.current = 0;
+    durationRef.current = 0;
+    seekLockUntilRef.current = 0;
+    lastPositionUpdateRef.current = 0;
+  }, []);
+
   const seekTo = useCallback(async (positionMillis: number) => {
     const p = playerRef.current;
     if (!p || isNaN(positionMillis)) return;
@@ -310,6 +330,7 @@ export function MusicPlayerProvider({
     playQueue,
     currentIndex,
     setQueue,
+    stopPlayer,
   };
 
   const positionValue = useMemo(

@@ -1,26 +1,27 @@
 import ArtistsSheet from "@/components/ArtistsSheet";
+import BottomDialog from "@/components/BottomDialog";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
 import { useLikedSongs } from "@/context/LikedSongsContext";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import { useBluetoothDevice } from "@/hooks/useAudioDevice";
 import { usePlayerColor } from "@/hooks/usePlayerColor";
 import {
-    fetchSongCredits,
-    ResolvedCredit,
-    SongCreditsPayload,
+  fetchSongCredits,
+  ResolvedCredit,
+  SongCreditsPayload,
 } from "@/services/credits";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    BackHandler,
-    Dimensions,
-    PanResponder,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  BackHandler,
+  Dimensions,
+  PanResponder,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArtistCard } from "./ArtistCard";
@@ -47,10 +48,37 @@ function PlayerComponent() {
     togglePlayPause,
     toggleExpand,
     setIsExpanded,
+    pause,
+    stopPlayer,
   } = useMusicPlayer();
 
   const slideAnim = useRef(new Animated.Value(0)).current;
-  const scrollY = useRef(new Animated.Value(0)).current;
+  // Holds the last known song so mini player content stays visible
+  // during the exit animation after currentSong is cleared
+  const [displaySong, setDisplaySong] = useState(currentSong);
+
+  useEffect(() => {
+    if (currentSong) {
+      // New song — update display immediately then spring in
+      setDisplaySong(currentSong);
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        friction: 10,
+        tension: 50,
+      }).start();
+    } else {
+      // Song cleared — slide out first, then clear display content
+      Animated.timing(slideAnim, {
+        toValue: MINI_H + 20,
+        duration: 280,
+        useNativeDriver: true,
+        easing: (t) => t * t * t,
+      }).start(() => {
+        setDisplaySong(null);
+      });
+    }
+  }, [currentSong]);
   const scrollYRaw = useRef(0);
   const [controlsY, setControlsY] = useState(0);
   const [artistImage, setArtistImage] = useState("");
@@ -62,6 +90,7 @@ function PlayerComponent() {
   const [showSongOptions, setShowSongOptions] = useState(false);
   const [showArtistsSheet, setShowArtistsSheet] = useState(false);
   const [showCreditsSheet, setShowCreditsSheet] = useState(false);
+  const [showStopDialog, setShowStopDialog] = useState(false);
   const [fetchedArtists, setFetchedArtists] = useState<any[]>([]);
   const [creditsPayload, setCreditsPayload] = useState<SongCreditsPayload>({
     credits: [],
@@ -114,14 +143,7 @@ function PlayerComponent() {
     }),
   ).current;
 
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: currentSong ? 0 : MINI_H + 10,
-      useNativeDriver: true,
-      friction: 10,
-      tension: 50,
-    }).start();
-  }, [currentSong]);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -182,13 +204,17 @@ function PlayerComponent() {
     return () => scrollY.removeListener(id);
   }, [controlsY]);
 
-  if (!currentSong) return null;
+  if (!displaySong) return null;
+
+  // activeSong: use live currentSong when available, fall back to displaySong
+  // during the exit animation so content doesn't flash away
+  const activeSong = currentSong ?? displaySong;
 
   const resolvedArtists =
-    fetchedArtists.length > 0 ? fetchedArtists : currentSong.artists || [];
+    fetchedArtists.length > 0 ? fetchedArtists : activeSong.artists || [];
 
   const artistName =
-    currentSong.artist_name ||
+    activeSong.artist_name ||
     resolvedArtists.map((a: any) => a.name).join(", ") ||
     "Unknown Artist";
   const firstArtistName =
@@ -196,7 +222,7 @@ function PlayerComponent() {
   const firstArtistImage =
     typeof artistImage === "string" && artistImage
       ? artistImage
-      : currentSong.image_url || "";
+      : activeSong.image_url || "";
 
   // Build credits array — use real DB credits when available, fall back to artist list
   const creditsData: ResolvedCredit[] =
@@ -281,6 +307,8 @@ function PlayerComponent() {
           <TouchableOpacity
             activeOpacity={0.9}
             onPress={toggleExpand}
+            onLongPress={() => setShowStopDialog(true)}
+            delayLongPress={400}
             style={{
               flexDirection: "row",
               alignItems: "center",
@@ -296,7 +324,7 @@ function PlayerComponent() {
             }}
           >
             <Image
-              source={{ uri: currentSong.image_url || "" }}
+              source={{ uri: activeSong.image_url || "" }}
               style={{
                 width: 48,
                 height: 48,
@@ -316,7 +344,7 @@ function PlayerComponent() {
                   fontWeight: "600",
                 }}
               >
-                {currentSong.title}
+                {activeSong.title}
               </Text>
               <Text
                 numberOfLines={1}
@@ -507,7 +535,7 @@ function PlayerComponent() {
                   letterSpacing: 0.5,
                 }}
               >
-                PLAYING FROM {currentSong.album_title ? "ALBUM" : "LIBRARY"}
+                PLAYING FROM {activeSong.album_title ? "ALBUM" : "LIBRARY"}
               </Text>
               <Text
                 numberOfLines={1}
@@ -518,7 +546,7 @@ function PlayerComponent() {
                   fontWeight: "600",
                 }}
               >
-                {currentSong.album_title || "Your Library"}
+                {activeSong.album_title || "Your Library"}
               </Text>
             </View>
             <TouchableOpacity
@@ -558,7 +586,7 @@ function PlayerComponent() {
               }}
             >
               <Image
-                source={{ uri: currentSong.image_url || "" }}
+                source={{ uri: activeSong.image_url || "" }}
                 style={{ width: "100%", height: "100%", borderRadius: 8 }}
                 contentFit="cover"
                 transition={300}
@@ -587,7 +615,7 @@ function PlayerComponent() {
                     marginBottom: 4,
                   }}
                 >
-                  {currentSong.title}
+                  {activeSong.title}
                 </Text>
                 <Text
                   numberOfLines={1}
@@ -601,7 +629,7 @@ function PlayerComponent() {
                 </Text>
               </View>
               <TouchableOpacity
-                onPress={() => toggleLike(currentSong.id)}
+                onPress={() => toggleLike(activeSong.id)}
                 activeOpacity={0.7}
                 style={{ padding: 8 }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -688,7 +716,7 @@ function PlayerComponent() {
             <ArtistCard
               artistName={firstArtistName}
               artistImage={firstArtistImage}
-              songTitle={currentSong.title}
+              songTitle={activeSong.title}
             />
             <CreditsCard
               credits={creditsData}
@@ -709,11 +737,11 @@ function PlayerComponent() {
         visible={showSongOptions}
         onClose={() => setShowSongOptions(false)}
         onShowArtists={() => setShowArtistsSheet(true)}
-        songId={currentSong.id}
-        songTitle={currentSong.title}
+        songId={activeSong.id}
+        songTitle={activeSong.title}
         artistName={artistName}
-        albumTitle={currentSong.album_title || ""}
-        imageUrl={currentSong.image_url}
+        albumTitle={activeSong.album_title || ""}
+        imageUrl={activeSong.image_url}
         artists={resolvedArtists.map((a: any) => ({
           id: a.id || `mock-${a.name}`,
           name: a.name,
@@ -744,12 +772,25 @@ function PlayerComponent() {
       <CreditsSheet
         visible={showCreditsSheet}
         onClose={() => setShowCreditsSheet(false)}
-        songTitle={currentSong.title}
+        songTitle={activeSong.title}
         artistNames={creditsData.map((c) => c.name).join(" • ")}
         payload={{
           credits: creditsData,
           sources: creditsPayload.sources,
         }}
+      />
+
+      <BottomDialog
+        visible={showStopDialog}
+        title="Stop playback?"
+        description={`"${activeSong.title}" is currently playing. Do you want to stop the player?`}
+        confirmLabel="Stop Player"
+        dismissLabel="Keep Playing"
+        onConfirm={() => {
+          setShowStopDialog(false);
+          stopPlayer();
+        }}
+        onDismiss={() => setShowStopDialog(false)}
       />
     </>
   );

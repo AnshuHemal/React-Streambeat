@@ -4,6 +4,7 @@ import LoadingDots from "@/components/LoadingDots";
 import PlayingIndicator from "@/components/PlayingIndicator";
 import ShuffleSheet from "@/components/ShuffleSheet";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
+import { useLikedSongs } from "@/context/LikedSongsContext";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import { usePlayerColor } from "@/hooks/usePlayerColor";
 import { supabase } from "@/lib/supabase";
@@ -67,6 +68,7 @@ export default function AlbumDetailScreen() {
   const { albumId } = useLocalSearchParams<{ albumId: string }>();
   const router = useRouter();
   const { playSong, setQueue, currentSong, isPlaying } = useMusicPlayer();
+  const { isLiked } = useLikedSongs();
   const [album, setAlbum] = useState<AlbumData | null>(null);
   const [loading, setLoading] = useState(true);
   const [recommendedAlbums, setRecommendedAlbums] = useState<AlbumData[]>([]);
@@ -426,6 +428,7 @@ export default function AlbumDetailScreen() {
 
   const renderSong = ({ item, index }: { item: Song; index: number }) => {
     const isCurrentSong = currentSong?.id === item.id;
+    const songLiked = isLiked(item.id);
 
     return (
       <TouchableOpacity
@@ -477,6 +480,11 @@ export default function AlbumDetailScreen() {
             {item.artist_name || artistsNames}
           </Text>
         </View>
+
+        {/* Liked indicator — green tick, visible only when liked */}
+        {songLiked && (
+          <Ionicons name="checkmark-circle" size={24} color="#1DB954" />
+        )}
         <TouchableOpacity
           className="p-2 ml-2"
           onPress={() => {
@@ -822,6 +830,7 @@ export default function AlbumDetailScreen() {
         onShowArtists={() => {
           setShowArtists(true);
         }}
+        songId={selectedSong?.id ?? null}
         songTitle={selectedSong?.title ?? ""}
         artistName={selectedSong?.artist_name ?? artistsNames}
         albumTitle={album.title}
