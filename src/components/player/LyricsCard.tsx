@@ -9,21 +9,21 @@ import { fetchLyrics } from "@/services/lyrics";
 import { getActiveLyricIndex, LyricLine, parseLrc } from "@/utils/lrcParser";
 import { LinearGradient } from "expo-linear-gradient";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
-    Animated,
-    Dimensions,
-    Modal,
-    ScrollView,
-    StatusBar,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Modal,
+  ScrollView,
+  StatusBar,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -67,6 +67,7 @@ const CardLine = React.memo(
       new Animated.Value(isActive ? 1 : isVisible ? 0.42 : 0),
     ).current;
     const scale = useRef(new Animated.Value(isActive ? 1 : 0.93)).current;
+    const translateY = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
       Animated.parallel([
@@ -77,6 +78,11 @@ const CardLine = React.memo(
         }),
         Animated.timing(scale, {
           toValue: isActive ? 1 : isVisible ? 0.93 : 0.88,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: isVisible ? 0 : 8,
           duration: 260,
           useNativeDriver: true,
         }),

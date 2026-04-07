@@ -41,6 +41,7 @@
       "expo-web-browser",
       "@react-native-community/datetimepicker",
       "expo-video",
+      "expo-audio",
       [
         "expo-audio",
         {

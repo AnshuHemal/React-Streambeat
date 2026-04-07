@@ -39,7 +39,7 @@ export const StickyHeader = React.memo(function StickyHeader({
         zIndex: 20,
         opacity,
         backgroundColor: bgColor,
-        paddingTop: insets.top,
+        paddingTop: insets.top + 20,
         paddingHorizontal: 16,
         paddingBottom: 12,
         flexDirection: "row",

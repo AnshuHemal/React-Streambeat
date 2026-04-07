@@ -1,17 +1,17 @@
 import {
-    AudioPlayer,
-    AudioStatus,
-    createAudioPlayer,
-    setAudioModeAsync,
+  AudioPlayer,
+  AudioStatus,
+  createAudioPlayer,
+  setAudioModeAsync,
 } from "expo-audio";
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { Animated } from "react-native";
 import { PlayerPositionContext } from "./PlayerPositionContext";
@@ -90,7 +90,6 @@ export function MusicPlayerProvider({
   const playQueueRef = useRef<Song[]>([]);
   const currentIndexRef = useRef(0);
   const expandAnim = useRef(new Animated.Value(0)).current;
-  const waitForLoadRef = useRef<{ remove: () => void } | null>(null);
 
   // Keep refs in sync with state (so callbacks always see latest values)
   currentSongRef.current = currentSong;
@@ -111,7 +110,7 @@ export function MusicPlayerProvider({
     });
 
     // Create a single long-lived player instance
-    const p = createAudioPlayer({ uri: "" });
+    const p = createAudioPlayer(null as any);
     playerRef.current = p;
 
     // Subscribe to status updates
@@ -194,9 +193,6 @@ export function MusicPlayerProvider({
     setDuration(song.duration_ms ?? 0);
     setIsLoading(true);
 
-    // Cleanup any pending load listener before replacing
-    waitForLoadRef.current?.remove();
-
     p.replace({ uri: audioUrl });
 
     // Play once loaded — listen for the first isLoaded=true event
@@ -205,13 +201,11 @@ export function MusicPlayerProvider({
       (s: AudioStatus) => {
         if (s.isLoaded) {
           waitForLoad.remove();
-          waitForLoadRef.current = null;
           setIsLoading(false);
           p.play();
         }
       },
     );
-    waitForLoadRef.current = waitForLoad;
   }, []);
 
   // ── Public API ─────────────────────────────────────────────────────────────
@@ -252,7 +246,7 @@ export function MusicPlayerProvider({
     if (isNaN(clamped)) return;
 
     // Set seek lock BEFORE the native call — prevents the 0-flash
-    seekLockUntilRef.current = Date.now() + 1200;
+    seekLockUntilRef.current = Date.now() + 2500;
     lastPositionUpdateRef.current = Date.now();
 
     // Update UI immediately
