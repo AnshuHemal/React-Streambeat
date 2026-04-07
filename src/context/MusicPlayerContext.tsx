@@ -1,4 +1,9 @@
-import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import {
+    AudioPlayer,
+    AudioStatus,
+    createAudioPlayer,
+    setAudioModeAsync,
+} from "expo-audio";
 import React, {
     createContext,
     useCallback,
@@ -10,6 +15,8 @@ import React, {
 } from "react";
 import { Animated } from "react-native";
 import { PlayerPositionContext } from "./PlayerPositionContext";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type Song = {
   id: string;
@@ -56,76 +63,109 @@ const MusicPlayerContext = createContext<MusicPlayerContextType | undefined>(
   undefined,
 );
 
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
 export function MusicPlayerProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // ── React state ────────────────────────────────────────────────────────────
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [playQueue, setPlayQueue] = useState<Song[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [audioSource, setAudioSource] = useState<string | null>(null);
-  const [optimisticIsPlaying, setOptimisticIsPlaying] = useState(false);
-  const isTogglingRef = useRef(false);
-  const lastToggleTimeRef = useRef(0);
-  // Suppress playerStatus position updates briefly after a seek
-  const seekLockUntilRef = useRef(0);
-  // Stable ref for duration (used in seekTo without deps)
+
+  // ── Refs (never cause re-renders) ──────────────────────────────────────────
+  const playerRef = useRef<AudioPlayer | null>(null);
   const durationRef = useRef(0);
-
-  // Use a stable player — never pass empty string, use replace() for source changes
-  const player = useAudioPlayer(null);
-  const playerRef = useRef(player);
-  playerRef.current = player;
-  const playerStatus = useAudioPlayerStatus(player);
-
+  const seekLockUntilRef = useRef(0); // ms timestamp — block position updates until this time
+  const lastPositionUpdateRef = useRef(0); // throttle position setState calls
+  const currentSongRef = useRef<Song | null>(null);
+  const playQueueRef = useRef<Song[]>([]);
+  const currentIndexRef = useRef(0);
   const expandAnim = useRef(new Animated.Value(0)).current;
+  const waitForLoadRef = useRef<{ remove: () => void } | null>(null);
 
-  // Update position with 500ms throttling for smooth slider updates
-  const lastUpdateRef = useRef(0);
+  // Keep refs in sync with state (so callbacks always see latest values)
+  currentSongRef.current = currentSong;
+  playQueueRef.current = playQueue;
+  currentIndexRef.current = currentIndex;
+
+  // ── Audio session setup ────────────────────────────────────────────────────
   useEffect(() => {
-    if (playerStatus) {
-      setIsPlaying(playerStatus.playing);
-      setIsBuffering(playerStatus.isBuffering ?? false);
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      interruptionMode: "doNotMix",
+    }).catch(() => {
+      setAudioModeAsync({
+        playsInSilentMode: true,
+        interruptionMode: "doNotMix",
+      }).catch(() => {});
+    });
 
+    // Create a single long-lived player instance
+    const p = createAudioPlayer({ uri: "" });
+    playerRef.current = p;
+
+    // Subscribe to status updates
+    const sub = p.addListener("playbackStatusUpdate", (status: AudioStatus) => {
       const now = Date.now();
-      if (now - lastUpdateRef.current > 500 && now > seekLockUntilRef.current) {
-        setPosition(playerStatus.currentTime * 1000);
-        lastUpdateRef.current = now;
+      const inSeekLock = now < seekLockUntilRef.current;
+
+      // Playing state
+      setIsPlaying(status.playing);
+      setIsBuffering(status.isBuffering ?? false);
+
+      // Position — throttled to 500ms, blocked during seek lock
+      if (!inSeekLock && now - lastPositionUpdateRef.current > 500) {
+        const newPos = (status.currentTime ?? 0) * 1000;
+        if (!isNaN(newPos) && newPos >= 0) {
+          setPosition(newPos);
+          lastPositionUpdateRef.current = now;
+        }
       }
 
-      const newDuration = playerStatus.duration * 1000;
-      // Prevent duration from incorrectly resetting to 0 if native player momentarily loses track info
-      if (
-        !isNaN(newDuration) &&
-        newDuration > 0 &&
-        Math.abs(newDuration - duration) > 1000
-      ) {
-        setDuration(newDuration);
-        durationRef.current = newDuration;
+      // Duration — only update when we have a real value and not in seek lock
+      if (!inSeekLock) {
+        const newDur = (status.duration ?? 0) * 1000;
+        if (
+          !isNaN(newDur) &&
+          newDur > 0 &&
+          Math.abs(newDur - durationRef.current) > 500
+        ) {
+          durationRef.current = newDur;
+          setDuration(newDur);
+        }
       }
 
-      const timeSinceLastToggle = Date.now() - lastToggleTimeRef.current;
-      if (!isTogglingRef.current && timeSinceLastToggle > 300) {
-        setOptimisticIsPlaying(playerStatus.playing);
+      // Auto-advance queue on track finish
+      if (status.didJustFinish && !inSeekLock) {
+        const queue = playQueueRef.current;
+        const idx = currentIndexRef.current;
+        if (queue.length > 0 && idx < queue.length - 1) {
+          const nextIdx = idx + 1;
+          currentIndexRef.current = nextIdx;
+          setCurrentIndex(nextIdx);
+          // playSong uses the ref so it's safe to call here
+          _playSongInternal(queue[nextIdx]);
+        }
       }
-    }
-  }, [playerStatus, duration]);
+    });
 
-  // Handle playback completion — guard against firing during seek lock
-  useEffect(() => {
-    if (playerStatus?.didJustFinish && Date.now() > seekLockUntilRef.current) {
-      skipToNext();
-    }
-  }, [playerStatus?.didJustFinish]);
+    return () => {
+      sub.remove();
+      p.release();
+    };
+  }, []); // runs once — player lives for the app lifetime
 
-  // Update expand animation
+  // ── Expand animation ───────────────────────────────────────────────────────
   useEffect(() => {
     Animated.spring(expandAnim, {
       toValue: isExpanded ? 1 : 0,
@@ -133,135 +173,131 @@ export function MusicPlayerProvider({
       friction: 10,
       tension: 40,
     }).start();
-  }, [isExpanded, expandAnim]);
+  }, [isExpanded]);
 
-  const playSong = useCallback(async (song: Song) => {
-    try {
-      setIsLoading(true);
-      setCurrentSong(song);
-      setPosition(0);
-      setDuration(song.duration_ms || 0);
-      durationRef.current = song.duration_ms || 0;
+  // ── Internal play helper (no React deps — uses refs) ──────────────────────
+  const _playSongInternal = useCallback((song: Song) => {
+    const p = playerRef.current;
+    if (!p) return;
 
-      const audioUrl =
-        song.audio_url || song.quality_urls?.medium || song.preview_url;
+    const audioUrl =
+      song.audio_url || song.quality_urls?.medium || song.preview_url;
+    if (!audioUrl) return;
 
-      if (!audioUrl) {
-        setIsLoading(false);
-        return;
-      }
+    // Reset seek lock and position tracking for the new track
+    seekLockUntilRef.current = 0;
+    lastPositionUpdateRef.current = 0;
+    durationRef.current = song.duration_ms ?? 0;
 
-      // Use replace() on the stable player instance — no hook re-creation
-      playerRef.current.replace({ uri: audioUrl });
-      setIsLoading(false);
-    } catch (error) {
-      setIsLoading(false);
-    }
+    setCurrentSong(song);
+    setPosition(0);
+    setDuration(song.duration_ms ?? 0);
+    setIsLoading(true);
+
+    // Cleanup any pending load listener before replacing
+    waitForLoadRef.current?.remove();
+
+    p.replace({ uri: audioUrl });
+
+    // Play once loaded — listen for the first isLoaded=true event
+    const waitForLoad = p.addListener(
+      "playbackStatusUpdate",
+      (s: AudioStatus) => {
+        if (s.isLoaded) {
+          waitForLoad.remove();
+          waitForLoadRef.current = null;
+          setIsLoading(false);
+          p.play();
+        }
+      },
+    );
+    waitForLoadRef.current = waitForLoad;
   }, []);
 
-  // Keep track of the last song we auto-played to prevent spamming play() when buffering finishes
-  const lastAutoPlayId = useRef<string | null>(null);
+  // ── Public API ─────────────────────────────────────────────────────────────
 
-  // Auto-play ONLY when a new song is loaded — not after seek/pause
-  useEffect(() => {
-    if (
-      playerStatus?.isLoaded &&
-      currentSong &&
-      lastAutoPlayId.current !== currentSong.id
-    ) {
-      playerRef.current.play();
-      lastAutoPlayId.current = currentSong.id;
-    }
-  }, [playerStatus?.isLoaded, currentSong?.id]);
+  const playSong = useCallback(
+    async (song: Song) => {
+      _playSongInternal(song);
+    },
+    [_playSongInternal],
+  );
 
   const togglePlayPause = useCallback(async () => {
-    if (!player) return;
-
-    // Optimistic update - immediately toggle UI state
-    const newPlayingState = !optimisticIsPlaying;
-    setOptimisticIsPlaying(newPlayingState);
-
-    try {
-      if (playerStatus?.playing) {
-        player.pause();
-      } else {
-        player.play();
-      }
-    } catch (error) {
-      // Revert optimistic state on error
-      setOptimisticIsPlaying(optimisticIsPlaying);
+    const p = playerRef.current;
+    if (!p) return;
+    if (isPlaying) {
+      p.pause();
+    } else {
+      p.play();
     }
-  }, [player, playerStatus?.playing, optimisticIsPlaying]);
+  }, [isPlaying]);
 
   const pause = useCallback(async () => {
-    if (!player) return;
-    try {
-      player.pause();
-    } catch (error) {}
-  }, [player]);
+    playerRef.current?.pause();
+  }, []);
 
   const resume = useCallback(async () => {
-    if (!player) return;
-    try {
-      player.play();
-    } catch (error) {}
-  }, [player]);
+    playerRef.current?.play();
+  }, []);
 
-  const seekTo = useCallback(
-    async (positionMillis: number) => {
-      const p = playerRef.current;
-      if (!p || isNaN(positionMillis)) return;
-      try {
-        // Clamp to valid range carefully
-        const dur = durationRef.current;
-        const clamped = Math.max(
-          0,
-          Math.min(positionMillis, dur > 0 ? dur - 100 : positionMillis),
-        );
+  const seekTo = useCallback(async (positionMillis: number) => {
+    const p = playerRef.current;
+    if (!p || isNaN(positionMillis)) return;
 
-        // Final sanity check before passing to Native (which expects seconds)
-        if (!isNaN(clamped)) {
-          p.seekTo(clamped / 1000);
-          setPosition(clamped);
-          // Lock position updates from playerStatus for 2s so audio engine catches up
-          seekLockUntilRef.current = Date.now() + 2000;
-          lastUpdateRef.current = Date.now();
-        }
-      } catch (error) {
-        console.error("[MusicPlayerContext] seek error:", error);
-      }
-    },
-    [], // no deps — uses refs only
-  );
+    const dur = durationRef.current;
+    if (dur <= 0) return;
+
+    const clamped = Math.max(0, Math.min(positionMillis, dur - 100));
+    if (isNaN(clamped)) return;
+
+    // Set seek lock BEFORE the native call — prevents the 0-flash
+    seekLockUntilRef.current = Date.now() + 1200;
+    lastPositionUpdateRef.current = Date.now();
+
+    // Update UI immediately
+    setPosition(clamped);
+
+    // Native seek (expects seconds)
+    p.seekTo(clamped / 1000);
+  }, []);
 
   const setQueue = useCallback((songs: Song[], startIndex = 0) => {
     setPlayQueue(songs);
     setCurrentIndex(startIndex);
+    playQueueRef.current = songs;
+    currentIndexRef.current = startIndex;
   }, []);
 
   const skipToNext = useCallback(async () => {
-    if (playQueue.length === 0 || currentIndex >= playQueue.length - 1) return;
-
-    const nextIndex = currentIndex + 1;
-    setCurrentIndex(nextIndex);
-    await playSong(playQueue[nextIndex]);
-  }, [playQueue, currentIndex, playSong]);
+    const queue = playQueueRef.current;
+    const idx = currentIndexRef.current;
+    if (queue.length === 0 || idx >= queue.length - 1) return;
+    const nextIdx = idx + 1;
+    setCurrentIndex(nextIdx);
+    currentIndexRef.current = nextIdx;
+    _playSongInternal(queue[nextIdx]);
+  }, [_playSongInternal]);
 
   const skipToPrevious = useCallback(async () => {
-    if (playQueue.length === 0 || currentIndex <= 0) return;
-
-    const prevIndex = currentIndex - 1;
-    setCurrentIndex(prevIndex);
-    await playSong(playQueue[prevIndex]);
-  }, [playQueue, currentIndex, playSong]);
+    const queue = playQueueRef.current;
+    const idx = currentIndexRef.current;
+    if (queue.length === 0 || idx <= 0) return;
+    const prevIdx = idx - 1;
+    setCurrentIndex(prevIdx);
+    currentIndexRef.current = prevIdx;
+    _playSongInternal(queue[prevIdx]);
+  }, [_playSongInternal]);
 
   const toggleExpand = useCallback(() => {
-    setIsExpanded(!isExpanded);
-  }, [isExpanded]);
+    setIsExpanded((v) => !v);
+  }, []);
+
+  // ── Context value ──────────────────────────────────────────────────────────
 
   const value: MusicPlayerContextType = {
     currentSong,
-    isPlaying: optimisticIsPlaying,
+    isPlaying,
     position,
     duration,
     isLoading,
@@ -282,7 +318,6 @@ export function MusicPlayerProvider({
     setQueue,
   };
 
-  // Position context value — memoized separately so it only updates on position/duration change
   const positionValue = useMemo(
     () => ({ position, duration }),
     [position, duration],
@@ -298,9 +333,8 @@ export function MusicPlayerProvider({
 }
 
 export function useMusicPlayer() {
-  const context = useContext(MusicPlayerContext);
-  if (context === undefined) {
-    throw new Error("useMusicPlayer must be used within a MusicPlayerProvider");
-  }
-  return context;
+  const ctx = useContext(MusicPlayerContext);
+  if (!ctx)
+    throw new Error("useMusicPlayer must be used within MusicPlayerProvider");
+  return ctx;
 }

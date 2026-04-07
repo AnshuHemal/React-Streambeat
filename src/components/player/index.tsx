@@ -1,20 +1,26 @@
 import ArtistsSheet from "@/components/ArtistsSheet";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
+import { useLikedSongs } from "@/context/LikedSongsContext";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import { useBluetoothDevice } from "@/hooks/useAudioDevice";
 import { usePlayerColor } from "@/hooks/usePlayerColor";
-import { fetchSongCredits, ResolvedCredit, SongCreditsPayload } from "@/services/credits";
+import {
+    fetchSongCredits,
+    ResolvedCredit,
+    SongCreditsPayload,
+} from "@/services/credits";
+import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  BackHandler,
-  Dimensions,
-  PanResponder,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    BackHandler,
+    Dimensions,
+    PanResponder,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArtistCard } from "./ArtistCard";
@@ -63,6 +69,11 @@ function PlayerComponent() {
   });
 
   const bgColor = usePlayerColor(currentSong?.image_url);
+  const { isLiked: isLikedFn, toggleLike, getScaleAnim } = useLikedSongs();
+  const songIsLiked = currentSong ? isLikedFn(currentSong.id) : false;
+  const likeScaleAnim = currentSong
+    ? getScaleAnim(currentSong.id)
+    : useRef(new Animated.Value(1)).current;
 
   const panResponder = useRef(
     PanResponder.create({
@@ -334,15 +345,24 @@ function PlayerComponent() {
                 />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => {}}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  if (currentSong) toggleLike(currentSong.id);
+                }}
                 style={{ padding: 4 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Image
-                  source={require("@/assets/images/ico-32-plus-circle.png")}
-                  style={{ width: 24, height: 24 }}
-                  contentFit="contain"
-                />
+                <Animated.View
+                  style={{ transform: [{ scale: likeScaleAnim }] }}
+                >
+                  <Ionicons
+                    name={
+                      songIsLiked ? "checkmark-circle" : "add-circle-outline"
+                    }
+                    size={24}
+                    color={songIsLiked ? "#1DB954" : "#fff"}
+                  />
+                </Animated.View>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={(e) => {
@@ -580,12 +600,23 @@ function PlayerComponent() {
                   {artistName}
                 </Text>
               </View>
-              <TouchableOpacity style={{ padding: 8 }}>
-                <Image
-                  source={require("@/assets/images/ico-32-plus-circle.png")}
-                  style={{ width: 28, height: 28 }}
-                  contentFit="contain"
-                />
+              <TouchableOpacity
+                onPress={() => toggleLike(currentSong.id)}
+                activeOpacity={0.7}
+                style={{ padding: 8 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Animated.View
+                  style={{ transform: [{ scale: likeScaleAnim }] }}
+                >
+                  <Ionicons
+                    name={
+                      songIsLiked ? "checkmark-circle" : "add-circle-outline"
+                    }
+                    size={28}
+                    color={songIsLiked ? "#1DB954" : "#fff"}
+                  />
+                </Animated.View>
               </TouchableOpacity>
             </View>
 
@@ -678,6 +709,7 @@ function PlayerComponent() {
         visible={showSongOptions}
         onClose={() => setShowSongOptions(false)}
         onShowArtists={() => setShowArtistsSheet(true)}
+        songId={currentSong.id}
         songTitle={currentSong.title}
         artistName={artistName}
         albumTitle={currentSong.album_title || ""}

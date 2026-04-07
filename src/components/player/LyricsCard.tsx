@@ -1,16 +1,6 @@
 /**
  * LyricsCard.tsx
- * Time-synced lyrics card shown in the expanded player.
- *
- * Features:
- * - Fetches lyrics: DB first → LRCLIB fallback
- * - Parses LRC (timestamped) and plain text lyrics
- * - Active line tracks playback position via PlayerPositionContext
- * - Auto-scrolls to keep active line centred in full-screen view
- * - Tap any line to seek to that timestamp
- * - Card preview shows 4 lines around the active one
- * - Animated opacity + scale transitions per line
- * - Source badge ("LRCLIB") shown when lyrics come from external API
+ * Time-synced lyrics card — Spotify-style layout.
  */
 
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
@@ -37,14 +27,14 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { height: SCREEN_H, width: SCREEN_W } = Dimensions.get("window");
+const { height: SCREEN_H } = Dimensions.get("window");
 
-// Fixed line height used for scroll position math
-const LINE_HEIGHT = 58;
 // Lines shown in the card preview
 const PREVIEW_LINES = 4;
-// Vertical offset — active line sits at ~35% from top of screen
-const ACTIVE_LINE_OFFSET = SCREEN_H * 0.32;
+// Vertical offset for full-screen auto-scroll — active line at ~30% from top
+const ACTIVE_LINE_OFFSET = SCREEN_H * 0.3;
+// Approximate height per line in full-screen view (for scroll math)
+const FULL_LINE_H = 64;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,33 +49,89 @@ type LyricsState =
       source: "database" | "lrclib" | "none";
     };
 
-// ─── Animated lyric line ──────────────────────────────────────────────────────
+// ─── Card lyric line ──────────────────────────────────────────────────────────
+// Stable component — never remounted, only isActive changes.
+// opacity + scale on native thread = zero JS lag.
 
-const LyricLineView = React.memo(
-  function LyricLineView({
+const CardLine = React.memo(
+  function CardLine({
     text,
     isActive,
-    onPress,
-    fontSize = 17,
+    isVisible,
   }: {
     text: string;
     isActive: boolean;
-    onPress?: () => void;
-    fontSize?: number;
+    isVisible: boolean;
   }) {
-    const opacity = useRef(new Animated.Value(isActive ? 1 : 0.32)).current;
-    const scale = useRef(new Animated.Value(isActive ? 1 : 0.96)).current;
+    const opacity = useRef(
+      new Animated.Value(isActive ? 1 : isVisible ? 0.42 : 0),
+    ).current;
+    const scale = useRef(new Animated.Value(isActive ? 1 : 0.93)).current;
 
     useEffect(() => {
       Animated.parallel([
         Animated.timing(opacity, {
-          toValue: isActive ? 1 : 0.32,
-          duration: 380,
+          toValue: isActive ? 1 : isVisible ? 0.42 : 0,
+          duration: 260,
           useNativeDriver: true,
         }),
         Animated.timing(scale, {
-          toValue: isActive ? 1 : 0.96,
-          duration: 380,
+          toValue: isActive ? 1 : isVisible ? 0.93 : 0.88,
+          duration: 260,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, [isActive, isVisible]);
+
+    return (
+      <Animated.Text
+        style={{
+          opacity,
+          transform: [{ scale }],
+          color: "#fff",
+          fontSize: 20,
+          fontFamily: "CircularStd",
+          fontWeight: isActive ? "600" : "500",
+          lineHeight: 28,
+          marginBottom: 14,
+        }}
+        numberOfLines={2}
+      >
+        {text || "♪"}
+      </Animated.Text>
+    );
+  },
+  (prev, next) =>
+    prev.isActive === next.isActive &&
+    prev.isVisible === next.isVisible &&
+    prev.text === next.text,
+);
+
+// ─── Full-screen lyric line ───────────────────────────────────────────────────
+
+const FullLine = React.memo(
+  function FullLine({
+    text,
+    isActive,
+    onPress,
+  }: {
+    text: string;
+    isActive: boolean;
+    onPress?: () => void;
+  }) {
+    const opacity = useRef(new Animated.Value(isActive ? 1 : 0.38)).current;
+    const scale = useRef(new Animated.Value(isActive ? 1 : 0.97)).current;
+
+    useEffect(() => {
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: isActive ? 1 : 0.38,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scale, {
+          toValue: isActive ? 1 : 0.97,
+          duration: 350,
           useNativeDriver: true,
         }),
       ]).start();
@@ -96,17 +142,21 @@ const LyricLineView = React.memo(
         onPress={onPress}
         activeOpacity={onPress ? 0.65 : 1}
         disabled={!onPress}
-        style={{ height: LINE_HEIGHT, justifyContent: "center" }}
+        style={{
+          minHeight: FULL_LINE_H,
+          justifyContent: "center",
+          paddingVertical: 4,
+        }}
       >
         <Animated.Text
           style={{
             opacity,
             transform: [{ scale }],
             color: "#fff",
-            fontSize,
+            fontSize: isActive ? 24 : 20,
             fontFamily: "CircularStd",
             fontWeight: isActive ? "600" : "500",
-            lineHeight: fontSize * 1.45,
+            lineHeight: isActive ? 32 : 28,
           }}
         >
           {text || "♪"}
@@ -114,13 +164,10 @@ const LyricLineView = React.memo(
       </TouchableOpacity>
     );
   },
-  (prev, next) =>
-    prev.isActive === next.isActive &&
-    prev.text === next.text &&
-    prev.fontSize === next.fontSize,
+  (prev, next) => prev.isActive === next.isActive && prev.text === next.text,
 );
 
-// ─── Full-screen lyrics modal ─────────────────────────────────────────────────
+// ─── Full-screen modal ────────────────────────────────────────────────────────
 
 function FullLyricsModal({
   visible,
@@ -144,12 +191,10 @@ function FullLyricsModal({
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const sheetOpacity = useRef(new Animated.Value(0)).current;
-  const sheetY = useRef(new Animated.Value(30)).current;
+  const sheetY = useRef(new Animated.Value(24)).current;
   const prevActiveRef = useRef(-1);
-  // Track whether we've done the initial scroll after open
   const didInitialScrollRef = useRef(false);
 
-  // Animate in/out
   useEffect(() => {
     if (visible) {
       didInitialScrollRef.current = false;
@@ -157,12 +202,12 @@ function FullLyricsModal({
       Animated.parallel([
         Animated.timing(sheetOpacity, {
           toValue: 1,
-          duration: 300,
+          duration: 280,
           useNativeDriver: true,
         }),
         Animated.timing(sheetY, {
           toValue: 0,
-          duration: 300,
+          duration: 280,
           useNativeDriver: true,
         }),
       ]).start();
@@ -170,33 +215,31 @@ function FullLyricsModal({
       Animated.parallel([
         Animated.timing(sheetOpacity, {
           toValue: 0,
-          duration: 220,
+          duration: 200,
           useNativeDriver: true,
         }),
         Animated.timing(sheetY, {
-          toValue: 30,
-          duration: 220,
+          toValue: 24,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]).start();
     }
   }, [visible]);
 
-  // Auto-scroll to active line
   useEffect(() => {
     if (!visible || activeIndex < 0) return;
     if (activeIndex === prevActiveRef.current) return;
     prevActiveRef.current = activeIndex;
 
-    const targetY = Math.max(0, activeIndex * LINE_HEIGHT - ACTIVE_LINE_OFFSET);
-    const animated = didInitialScrollRef.current;
+    const targetY = Math.max(0, activeIndex * FULL_LINE_H - ACTIVE_LINE_OFFSET);
+    const isFirst = !didInitialScrollRef.current;
     didInitialScrollRef.current = true;
 
-    // Small delay on first scroll so the modal has rendered
-    const delay = animated ? 0 : 350;
-    const timer = setTimeout(() => {
-      scrollRef.current?.scrollTo({ y: targetY, animated });
-    }, delay);
+    const timer = setTimeout(
+      () => scrollRef.current?.scrollTo({ y: targetY, animated: !isFirst }),
+      isFirst ? 320 : 0,
+    );
     return () => clearTimeout(timer);
   }, [activeIndex, visible]);
 
@@ -214,22 +257,22 @@ function FullLyricsModal({
       <Animated.View
         style={{
           flex: 1,
-          backgroundColor: "#0d0d0d",
           opacity: sheetOpacity,
           transform: [{ translateY: sheetY }],
+          backgroundColor: "#1e1e1e",
         }}
       >
         {/* Header */}
         <View
           style={{
             paddingTop: insets.top + 14,
-            paddingHorizontal: 20,
-            paddingBottom: 14,
+            paddingHorizontal: 24,
+            paddingBottom: 16,
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "space-between",
             borderBottomWidth: 1,
-            borderBottomColor: "#1e1e1e",
+            borderBottomColor: "#2a2a2a",
           }}
         >
           <View style={{ flex: 1 }}>
@@ -237,7 +280,7 @@ function FullLyricsModal({
               numberOfLines={1}
               style={{
                 color: "#fff",
-                fontSize: 15,
+                fontSize: 16,
                 fontFamily: "CircularStd",
                 fontWeight: "600",
               }}
@@ -265,12 +308,10 @@ function FullLyricsModal({
               {source === "lrclib" && (
                 <View
                   style={{
-                    backgroundColor: "#1a1a1a",
+                    backgroundColor: "#2a2a2a",
                     borderRadius: 4,
                     paddingHorizontal: 6,
                     paddingVertical: 2,
-                    borderWidth: 1,
-                    borderColor: "#2a2a2a",
                   }}
                 >
                   <Text
@@ -312,30 +353,29 @@ function FullLyricsModal({
           </TouchableOpacity>
         </View>
 
-        {/* Lyrics scroll */}
+        {/* Lyrics */}
         <ScrollView
           ref={scrollRef}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 24,
             paddingTop: 24,
-            paddingBottom: insets.bottom + SCREEN_H * 0.45,
+            paddingBottom: insets.bottom + 40,
           }}
         >
           {lines.map((line, i) => (
-            <LyricLineView
+            <FullLine
               key={i}
               text={line.text}
               isActive={i === activeIndex}
-              fontSize={21}
               onPress={isSynced ? () => onSeek(line.time) : undefined}
             />
           ))}
         </ScrollView>
 
-        {/* Bottom gradient */}
+        {/* Bottom fade */}
         <LinearGradient
-          colors={["transparent", "#0d0d0d"]}
+          colors={["transparent", "#1e1e1e"]}
           style={{
             position: "absolute",
             bottom: 0,
@@ -361,14 +401,12 @@ export const LyricsCard = React.memo(function LyricsCard({ bgColor }: Props) {
   });
   const [showFull, setShowFull] = useState(false);
 
-  // ── Fetch lyrics when song changes ──────────────────────────────────────────
-
+  // Fetch lyrics when song changes
   useEffect(() => {
     if (!currentSong) {
       setLyricsState({ status: "empty" });
       return;
     }
-
     setLyricsState({ status: "loading" });
     setShowFull(false);
 
@@ -385,15 +423,13 @@ export const LyricsCard = React.memo(function LyricsCard({ bgColor }: Props) {
       durationMs: currentSong.duration_ms ?? undefined,
     }).then(({ lrc, source }) => {
       const lines = parseLrc(lrc);
-      if (lines.length === 0) {
-        setLyricsState({ status: "empty" });
-      } else {
-        setLyricsState({ status: "ready", lines, source });
-      }
+      setLyricsState(
+        lines.length === 0
+          ? { status: "empty" }
+          : { status: "ready", lines, source },
+      );
     });
   }, [currentSong?.id]);
-
-  // ── Active line index ────────────────────────────────────────────────────────
 
   const activeIndex = useMemo(() => {
     if (lyricsState.status !== "ready") return -1;
@@ -440,7 +476,7 @@ export const LyricsCard = React.memo(function LyricsCard({ bgColor }: Props) {
         >
           <Text
             style={{
-              color: "rgba(255,255,255,0.4)",
+              color: "rgba(255,255,255,0.45)",
               fontSize: 15,
               fontFamily: "CircularStd",
               fontWeight: "500",
@@ -456,11 +492,22 @@ export const LyricsCard = React.memo(function LyricsCard({ bgColor }: Props) {
   // ── Ready ────────────────────────────────────────────────────────────────────
 
   const { lines, source } = lyricsState;
-  const isSynced = lines.some((l) => l.time > 0);
 
-  // Preview window: show lines around the active one
-  const windowStart = Math.max(0, activeIndex - 1);
-  const previewLines = lines.slice(windowStart, windowStart + PREVIEW_LINES);
+  // Active line sits at slot index 3 (fourth position) in the preview window.
+  // windowStart shifts so activeIndex always lands at slot 3.
+  const ACTIVE_SLOT = 3;
+  const windowStart = Math.max(0, activeIndex - ACTIVE_SLOT);
+  // Always render exactly PREVIEW_LINES slots — stable keys prevent remounting
+  const windowLines = Array.from({ length: PREVIEW_LINES }, (_, slot) => {
+    const lineIndex = windowStart + slot;
+    const line = lines[lineIndex];
+    return {
+      lineIndex,
+      text: line?.text ?? "",
+      isActive: lineIndex === activeIndex,
+      isVisible: !!line,
+    };
+  });
 
   const artistName =
     currentSong?.artist_name ||
@@ -479,84 +526,46 @@ export const LyricsCard = React.memo(function LyricsCard({ bgColor }: Props) {
           colors={[bgColor, `${bgColor}cc`, `${bgColor}88`]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0.3, y: 1 }}
-          style={{ padding: 20 }}
+          style={{ padding: 20, paddingBottom: 24 }}
         >
-          {/* Card header row */}
-          <View
+          <Text
             style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 14,
+              color: "#fff",
+              fontSize: 16,
+              fontFamily: "CircularStd",
+              fontWeight: "600",
+              marginBottom: 20,
             }}
           >
-            <Text
-              style={{
-                color: "#fff",
-                fontSize: 12,
-                fontFamily: "CircularStd",
-                fontWeight: "600",
-                letterSpacing: 1,
-                opacity: 0.7,
-                textTransform: "uppercase",
-              }}
-            >
-              Lyrics
-            </Text>
-            {!isSynced && (
-              <View
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.12)",
-                  borderRadius: 4,
-                  paddingHorizontal: 7,
-                  paddingVertical: 3,
-                }}
-              >
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.55)",
-                    fontSize: 10,
-                    fontFamily: "CircularStd",
-                    fontWeight: "600",
-                    letterSpacing: 0.5,
-                  }}
-                >
-                  PLAIN TEXT
-                </Text>
-              </View>
-            )}
-          </View>
+            Lyrics preview
+          </Text>
 
-          {/* Preview lines */}
-          {previewLines.map((line, i) => {
-            const globalIndex = windowStart + i;
-            return (
-              <LyricLineView
-                key={globalIndex}
-                text={line.text}
-                isActive={globalIndex === activeIndex}
-                fontSize={17}
-              />
-            );
-          })}
+          {/* Fixed PREVIEW_LINES slots — stable keys, no remounting */}
+          {windowLines.map(({ lineIndex, text, isActive, isVisible }) => (
+            <CardLine
+              key={lineIndex}
+              text={text}
+              isActive={isActive}
+              isVisible={isVisible}
+            />
+          ))}
 
-          {/* Show lyrics button */}
           <TouchableOpacity
             onPress={() => setShowFull(true)}
             activeOpacity={0.85}
             style={{
-              backgroundColor: "rgba(255,255,255,0.14)",
-              paddingHorizontal: 20,
-              paddingVertical: 10,
+              backgroundColor: "#fff",
+              paddingHorizontal: 24,
+              paddingVertical: 12,
               borderRadius: 50,
               alignSelf: "flex-start",
-              marginTop: 14,
+              marginTop: 20,
             }}
           >
             <Text
               style={{
-                color: "#fff",
-                fontSize: 13,
+                color: "#000",
+                fontSize: 14,
                 fontFamily: "CircularStd",
                 fontWeight: "600",
               }}
