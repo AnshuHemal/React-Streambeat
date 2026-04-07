@@ -4,16 +4,16 @@ import { useLikedSongs } from "@/context/LikedSongsContext";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Dimensions,
-    Image,
-    Modal,
-    PanResponder,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    TouchableWithoutFeedback,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  Modal,
+  PanResponder,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -354,9 +354,7 @@ export default function SongOptionsSheet({
               {/* ── Dynamic liked row ── */}
               <TouchableOpacity
                 activeOpacity={0.65}
-                onPress={() => {
-                  if (songId) void toggleLike(songId);
-                }}
+                onPress={() => songId && toggleLike(songId)}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",

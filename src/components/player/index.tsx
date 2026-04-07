@@ -73,7 +73,7 @@ function PlayerComponent() {
   const songIsLiked = currentSong ? isLikedFn(currentSong.id) : false;
   const likeScaleAnim = currentSong
     ? getScaleAnim(currentSong.id)
-    : useRef(new Animated.Value(1)).current;
+    : new Animated.Value(1);
 
   const panResponder = useRef(
     PanResponder.create({
