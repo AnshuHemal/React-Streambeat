@@ -2,11 +2,13 @@ import { LikedSong } from "@/hooks/useLikedSongsData";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   Animated,
+  Keyboard,
   LayoutChangeEvent,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -21,6 +23,12 @@ type Props = {
   paddingTop: number;
   /** Absolute Y of the controls row in scroll-content space */
   onControlsRowLayout: (y: number) => void;
+  /** Called when Sort button is tapped */
+  onSortPress: () => void;
+  /** Search query value */
+  searchQuery: string;
+  /** Called when search text changes */
+  onSearchChange: (q: string) => void;
 };
 
 export function LikedSongsHeader({
@@ -31,6 +39,9 @@ export function LikedSongsHeader({
   controlsAnim,
   paddingTop,
   onControlsRowLayout,
+  onSortPress,
+  searchQuery,
+  onSearchChange,
 }: Props) {
   const headerTranslateY = headerAnim.interpolate({
     inputRange: [0, 1],
@@ -42,9 +53,60 @@ export function LikedSongsHeader({
   });
 
   const firstThumb = songs[0]?.image_url ?? null;
-
-  // Height of the top section (search bar + back arrow) measured via onLayout
   const topSectionHeightRef = useRef(0);
+  const inputRef = useRef<TextInput>(null);
+
+  // Search active state
+  const [isSearchActive, setIsSearchActive] = useState(false);
+
+  // Cancel button slides in from right
+  const cancelTranslateX = useRef(new Animated.Value(80)).current;
+  const cancelOpacity = useRef(new Animated.Value(0)).current;
+  // Sort button fades out when search active
+  const sortOpacity = useRef(new Animated.Value(1)).current;
+
+  const activateSearch = () => {
+    setIsSearchActive(true);
+    Animated.parallel([
+      Animated.timing(cancelTranslateX, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cancelOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sortOpacity, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const deactivateSearch = () => {
+    Keyboard.dismiss();
+    onSearchChange("");
+    Animated.parallel([
+      Animated.timing(cancelTranslateX, {
+        toValue: 80,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(cancelOpacity, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+      Animated.timing(sortOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => setIsSearchActive(false));
+  };
 
   return (
     <View>
@@ -69,6 +131,7 @@ export function LikedSongsHeader({
         </TouchableOpacity>
 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          {/* Search input */}
           <View
             style={{
               flex: 1,
@@ -82,39 +145,93 @@ export function LikedSongsHeader({
             }}
           >
             <Ionicons name="search" size={18} color="rgba(255,255,255,0.7)" />
-            <Text
+            <TextInput
+              ref={inputRef}
+              value={searchQuery}
+              onChangeText={onSearchChange}
+              onFocus={activateSearch}
+              placeholder="Find in Liked Songs"
+              placeholderTextColor="rgba(255,255,255,0.55)"
+              selectionColor="#1DB954"
+              returnKeyType="search"
               style={{
-                color: "rgba(255,255,255,0.7)",
-                fontSize: 15,
-                fontFamily: "CircularStd",
-                fontWeight: "600",
-              }}
-            >
-              Find in Liked Songs
-            </Text>
-          </View>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={{
-              backgroundColor: "rgba(255,255,255,0.15)",
-              borderRadius: 8,
-              paddingHorizontal: 16,
-              height: 44,
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text
-              style={{
+                flex: 1,
                 color: "#fff",
                 fontSize: 15,
                 fontFamily: "CircularStd",
-                fontWeight: "600",
+                paddingVertical: 0,
+                height: 44,
               }}
+            />
+            {/* Clear button — only when there's text */}
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={() => onSearchChange("")}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name="close-circle"
+                  size={18}
+                  color="rgba(255,255,255,0.6)"
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Sort button — fades out when search active */}
+          {!isSearchActive && (
+            <Animated.View style={{ opacity: sortOpacity }}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={onSortPress}
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.15)",
+                  borderRadius: 8,
+                  paddingHorizontal: 16,
+                  height: 44,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontSize: 15,
+                    fontFamily: "CircularStd",
+                    fontWeight: "600",
+                  }}
+                >
+                  Sort
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+
+          {/* Cancel button — slides in from right when search active */}
+          <Animated.View
+            style={{
+              opacity: cancelOpacity,
+              transform: [{ translateX: cancelTranslateX }],
+              position: isSearchActive ? "relative" : "absolute",
+              right: isSearchActive ? undefined : -100,
+            }}
+          >
+            <TouchableOpacity
+              onPress={deactivateSearch}
+              hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
             >
-              Sort
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={{
+                  color: "#fff",
+                  fontSize: 15,
+                  fontFamily: "CircularStd",
+                  fontWeight: "600",
+                }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
       </LinearGradient>
 
