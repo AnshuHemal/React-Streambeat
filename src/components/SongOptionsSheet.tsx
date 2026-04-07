@@ -1,5 +1,6 @@
 import { ArtistItem } from "@/components/ArtistsSheet";
 import StreambeatCodeModal from "@/components/StreambeatCodeModal";
+import { useLikedSongs } from "@/context/LikedSongsContext";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -36,6 +37,7 @@ type Props = {
   visible: boolean;
   onClose: () => void;
   onShowArtists?: () => void;
+  songId?: string | null;
   songTitle: string;
   artistName: string;
   albumTitle: string;
@@ -45,12 +47,6 @@ type Props = {
 
 const MENU_ITEMS: MenuItem[] = [
   { id: "share", icon: "share-social-outline", label: "Share" },
-  {
-    id: "liked",
-    icon: undefined,
-    label: "Add to Liked Songs",
-    customImage: require("@/assets/images/liked-placeholder.png"),
-  },
   { id: "playlist", icon: "add-circle-outline", label: "Add to playlist" },
   { id: "hide", icon: "close-outline", label: "Hide in this album" },
   {
@@ -82,6 +78,7 @@ export default function SongOptionsSheet({
   visible,
   onClose,
   onShowArtists,
+  songId,
   songTitle,
   artistName,
   albumTitle,
@@ -89,6 +86,9 @@ export default function SongOptionsSheet({
   artists = [],
 }: Props) {
   const insets = useSafeAreaInsets();
+  const { isLiked: isLikedFn, toggleLike, getScaleAnim } = useLikedSongs();
+  const isLiked = songId ? isLikedFn(songId) : false;
+  const scaleAnim = songId ? getScaleAnim(songId) : null;
   const translateY = useRef(new Animated.Value(SCREEN_H)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const dragY = useRef(new Animated.Value(0)).current;
@@ -351,6 +351,42 @@ export default function SongOptionsSheet({
                 }
               }}
             >
+              {/* ── Dynamic liked row ── */}
+              <TouchableOpacity
+                activeOpacity={0.65}
+                onPress={() => songId && toggleLike(songId)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 20,
+                  paddingVertical: 15,
+                }}
+              >
+                <Animated.View
+                  style={{
+                    width: 34,
+                    marginRight: 18,
+                    alignItems: "center",
+                    transform: scaleAnim ? [{ scale: scaleAnim }] : [],
+                  }}
+                >
+                  <Ionicons
+                    name={isLiked ? "checkmark-circle" : "add-circle-outline"}
+                    size={26}
+                    color={isLiked ? "#1DB954" : "#e3e3e3"}
+                  />
+                </Animated.View>
+                <Text
+                  style={{
+                    color: isLiked ? "#1DB954" : "#e3e3e3",
+                    fontSize: 16,
+                    fontFamily: "CircularStd",
+                    flex: 1,
+                  }}
+                >
+                  {isLiked ? "Remove from Liked Songs" : "Add to Liked Songs"}
+                </Text>
+              </TouchableOpacity>
               {MENU_ITEMS.map((item) => (
                 <TouchableOpacity
                   key={item.id}

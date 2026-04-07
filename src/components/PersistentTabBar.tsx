@@ -13,6 +13,7 @@ const TAB_ROUTES = [
   "/settings",
   "/album",
   "/artist",
+  "/liked-songs",
 ];
 
 type TabItem = {

@@ -9,25 +9,25 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
 } from "react";
 import {
-  Animated,
-  BackHandler,
-  Dimensions,
-  FlatList,
-  Image,
-  LayoutAnimation,
-  Platform,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  UIManager,
-  View,
+    Animated,
+    BackHandler,
+    Dimensions,
+    FlatList,
+    Image,
+    LayoutAnimation,
+    Platform,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -135,6 +135,10 @@ function LibraryItemCard({
   const isCircle = item.is_circular;
 
   const handlePress = () => {
+    if (item.id === "liked-songs") {
+      router.push("/liked-songs" as any);
+      return;
+    }
     if (item.type === "artist") {
       router.push(`/artist/${item.id}` as any);
     } else if (item.type === "album") {
