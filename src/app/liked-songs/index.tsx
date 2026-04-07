@@ -1,5 +1,9 @@
 import { LikedSongRow } from "@/components/liked-songs/LikedSongRow";
 import { LikedSongsHeader } from "@/components/liked-songs/LikedSongsHeader";
+import {
+  LikedSongsSortOption,
+  LikedSongsSortSheet,
+} from "@/components/liked-songs/LikedSongsSortSheet";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import { LikedSong, useLikedSongsData } from "@/hooks/useLikedSongsData";
@@ -26,6 +30,10 @@ export default function LikedSongsScreen() {
 
   const [listVisible, setListVisible] = useState(false);
   const [selectedSong, setSelectedSong] = useState<LikedSong | null>(null);
+  const [sortOption, setSortOption] =
+    useState<LikedSongsSortOption>("recently_added");
+  const [showSortSheet, setShowSortSheet] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   // Y position of the controls row in content space (set via onLayout)
   const [controlsRowY, setControlsRowY] = useState(320);
 
@@ -68,13 +76,23 @@ export default function LikedSongsScreen() {
     extrapolate: "clamp",
   });
 
+  const filteredSongs = searchQuery.trim()
+    ? songs.filter((s) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          s.title.toLowerCase().includes(q) ||
+          s.artist_name.toLowerCase().includes(q)
+        );
+      })
+    : songs;
+
   const handlePlay = useCallback(
     (index: number) => {
-      if (!songs.length) return;
-      setQueue(songs as any, index);
-      playSong(songs[index] as any);
+      if (!filteredSongs.length) return;
+      setQueue(filteredSongs as any, index);
+      playSong(filteredSongs[index] as any);
     },
-    [songs, setQueue, playSong],
+    [filteredSongs, setQueue, playSong],
   );
 
   return (
@@ -173,7 +191,7 @@ export default function LikedSongsScreen() {
         </View>
       ) : (
         <Animated.FlatList
-          data={songs}
+          data={filteredSongs}
           keyExtractor={(item) => item.id}
           renderItem={({ item, index }) => (
             <LikedSongRow
@@ -191,12 +209,15 @@ export default function LikedSongsScreen() {
               songs={songs}
               onBack={() => router.back()}
               onShuffle={() =>
-                handlePlay(Math.floor(Math.random() * songs.length))
+                handlePlay(Math.floor(Math.random() * filteredSongs.length))
               }
               headerAnim={headerAnim}
               controlsAnim={controlsAnim}
               paddingTop={insets.top}
               onControlsRowLayout={(y) => setControlsRowY(y)}
+              onSortPress={() => setShowSortSheet(true)}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -210,7 +231,11 @@ export default function LikedSongsScreen() {
           scrollEventThrottle={16}
           ListEmptyComponent={
             <View style={{ alignItems: "center", paddingTop: 48 }}>
-              <Ionicons name="heart-outline" size={52} color="#535353" />
+              <Ionicons
+                name={searchQuery ? "search-outline" : "heart-outline"}
+                size={52}
+                color="#535353"
+              />
               <Text
                 style={{
                   color: "#a7a7a7",
@@ -221,7 +246,9 @@ export default function LikedSongsScreen() {
                   paddingHorizontal: 40,
                 }}
               >
-                Songs you like will appear here
+                {searchQuery
+                  ? `No results for "${searchQuery}"`
+                  : "Songs you like will appear here"}
               </Text>
             </View>
           }
@@ -240,6 +267,13 @@ export default function LikedSongsScreen() {
         albumTitle={selectedSong?.album_title ?? ""}
         imageUrl={selectedSong?.image_url ?? null}
         artists={selectedSong?.artists ?? []}
+      />
+
+      <LikedSongsSortSheet
+        visible={showSortSheet}
+        selected={sortOption}
+        onSelect={setSortOption}
+        onClose={() => setShowSortSheet(false)}
       />
     </View>
   );
