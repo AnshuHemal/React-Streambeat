@@ -16,6 +16,13 @@ import React, {
 import { Animated } from "react-native";
 import { PlayerPositionContext } from "./PlayerPositionContext";
 
+// ─── Global play-record bridge ────────────────────────────────────────────────
+// PlayHistoryProvider sets this ref so MusicPlayerContext can call recordPlay
+// without a circular context dependency.
+export const globalRecordPlayRef = {
+  current: null as ((songId: string, artistIds: string[]) => void) | null,
+};
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Song = {
@@ -194,6 +201,10 @@ export function MusicPlayerProvider({
     setPosition(0);
     setDuration(song.duration_ms ?? 0);
     setIsLoading(true);
+
+    // Record play for personalisation ranking (fire-and-forget via global ref)
+    const artistIds = (song.artists ?? []).map((a) => a.id).filter(Boolean);
+    globalRecordPlayRef.current?.(song.id, artistIds);
 
     p.replace({ uri: audioUrl });
 

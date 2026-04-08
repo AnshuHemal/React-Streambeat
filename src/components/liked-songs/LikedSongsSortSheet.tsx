@@ -6,14 +6,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import {
-  Animated,
-  Dimensions,
-  Modal,
-  PanResponder,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
+    Animated,
+    Dimensions,
+    Modal,
+    PanResponder,
+    Text,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -193,7 +193,7 @@ export function LikedSongsSortSheet({
                 color: "#fff",
                 fontSize: 17,
                 fontFamily: "CircularStd",
-                fontWeight: "700",
+                fontWeight: "600",
               }}
             >
               Sort by

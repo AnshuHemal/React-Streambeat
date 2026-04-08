@@ -3,6 +3,7 @@ import PersistentTabBar from "@/components/PersistentTabBar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { LikedSongsProvider } from "@/context/LikedSongsContext";
 import { MusicPlayerProvider } from "@/context/MusicPlayerContext";
+import { PlayHistoryProvider } from "@/context/PlayHistoryContext";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import { Stack, useRouter } from "expo-router";
@@ -65,70 +66,76 @@ export default function RootLayout() {
       <MusicPlayerProvider>
         <AuthProvider>
           <LikedSongsProvider>
-            <NavigationGuard>
-              <Stack
-                screenOptions={{
-                  headerShown: false,
-                  animation: "fade",
-                  contentStyle: { backgroundColor: "#121212" },
-                }}
-              >
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="search-input"
-                  options={{ animation: "fade" }}
-                />
-                <Stack.Screen
-                  name="album/[albumId]/index"
-                  options={{ animation: "fade" }}
-                />
-                <Stack.Screen
-                  name="artist/[artistId]/index"
-                  options={{ animation: "fade" }}
-                />
-                <Stack.Screen
-                  name="liked-songs/index"
-                  options={{ animation: "fade" }}
-                />
-              </Stack>
-              <PersistentTabBar />
-              <MiniPlayer />
-              <View
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: 99999,
-                  elevation: 99999,
-                }}
-                pointerEvents="box-none"
-              >
-                <Toaster
-                  position="bottom-center"
-                  toastOptions={{
-                    style: {
-                      backgroundColor: "#1e1e1e",
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: "#2a2a2a",
-                    },
-                    titleStyle: {
-                      color: "#ffffff",
-                      fontFamily: "CircularStd",
-                      fontSize: 14,
-                      fontWeight: "600",
-                    },
-                    descriptionStyle: {
-                      color: "#a7a7a7",
-                      fontFamily: "CircularStd",
-                      fontSize: 12,
-                    },
+            <PlayHistoryProvider>
+              <NavigationGuard>
+                <Stack
+                  screenOptions={{
+                    headerShown: false,
+                    animation: "fade",
+                    contentStyle: { backgroundColor: "#121212" },
                   }}
-                />
-              </View>
-            </NavigationGuard>
+                >
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="search-input"
+                    options={{ animation: "fade" }}
+                  />
+                  <Stack.Screen
+                    name="album/[albumId]/index"
+                    options={{ animation: "fade" }}
+                  />
+                  <Stack.Screen
+                    name="artist/[artistId]/index"
+                    options={{ animation: "fade" }}
+                  />
+                  <Stack.Screen
+                    name="liked-songs/index"
+                    options={{ animation: "fade" }}
+                  />
+                  <Stack.Screen
+                    name="manage-artists"
+                    options={{ animation: "slide_from_bottom" }}
+                  />
+                </Stack>
+                <PersistentTabBar />
+                <MiniPlayer />
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 99999,
+                    elevation: 99999,
+                  }}
+                  pointerEvents="box-none"
+                >
+                  <Toaster
+                    position="bottom-center"
+                    toastOptions={{
+                      style: {
+                        backgroundColor: "#1e1e1e",
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: "#2a2a2a",
+                      },
+                      titleStyle: {
+                        color: "#ffffff",
+                        fontFamily: "CircularStd",
+                        fontSize: 14,
+                        fontWeight: "600",
+                      },
+                      descriptionStyle: {
+                        color: "#a7a7a7",
+                        fontFamily: "CircularStd",
+                        fontSize: 12,
+                      },
+                    }}
+                  />
+                </View>
+              </NavigationGuard>
+            </PlayHistoryProvider>
           </LikedSongsProvider>
         </AuthProvider>
       </MusicPlayerProvider>
