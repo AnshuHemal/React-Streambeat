@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: streambeat-audio-analysis
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # Free tier — 512MB RAM, shared CPU, spins down after 15min inactivity
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false # set manually in Render dashboard
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: API_SECRET_KEY
+        sync: false
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 10000 # Render assigns $PORT=10000 by default
+      - key: MAX_AUDIO_SIZE_MB
+        value: 20 # keep memory usage within 512MB free tier limit
+      - key: AUDIO_DOWNLOAD_TIMEOUT
+        value: 60
