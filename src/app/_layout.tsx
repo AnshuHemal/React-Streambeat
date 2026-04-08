@@ -3,6 +3,7 @@ import PersistentTabBar from "@/components/PersistentTabBar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { LikedSongsProvider } from "@/context/LikedSongsContext";
 import { MusicPlayerProvider } from "@/context/MusicPlayerContext";
+import { PlayHistoryProvider } from "@/context/PlayHistoryContext";
 import { useFonts } from "expo-font";
 import * as NavigationBar from "expo-navigation-bar";
 import { Stack, useRouter } from "expo-router";
@@ -13,7 +14,6 @@ import { Platform, Text, TextInput, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Toaster } from "sonner-native";
 import "../../global.css";
-import { PlayHistoryProvider } from "@/context/PlayHistoryContext";
 
 const defaultTextStyle = { fontFamily: "CircularStd" };
 const RNText = Text as any;
@@ -91,6 +91,10 @@ export default function RootLayout() {
                   <Stack.Screen
                     name="liked-songs/index"
                     options={{ animation: "fade" }}
+                  />
+                  <Stack.Screen
+                    name="manage-artists"
+                    options={{ animation: "slide_from_bottom" }}
                   />
                 </Stack>
                 <PersistentTabBar />

@@ -265,7 +265,14 @@ export default function AlbumDetailScreen() {
   }
 
   const artists = album.album_artists.map((aa) => aa.artists);
-  const artistsNames = artists.map((a) => a.name).join(" • ");
+  const MAX_SHOWN = 2;
+  const artistsNames =
+    artists.length <= MAX_SHOWN
+      ? artists.map((a) => a.name).join(" • ")
+      : artists
+          .slice(0, MAX_SHOWN)
+          .map((a) => a.name)
+          .join(" • ") + ` +${artists.length - MAX_SHOWN} others`;
   const albumType =
     (album.album_type || "Album").charAt(0).toUpperCase() +
     (album.album_type || "Album").slice(1);
