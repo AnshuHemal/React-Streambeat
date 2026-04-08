@@ -13,16 +13,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Image,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Image,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 type Song = {
@@ -600,52 +600,19 @@ export default function AlbumDetailScreen() {
   };
 
   const renderRecommendedSection = () => {
-    // Use dummy data if no recommended albums from database
-    const displayAlbums =
-      recommendedAlbums.length > 0
-        ? recommendedAlbums
-        : [
-            {
-              id: "dummy-1",
-              title: "Gazab Gujarat",
-              image_url: null,
-              album_artists: [{ artists: { name: "Shashwat Sachdev" } }],
-            },
-            {
-              id: "dummy-2",
-              title: "Jhakaas Mumbai",
-              image_url: null,
-              album_artists: [{ artists: { name: "Shashwat Sachdev" } }],
-            },
-            {
-              id: "dummy-3",
-              title: "Midnight Dreams",
-              image_url: null,
-              album_artists: [{ artists: { name: "Arijit Singh" } }],
-            },
-            {
-              id: "dummy-4",
-              title: "Summer Vibes",
-              image_url: null,
-              album_artists: [{ artists: { name: "Neha Kakkar" } }],
-            },
-            {
-              id: "dummy-5",
-              title: "Bollywood Hits",
-              image_url: null,
-              album_artists: [{ artists: { name: "Various Artists" } }],
-            },
-            {
-              id: "dummy-6",
-              title: "Retro Classics",
-              image_url: null,
-              album_artists: [{ artists: { name: "Kishore Kumar" } }],
-            },
-          ];
+    if (recommendedAlbums.length === 0) return null;
 
     return (
-      <View className="mt-8 pl-4">
-        <Text className="text-white text-xl font-CircularStd mb-4">
+      <View style={{ marginTop: 32, paddingLeft: 16 }}>
+        <Text
+          style={{
+            color: "#ffffff",
+            fontSize: 22,
+            fontFamily: "CircularStd",
+            fontWeight: "600",
+            marginBottom: 16,
+          }}
+        >
           You may also like
         </Text>
         <ScrollView
@@ -653,39 +620,73 @@ export default function AlbumDetailScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingRight: 16, gap: 12 }}
         >
-          {displayAlbums.map((recAlbum) => {
+          {recommendedAlbums.map((recAlbum) => {
             const recArtists =
               recAlbum.album_artists
-                ?.map((aa: any) => aa.artists.name)
+                ?.map((aa: any) =>
+                  typeof aa.artists === "object" ? aa.artists.name : "",
+                )
+                .filter(Boolean)
                 .join(", ") || "Various Artists";
+
             return (
-              <View key={recAlbum.id} className="w-[150px] mr-3">
-                <View className="w-[150px] h-[150px] rounded-[4px] overflow-hidden mb-2 bg-[#282828]">
+              <TouchableOpacity
+                key={recAlbum.id}
+                activeOpacity={0.75}
+                onPress={() => router.push(`/album/${recAlbum.id}` as any)}
+                style={{ width: 150 }}
+              >
+                <View
+                  style={{
+                    width: 150,
+                    height: 150,
+                    borderRadius: 6,
+                    overflow: "hidden",
+                    marginBottom: 8,
+                    backgroundColor: "#282828",
+                  }}
+                >
                   {recAlbum.image_url ? (
                     <Image
                       source={{ uri: recAlbum.image_url }}
-                      className="w-full h-full"
+                      style={{ width: "100%", height: "100%" }}
                       resizeMode="cover"
                     />
                   ) : (
-                    <View className="w-full h-full bg-[#282828] items-center justify-center">
-                      <Ionicons name="musical-note" size={48} color="#7c7c7c" />
+                    <View
+                      style={{
+                        flex: 1,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Ionicons name="disc" size={48} color="#535353" />
                     </View>
                   )}
                 </View>
                 <Text
-                  className="text-white text-[15px] font-CircularStd mb-1"
+                  style={{
+                    color: "#ffffff",
+                    fontSize: 14,
+                    fontFamily: "CircularStd",
+                    fontWeight: "600",
+                    marginBottom: 2,
+                  }}
                   numberOfLines={1}
                 >
                   {recAlbum.title}
                 </Text>
                 <Text
-                  className="text-[#a7a7a7] text-[13px] font-CircularStd"
+                  style={{
+                    color: "#a7a7a7",
+                    fontSize: 12,
+                    fontFamily: "CircularStd",
+                  }}
                   numberOfLines={1}
                 >
                   {recArtists}
                 </Text>
-              </View>
+              </TouchableOpacity>
             );
           })}
         </ScrollView>
