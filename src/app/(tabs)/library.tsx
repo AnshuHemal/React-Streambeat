@@ -9,25 +9,25 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, {
-    useCallback,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import {
-    Animated,
-    BackHandler,
-    Dimensions,
-    FlatList,
-    Image,
-    LayoutAnimation,
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  Animated,
+  BackHandler,
+  Dimensions,
+  FlatList,
+  Image,
+  LayoutAnimation,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -357,10 +357,14 @@ export default function LibraryScreen() {
   }, []);
 
   // Fetch user's selected artists from Supabase
-  const { libraryItems, loading } = useLibraryData(user?.id);
+  const { libraryItems, loading, refetch } = useLibraryData(user?.id);
 
   useFocusEffect(
     useCallback(() => {
+      // Re-fetch every time the screen comes into focus so changes from
+      // manage-artists are reflected immediately
+      refetch();
+
       const sub = BackHandler.addEventListener("hardwareBackPress", () => {
         if (open) {
           setOpen(false);
@@ -506,6 +510,40 @@ export default function LibraryScreen() {
     );
   };
 
+  // ── Add-items — appended inline after real items in the grid ──────────────
+  const ADD_CARD_ITEMS: LibraryItem[] = [
+    {
+      id: "__add_artists",
+      title: "Add artists",
+      subtitle: "",
+      type: "artist",
+      image_url: null,
+      is_circular: true,
+    },
+    {
+      id: "__add_podcasts",
+      title: "Add podcasts",
+      subtitle: "",
+      type: "podcast",
+      image_url: null,
+      is_circular: false,
+    },
+    {
+      id: "__add_events",
+      title: "Add events and venues",
+      subtitle: "",
+      type: "podcast",
+      image_url: null,
+      is_circular: false,
+    },
+  ];
+
+  // Only show add-cards when filter is "all" or "artist"
+  const filteredWithAddCards = useMemo(() => {
+    const showAdd = activeFilter === "all" || activeFilter === "artist";
+    return showAdd ? [...filtered, ...ADD_CARD_ITEMS] : filtered;
+  }, [filtered, activeFilter]);
+
   return (
     <Drawer
       open={open}
@@ -605,7 +643,7 @@ export default function LibraryScreen() {
           ) : (
             <FlatList
               key={viewMode}
-              data={filtered}
+              data={filteredWithAddCards}
               keyExtractor={(item) => item.id}
               numColumns={viewMode === "grid" ? 3 : 1}
               showsVerticalScrollIndicator={false}
@@ -616,9 +654,89 @@ export default function LibraryScreen() {
               columnWrapperStyle={
                 viewMode === "grid" ? { gap: 12, marginBottom: 4 } : undefined
               }
-              renderItem={({ item }) => (
-                <LibraryItemCard item={item} viewMode={viewMode} />
-              )}
+              renderItem={({ item }) => {
+                // Add-card placeholder
+                if (item.id.startsWith("__add_")) {
+                  const isCircle = item.is_circular;
+                  const s = viewMode === "grid" ? ITEM_W : 64;
+                  const onAddPress = () => {
+                    if (item.id === "__add_artists")
+                      router.push("/manage-artists" as any);
+                  };
+                  if (viewMode === "list") {
+                    return (
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={onAddPress}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 14,
+                          marginBottom: 14,
+                          width: "100%",
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: s,
+                            height: s,
+                            borderRadius: isCircle ? s / 2 : 6,
+                            backgroundColor: "#2a2a2a",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Ionicons name="add" size={s * 0.4} color="#a7a7a7" />
+                        </View>
+                        <Text
+                          style={{
+                            color: "#ffffff",
+                            fontFamily: "CircularStd",
+                            fontSize: 15,
+                            fontWeight: "600",
+                          }}
+                        >
+                          {item.title}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  }
+                  return (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={onAddPress}
+                      style={{ width: s, marginBottom: 20 }}
+                    >
+                      <View
+                        style={{
+                          width: s,
+                          height: s,
+                          borderRadius: isCircle ? s / 2 : 10,
+                          backgroundColor: "#2a2a2a",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginBottom: 8,
+                        }}
+                      >
+                        <Ionicons name="add" size={s * 0.38} color="#a7a7a7" />
+                      </View>
+                      <Text
+                        style={{
+                          color: "#ffffff",
+                          fontFamily: "CircularStd",
+                          fontSize: 12,
+                          fontWeight: "600",
+                          lineHeight: 16,
+                        }}
+                        numberOfLines={2}
+                      >
+                        {item.title}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }
+                return <LibraryItemCard item={item} viewMode={viewMode} />;
+              }}
               ListHeaderComponent={<ListHeader />}
             />
           )}
