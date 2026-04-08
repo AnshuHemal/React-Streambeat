@@ -36,6 +36,61 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+def _to_wav_bytes(audio_bytes: bytes, filename: str) -> bytes:
+    """
+    Convert any audio format (AAC, M4A, OGG, FLAC, MP3, WAV) to
+    raw WAV bytes using pydub + ffmpeg.
+
+    pydub auto-detects the format from the file content / extension.
+    Falls back to trying common formats if auto-detection fails.
+    """
+    from pydub import AudioSegment
+
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+
+    # Map common extensions to pydub format strings
+    fmt_map = {
+        "aac": "aac",
+        "m4a": "mp4",
+        "mp4": "mp4",
+        "mp3": "mp3",
+        "ogg": "ogg",
+        "flac": "flac",
+        "wav": "wav",
+        "webm": "webm",
+        "opus": "opus",
+    }
+    fmt = fmt_map.get(ext, None)
+
+    try:
+        if fmt:
+            segment = AudioSegment.from_file(io.BytesIO(audio_bytes), format=fmt)
+        else:
+            # Let pydub auto-detect
+            segment = AudioSegment.from_file(io.BytesIO(audio_bytes))
+    except Exception:
+        # Last resort: try each common format
+        for try_fmt in ["aac", "mp4", "mp3", "ogg", "flac", "wav"]:
+            try:
+                segment = AudioSegment.from_file(
+                    io.BytesIO(audio_bytes), format=try_fmt
+                )
+                break
+            except Exception:
+                continue
+        else:
+            raise ValueError(
+                f"Could not decode audio '{filename}'. "
+                "Supported formats: MP3, AAC, M4A, WAV, FLAC, OGG, OPUS, WEBM."
+            )
+
+    # Export as WAV into memory — librosa handles WAV natively without ffmpeg
+    wav_buffer = io.BytesIO()
+    segment.export(wav_buffer, format="wav")
+    wav_buffer.seek(0)
+    return wav_buffer.read()
+
+
 # ─── Result dataclass ──────────────────────────────────────────────────────────
 
 @dataclass
@@ -285,10 +340,17 @@ def analyze_audio_bytes(audio_bytes: bytes, filename: str = "audio") -> AudioFea
     logger.info("Starting analysis: %s (%d bytes)", filename, len(audio_bytes))
 
     try:
-        # Load audio — librosa handles MP3/WAV/FLAC/OGG/M4A via audioread
-        # sr=22050 is standard for music analysis (matches Spotify's pipeline)
-        # mono=True collapses stereo — all features are mono-based
-        y, sr = librosa.load(io.BytesIO(audio_bytes), sr=22050, mono=True)
+        # Convert to WAV first — handles AAC, M4A, MP3, OGG, FLAC, WEBM etc.
+        # librosa's soundfile backend reads WAV natively without ffmpeg dependency
+        try:
+            wav_bytes = _to_wav_bytes(audio_bytes, filename)
+        except ValueError as exc:
+            raise ValueError(str(exc)) from exc
+
+        # Load from WAV bytes — sr=22050 is standard for music analysis
+        y, sr = librosa.load(io.BytesIO(wav_bytes), sr=22050, mono=True)
+    except ValueError:
+        raise
     except Exception as exc:
         raise ValueError(f"Failed to decode audio '{filename}': {exc}") from exc
 
