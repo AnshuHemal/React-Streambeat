@@ -2,7 +2,6 @@ import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Modal,
@@ -20,10 +19,15 @@ interface ArtistCreationModalProps {
   onArtistCreated: (artist: { id: string; name: string }) => void;
 }
 
-export function ArtistCreationModal({ visible, onClose, onArtistCreated }: ArtistCreationModalProps) {
+export function ArtistCreationModal({
+  visible,
+  onClose,
+  onArtistCreated,
+}: ArtistCreationModalProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [genresText, setGenresText] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -31,6 +35,12 @@ export function ArtistCreationModal({ visible, onClose, onArtistCreated }: Artis
       Alert.alert("Error", "Artist name is required");
       return;
     }
+
+    // Parse comma-separated genres into a clean array
+    const genres = genresText
+      .split(",")
+      .map((g) => g.trim().toLowerCase())
+      .filter(Boolean);
 
     setLoading(true);
     try {
@@ -40,6 +50,7 @@ export function ArtistCreationModal({ visible, onClose, onArtistCreated }: Artis
           name: name.trim(),
           slug: slug.trim() || name.trim().toLowerCase().replace(/\s+/g, "-"),
           image_url: imageUrl.trim() || null,
+          genres,
           is_active: true,
         })
         .select("id, name")
@@ -62,6 +73,7 @@ export function ArtistCreationModal({ visible, onClose, onArtistCreated }: Artis
     setName("");
     setSlug("");
     setImageUrl("");
+    setGenresText("");
     onClose();
   };
 
@@ -70,7 +82,7 @@ export function ArtistCreationModal({ visible, onClose, onArtistCreated }: Artis
     value: string,
     onChangeText: (text: string) => void,
     icon: keyof typeof Ionicons.glyphMap,
-    required = false
+    required = false,
   ) => (
     <View
       style={{
@@ -83,13 +95,23 @@ export function ArtistCreationModal({ visible, onClose, onArtistCreated }: Artis
         height: 52,
       }}
     >
-      <Ionicons name={icon} size={20} color="#B3B3B3" style={{ marginRight: 12 }} />
+      <Ionicons
+        name={icon}
+        size={20}
+        color="#B3B3B3"
+        style={{ marginRight: 12 }}
+      />
       <TextInput
         placeholder={`${placeholder}${required ? " *" : ""}`}
         placeholderTextColor="#7A7A7A"
         value={value}
         onChangeText={onChangeText}
-        style={{ flex: 1, color: "#FFFFFF", fontSize: 15, fontFamily: "CircularStd" }}
+        style={{
+          flex: 1,
+          color: "#FFFFFF",
+          fontSize: 15,
+          fontFamily: "CircularStd",
+        }}
       />
     </View>
   );
@@ -132,7 +154,9 @@ export function ArtistCreationModal({ visible, onClose, onArtistCreated }: Artis
                 marginBottom: 20,
               }}
             >
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View
+                style={{ flexDirection: "row", alignItems: "center", gap: 10 }}
+              >
                 <View
                   style={{
                     width: 36,
@@ -171,13 +195,37 @@ export function ArtistCreationModal({ visible, onClose, onArtistCreated }: Artis
                 lineHeight: 18,
               }}
             >
-              Create a new artist without leaving this form. The artist will be immediately available for selection.
+              Create a new artist without leaving this form. The artist will be
+              immediately available for selection.
             </Text>
 
             {/* Form Fields */}
             {renderInput("Artist Name", name, setName, "person", true)}
             {renderInput("Slug (optional)", slug, setSlug, "link")}
-            {renderInput("Image URL (optional)", imageUrl, setImageUrl, "image")}
+            {renderInput(
+              "Image URL (optional)",
+              imageUrl,
+              setImageUrl,
+              "image",
+            )}
+            {renderInput(
+              "Genres (comma-separated)",
+              genresText,
+              setGenresText,
+              "musical-notes",
+            )}
+            <Text
+              style={{
+                color: "#7A7A7A",
+                fontSize: 11,
+                fontFamily: "CircularStd",
+                marginTop: -8,
+                marginBottom: 12,
+                paddingHorizontal: 4,
+              }}
+            >
+              e.g. bollywood, romantic, indie
+            </Text>
 
             {/* Actions */}
             <View style={{ flexDirection: "row", gap: 12, marginTop: 8 }}>

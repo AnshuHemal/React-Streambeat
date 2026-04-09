@@ -33,9 +33,47 @@ import { MiniProgressBar } from "./ProgressBar";
 import { SeekBar } from "./SeekBar";
 import { SleepTimerSheet } from "./SleepTimerSheet";
 import { StickyHeader } from "./StickyHeader";
+import { useFollowArtist } from "@/hooks/useFollowArtist";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const MINI_H = 64;
+
+// ─── Follow button sub-component ──────────────────────────────────────────────
+// Extracted so useFollowArtist is called after resolvedArtists is known,
+// avoiding the "used before declaration" error in the parent component.
+function FollowArtistButton({ artistId }: { artistId: string | undefined }) {
+  const { isFollowing, toggleFollow, scaleAnim } = useFollowArtist(artistId);
+  if (!artistId) return null;
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        onPress={toggleFollow}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        style={{
+          borderWidth: 1,
+          borderColor: isFollowing ? "#1DB954" : "rgba(255,255,255,0.5)",
+          borderRadius: 14,
+          paddingHorizontal: 12,
+          paddingVertical: 5,
+          marginRight: 8,
+          backgroundColor: isFollowing ? "rgba(29,185,84,0.15)" : "transparent",
+        }}
+      >
+        <Text
+          style={{
+            color: isFollowing ? "#1DB954" : "#ffffff",
+            fontSize: 12,
+            fontFamily: "CircularStd",
+            fontWeight: "600",
+          }}
+        >
+          {isFollowing ? "Following" : "Follow"}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 function PlayerComponent() {
   const insets = useSafeAreaInsets();
@@ -595,7 +633,7 @@ function PlayerComponent() {
           </Animated.View>
 
           <View style={{ paddingHorizontal: 24 }}>
-            {/* Title + add */}
+            {/* Title + follow + like */}
             <View
               style={{
                 flexDirection: "row",
@@ -604,7 +642,7 @@ function PlayerComponent() {
                 marginBottom: 28,
               }}
             >
-              <View style={{ flex: 1, marginRight: 16 }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
                 <Text
                   numberOfLines={1}
                   style={{
@@ -628,6 +666,11 @@ function PlayerComponent() {
                   {artistName}
                 </Text>
               </View>
+
+              {/* Follow artist */}
+              <FollowArtistButton artistId={resolvedArtists[0]?.id} />
+
+              {/* Like song button */}
               <TouchableOpacity
                 onPress={() => toggleLike(activeSong.id)}
                 activeOpacity={0.7}
