@@ -82,16 +82,24 @@ export function parseLrc(raw: string | null | undefined): LyricLine[] {
 /**
  * Given a sorted LyricLine[] and current position (ms),
  * returns the index of the currently active line (-1 if before first line).
+ *
+ * LOOK_AHEAD_MS: highlights the next line slightly before its timestamp
+ * so the visual change coincides with when the words are actually sung,
+ * compensating for audio buffering and React render latency.
  */
+const LOOK_AHEAD_MS = 400;
+
 export function getActiveLyricIndex(
   lines: LyricLine[],
   positionMs: number,
 ): number {
   if (lines.length === 0) return -1;
 
+  const adjusted = positionMs + LOOK_AHEAD_MS;
+
   let active = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].time <= positionMs) {
+    if (lines[i].time <= adjusted) {
       active = i;
     } else {
       break;
