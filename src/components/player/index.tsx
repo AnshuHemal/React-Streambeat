@@ -595,7 +595,7 @@ function PlayerComponent() {
           </Animated.View>
 
           <View style={{ paddingHorizontal: 24 }}>
-            {/* Title + add */}
+            {/* Title + follow + like */}
             <View
               style={{
                 flexDirection: "row",
@@ -604,7 +604,7 @@ function PlayerComponent() {
                 marginBottom: 28,
               }}
             >
-              <View style={{ flex: 1, marginRight: 16 }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
                 <Text
                   numberOfLines={1}
                   style={{
@@ -628,6 +628,8 @@ function PlayerComponent() {
                   {artistName}
                 </Text>
               </View>
+
+              {/* Like song button */}
               <TouchableOpacity
                 onPress={() => toggleLike(activeSong.id)}
                 activeOpacity={0.7}

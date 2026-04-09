@@ -1,81 +1,187 @@
 import ProfileDrawerContent from "@/components/ProfileDrawer";
 import TabScreenHeader from "@/components/TabScreenHeader";
-import { useAuth } from "@/context/AuthContext";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { FeaturedBanner } from "@/components/home/FeaturedBanner";
+import { HomeAlbumCard } from "@/components/home/HomeAlbumCard";
+import { HomeArtistCard } from "@/components/home/HomeArtistCard";
+import { HomeSectionHeader } from "@/components/home/HomeSectionHeader";
+import { HomeSongCard } from "@/components/home/HomeSongCard";
+import { QuickItemTile } from "@/components/home/QuickItemTile";
+import { useMusicPlayer } from "@/context/MusicPlayerContext";
+import { useHomeData } from "@/hooks/useHomeData";
+import { useExtractedColor } from "@/hooks/useImageColor";
+import { LinearGradient } from "expo-linear-gradient";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useRef, useState } from "react";
 import {
-    BackHandler,
-    Dimensions,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View
+  Animated,
+  BackHandler,
+  Dimensions,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const AVATAR_COLORS = [
-  "#E91E63",
-  "#9C27B0",
-  "#3F51B5",
-  "#2196F3",
-  "#009688",
-  "#FF5722",
-  "#795548",
-  "#607D8B",
-];
+const FILTER_TABS = ["All", "Music"] as const;
+type FilterTab = (typeof FILTER_TABS)[number];
 
-const GREETING_SECTIONS = [
-  { id: "1", title: "Recently played" },
-  { id: "2", title: "Top mixes" },
-  { id: "3", title: "Made for you" },
-];
+// ─── Skeleton ──────────────────────────────────────────────────────────────────
 
-const QUICK_ITEMS = Array.from({ length: 6 }, (_, i) => ({
-  id: String(i + 1),
-  title: `Playlist ${i + 1}`,
-}));
-
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+function SkeletonCard({
+  width = 144,
+  height = 144,
+}: {
+  width?: number;
+  height?: number;
+}) {
+  const anim = useRef(new Animated.Value(0.4)).current;
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 0.4,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, []);
+  return (
+    <Animated.View
+      style={{
+        width,
+        height,
+        borderRadius: 6,
+        backgroundColor: "#282828",
+        opacity: anim,
+        marginRight: 16,
+      }}
+    />
+  );
 }
+
+function SkeletonRow() {
+  return (
+    <View style={{ marginBottom: 32 }}>
+      <View
+        style={{
+          height: 24,
+          width: 160,
+          backgroundColor: "#282828",
+          borderRadius: 4,
+          marginHorizontal: 20,
+          marginBottom: 14,
+          opacity: 0.6,
+        }}
+      />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+      >
+        {Array.from({ length: 5 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+// ─── Screen ────────────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, profile } = useAuth();
   const [open, setOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<
-    "All" | "Music" | "Podcasts"
-  >("All");
+  const [activeFilter, setActiveFilter] = useState<FilterTab>("All");
+  const { currentSong, playSong, setQueue } = useMusicPlayer();
 
-  useEffect(() => {
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (open) {
-        setOpen(false);
-        return true;
-      }
-      return false;
-    });
-    return () => sub.remove();
-  }, [open]);
+  const {
+    quickItems,
+    recentlyPlayed,
+    followedArtists,
+    newReleases,
+    popularAlbums,
+    personalizedSongs,
+    personalizedArtistName,
+    featuredItem,
+    timeContext,
+    loading,
+    refetch,
+  } = useHomeData();
 
-  const displayName =
-    profile?.display_name ??
-    user?.user_metadata?.display_name ??
-    user?.user_metadata?.full_name ??
-    user?.email?.split("@")[0] ??
-    user?.phone ??
-    "there";
+  // Gradient color from first recently played album
+  const heroImageUrl = recentlyPlayed[0]?.image_url ?? null;
+  const extractedColor = useExtractedColor(heroImageUrl);
+  const gradientColor =
+    extractedColor !== "#1a1a1a" ? extractedColor : "#1a1a2e";
 
-  const avatarLetter = displayName.charAt(0).toUpperCase();
-  const avatarColor = useMemo(
-    () => AVATAR_COLORS[displayName.charCodeAt(0) % AVATAR_COLORS.length],
-    [displayName],
+  // Refresh on focus
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+      const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+        if (open) {
+          setOpen(false);
+          return true;
+        }
+        return false;
+      });
+      return () => sub.remove();
+    }, [open, refetch]),
   );
+
+  // Fade-in when data loads
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  React.useEffect(() => {
+    if (!loading) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      fadeAnim.setValue(0);
+    }
+  }, [loading]);
+
+  // Navigation helpers
+  const goAlbum = useCallback(
+    (id: string) => router.push(`/album/${id}` as any),
+    [router],
+  );
+  const goArtist = useCallback(
+    (id: string) => router.push(`/artist/${id}` as any),
+    [router],
+  );
+
+  // Play personalized song
+  const handleSongPress = useCallback(
+    (index: number) => {
+      const queue = personalizedSongs.map((s) => ({
+        id: s.id,
+        title: s.title,
+        image_url: s.image_url,
+        audio_url: s.audio_url,
+        preview_url: s.preview_url,
+        duration_ms: s.duration_ms,
+        artist_name: s.artist_name,
+        artists: s.artists,
+        album_title: s.album_title ?? undefined,
+      }));
+      setQueue(queue, index);
+      playSong(queue[index] as any);
+    },
+    [personalizedSongs, setQueue, playSong],
+  );
+
+  const quickGrid = quickItems.slice(0, 6);
 
   return (
     <Drawer
@@ -96,13 +202,31 @@ export default function HomeScreen() {
         style={{ flex: 1, backgroundColor: "#121212" }}
         edges={["top"]}
       >
+        {/* Scroll-based gradient header */}
+        {!loading && (
+          <LinearGradient
+            colors={[gradientColor, `${gradientColor}88`, "#121212"]}
+            locations={[0, 0.5, 1]}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 320,
+              zIndex: 0,
+            }}
+            pointerEvents="none"
+          />
+        )}
+
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 120 }}
+          style={{ zIndex: 1 }}
         >
           {/* Header */}
           <TabScreenHeader
-            title={getGreeting()}
+            title={timeContext.greeting}
             onAvatarPress={() => setOpen(true)}
             rightIcon="notifications-outline"
             onRightPress={() => router.push("/admin" as any)}
@@ -117,7 +241,7 @@ export default function HomeScreen() {
               marginBottom: 20,
             }}
           >
-            {(["All", "Music", "Podcasts"] as const).map((tab) => {
+            {FILTER_TABS.map((tab) => {
               const isActive = activeFilter === tab;
               return (
                 <TouchableOpacity
@@ -128,7 +252,9 @@ export default function HomeScreen() {
                     paddingHorizontal: 16,
                     paddingVertical: 8,
                     borderRadius: 20,
-                    backgroundColor: isActive ? "#1DB954" : "#2a2a2a",
+                    backgroundColor: isActive
+                      ? "#1DB954"
+                      : "rgba(255,255,255,0.15)",
                   }}
                 >
                   <Text
@@ -146,147 +272,176 @@ export default function HomeScreen() {
             })}
           </View>
 
-          {/* Quick access grid */}
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              paddingHorizontal: 12,
-              gap: 8,
-              marginBottom: 32,
-            }}
-          >
-            {QUICK_ITEMS.map((item) => (
-              <View key={item.id} style={{ width: "47%" }}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: "#282828",
-                    borderRadius: 6,
-                    overflow: "hidden",
-                    height: 56,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 56,
-                      height: 56,
-                      backgroundColor: "#535353",
-                      alignItems: "center",
-                      justifyContent: "center",
+          {/* ── Quick access grid ── */}
+          {loading ? (
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                paddingHorizontal: 12,
+                gap: 8,
+                marginBottom: 32,
+              }}
+            >
+              {Array.from({ length: 6 }).map((_, i) => (
+                <View key={i} style={{ width: "47%" }}>
+                  <SkeletonCard width={144} height={56} />
+                </View>
+              ))}
+            </View>
+          ) : quickGrid.length > 0 ? (
+            <Animated.View
+              style={{
+                opacity: fadeAnim,
+                flexDirection: "row",
+                flexWrap: "wrap",
+                paddingHorizontal: 12,
+                gap: 8,
+                marginBottom: 32,
+              }}
+            >
+              {quickGrid.map((item) => (
+                <View key={item.id} style={{ width: "47%" }}>
+                  <QuickItemTile
+                    item={item}
+                    onPress={() => {
+                      if (item.kind === "liked-songs")
+                        router.push("/liked-songs" as any);
+                      else if (item.kind === "album") goAlbum(item.id);
+                      else goArtist(item.id);
                     }}
-                  >
-                    <Ionicons name="musical-notes" size={22} color="#1DB954" />
-                  </View>
-                  <Text
-                    style={{
-                      flex: 1,
-                      color: "#ffffff",
-                      fontSize: 12,
-                      fontFamily: "CircularStd",
-                      fontWeight: "600",
-                      paddingHorizontal: 12,
-                    }}
-                    numberOfLines={2}
-                  >
-                    {item.title}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
+                  />
+                </View>
+              ))}
+            </Animated.View>
+          ) : null}
 
-          {/* Sections */}
-          {GREETING_SECTIONS.map((section) => (
-            <View key={section.id} style={{ marginBottom: 32 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  paddingHorizontal: 20,
-                  marginBottom: 16,
+          {/* ── Featured banner (editor's pick) ── */}
+          {!loading && featuredItem && (
+            <Animated.View style={{ opacity: fadeAnim }}>
+              <FeaturedBanner
+                item={featuredItem}
+                onPress={() => {
+                  if (featuredItem.link_type === "album")
+                    goAlbum(featuredItem.link_id);
+                  else goArtist(featuredItem.link_id);
                 }}
-              >
-                <Text
-                  style={{
-                    color: "#ffffff",
-                    fontSize: 20,
-                    fontWeight: "600",
-                    fontFamily: "CircularStd",
-                  }}
-                >
-                  {section.title}
-                </Text>
-                <TouchableOpacity activeOpacity={0.7}>
-                  <Text
-                    style={{
-                      color: "#B3B3B3",
-                      fontSize: 12,
-                      fontFamily: "CircularStd",
-                    }}
-                  >
-                    Show all
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              />
+            </Animated.View>
+          )}
 
+          {/* ── Jump back in ── */}
+          {loading ? (
+            <SkeletonRow />
+          ) : recentlyPlayed.length > 0 ? (
+            <Animated.View style={{ opacity: fadeAnim, marginBottom: 32 }}>
+              <HomeSectionHeader title="Jump back in" />
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
               >
-                {Array.from({ length: 5 }, (_, i) => (
-                  <TouchableOpacity
-                    key={i}
-                    activeOpacity={0.7}
-                    style={{ width: 144 }}
-                  >
-                    <View
-                      style={{
-                        width: 144,
-                        height: 144,
-                        borderRadius: 6,
-                        backgroundColor: "#282828",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 8,
-                      }}
-                    >
-                      <Ionicons
-                        name="musical-notes"
-                        size={40}
-                        color="#535353"
-                      />
-                    </View>
-                    <Text
-                      style={{
-                        color: "#ffffff",
-                        fontSize: 12,
-                        fontFamily: "CircularStd",
-                      }}
-                      numberOfLines={2}
-                    >
-                      {section.title} {i + 1}
-                    </Text>
-                    <Text
-                      style={{
-                        color: "#B3B3B3",
-                        fontSize: 12,
-                        fontFamily: "CircularStd",
-                        marginTop: 2,
-                      }}
-                      numberOfLines={1}
-                    >
-                      Playlist • Streambeat
-                    </Text>
-                  </TouchableOpacity>
+                {recentlyPlayed.map((album) => (
+                  <HomeAlbumCard
+                    key={album.id}
+                    album={album}
+                    onPress={() => goAlbum(album.id)}
+                  />
                 ))}
               </ScrollView>
-            </View>
-          ))}
+            </Animated.View>
+          ) : null}
+
+          {/* ── Based on [artist] — personalized songs ── */}
+          {!loading && personalizedSongs.length > 0 && (
+            <Animated.View style={{ opacity: fadeAnim, marginBottom: 32 }}>
+              <HomeSectionHeader
+                title={
+                  personalizedArtistName
+                    ? `Based on ${personalizedArtistName}`
+                    : timeContext.sectionTitle
+                }
+              />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+              >
+                {personalizedSongs.map((song, idx) => (
+                  <HomeSongCard
+                    key={song.id}
+                    song={song}
+                    isActive={currentSong?.id === song.id}
+                    onPress={() => handleSongPress(idx)}
+                  />
+                ))}
+              </ScrollView>
+            </Animated.View>
+          )}
+
+          {/* ── Your artists ── */}
+          {!loading && followedArtists.length > 0 && (
+            <Animated.View style={{ opacity: fadeAnim, marginBottom: 32 }}>
+              <HomeSectionHeader title="Your artists" />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 20 }}
+              >
+                {followedArtists.map((artist) => (
+                  <HomeArtistCard
+                    key={artist.id}
+                    artist={artist}
+                    onPress={() => goArtist(artist.id)}
+                  />
+                ))}
+              </ScrollView>
+            </Animated.View>
+          )}
+
+          {/* ── New releases for you ── */}
+          {loading ? (
+            <SkeletonRow />
+          ) : newReleases.length > 0 ? (
+            <Animated.View style={{ opacity: fadeAnim, marginBottom: 32 }}>
+              <HomeSectionHeader title="New releases for you" />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+              >
+                {newReleases.map((album) => (
+                  <HomeAlbumCard
+                    key={album.id}
+                    album={album}
+                    onPress={() => goAlbum(album.id)}
+                  />
+                ))}
+              </ScrollView>
+            </Animated.View>
+          ) : null}
+
+          {/* ── Popular right now ── */}
+          {loading ? (
+            <SkeletonRow />
+          ) : popularAlbums.length > 0 ? (
+            <Animated.View style={{ opacity: fadeAnim, marginBottom: 32 }}>
+              <HomeSectionHeader title="Popular right now" />
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 16 }}
+              >
+                {popularAlbums.map((album) => (
+                  <HomeAlbumCard
+                    key={album.id}
+                    album={album}
+                    onPress={() => goAlbum(album.id)}
+                  />
+                ))}
+              </ScrollView>
+            </Animated.View>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </Drawer>
