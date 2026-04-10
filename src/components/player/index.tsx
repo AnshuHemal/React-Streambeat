@@ -1,6 +1,7 @@
 import ArtistsSheet from "@/components/ArtistsSheet";
 import BottomDialog from "@/components/BottomDialog";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
+import SongShareSheet from "@/components/SongShareSheet";
 import { useLikedSongs } from "@/context/LikedSongsContext";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import { useBluetoothDevice } from "@/hooks/useAudioDevice";
@@ -50,6 +51,7 @@ function PlayerComponent() {
     setIsExpanded,
     pause,
     stopPlayer,
+    playingFrom,
   } = useMusicPlayer();
 
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -88,6 +90,7 @@ function PlayerComponent() {
     number | "end_of_track" | null
   >(null);
   const [showSongOptions, setShowSongOptions] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [showArtistsSheet, setShowArtistsSheet] = useState(false);
   const [showCreditsSheet, setShowCreditsSheet] = useState(false);
   const [showStopDialog, setShowStopDialog] = useState(false);
@@ -223,6 +226,29 @@ function PlayerComponent() {
     typeof artistImage === "string" && artistImage
       ? artistImage
       : activeSong.image_url || "";
+
+  // Get display text for "Playing From" section
+  const getPlayingFromText = () => {
+    switch (playingFrom) {
+      case "ALBUM":
+        return { label: "PLAYING FROM ALBUM", subtitle: activeSong.album_title || "" };
+      case "SEARCH":
+        return { label: "PLAYING FROM SEARCH", subtitle: "Recent Searches" };
+      case "LIKED_SONGS":
+        return { label: "PLAYING FROM LIBRARY", subtitle: "Liked Songs" };
+      case "ARTIST":
+        return { label: "PLAYING FROM ARTIST", subtitle: firstArtistName };
+      case "HOME":
+        return { label: "PLAYING FROM HOME", subtitle: "Made For You" };
+      default:
+        // Fallback based on album_title
+        return activeSong.album_title
+          ? { label: "PLAYING FROM ALBUM", subtitle: activeSong.album_title }
+          : { label: "PLAYING FROM LIBRARY", subtitle: "Your Library" };
+    }
+  };
+
+  const { label: playingFromLabel, subtitle: playingFromSubtitle } = getPlayingFromText();
 
   // Build credits array — use real DB credits when available, fall back to artist list
   const creditsData: ResolvedCredit[] =
@@ -535,7 +561,7 @@ function PlayerComponent() {
                   letterSpacing: 0.5,
                 }}
               >
-                PLAYING FROM {activeSong.album_title ? "ALBUM" : "LIBRARY"}
+                {playingFromLabel}
               </Text>
               <Text
                 numberOfLines={1}
@@ -546,7 +572,7 @@ function PlayerComponent() {
                   fontWeight: "600",
                 }}
               >
-                {activeSong.album_title || "Your Library"}
+                {playingFromSubtitle}
               </Text>
             </View>
             <TouchableOpacity
@@ -697,7 +723,7 @@ function PlayerComponent() {
               <View
                 style={{ flexDirection: "row", alignItems: "center", gap: 20 }}
               >
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowShare(true)}>
                   <Image
                     source={require("@/assets/images/ico-24-share.png")}
                     style={{ width: 24, height: 24, tintColor: "#B3B3B3" }}
@@ -744,11 +770,23 @@ function PlayerComponent() {
         artistName={artistName}
         albumTitle={activeSong.album_title || ""}
         imageUrl={activeSong.image_url}
+        durationMs={activeSong.duration_ms}
         artists={resolvedArtists.map((a: any) => ({
           id: a.id || `mock-${a.name}`,
           name: a.name,
           image_url: a.image_url ?? null,
         }))}
+      />
+
+      <SongShareSheet
+        visible={showShare}
+        onClose={() => setShowShare(false)}
+        songId={activeSong.id}
+        songTitle={activeSong.title}
+        artistName={artistName}
+        albumTitle={activeSong.album_title || ""}
+        imageUrl={activeSong.image_url}
+        durationMs={activeSong.duration_ms}
       />
 
       <ArtistsSheet

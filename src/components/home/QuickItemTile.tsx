@@ -28,20 +28,11 @@ export function QuickItemTile({ item, onPress }: Props) {
     >
       {/* Artwork */}
       {isLiked ? (
-        <View
-          style={{
-            width: 56,
-            height: 56,
-            backgroundColor: "#4a3f8f",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Image
-            source={require("@/assets/images/liked-placeholder.png")}
-            style={{ width: 56, height: 56 }}
-          />
-        </View>
+        <Image
+          source={require("@/assets/images/liked-placeholder.png")}
+          style={{ width: 56, height: 56 }}
+          contentFit="cover"
+        />
       ) : item.image_url ? (
         <Image
           source={{ uri: item.image_url }}

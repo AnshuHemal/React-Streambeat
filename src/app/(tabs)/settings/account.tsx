@@ -1,9 +1,11 @@
+import BottomDialog from "@/components/BottomDialog";
 import SettingHighlightRow from "@/components/SettingHighlightRow";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
-import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function SectionHeader({ title }: { title: string }) {
@@ -86,10 +88,45 @@ function AccountRow({
 
 export default function AccountScreen() {
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const username = user?.id?.slice(0, 28) ?? "—";
+  // Format username: remove hyphens and join into one word
+  const rawUsername = user?.id?.slice(0, 28) ?? "";
+  const username = rawUsername ? rawUsername.replace(/-/g, "") : "—";
   const email = user?.email ?? "—";
+
+  // Delete all user data and close account
+  const handleCloseAccount = async () => {
+    if (!user?.id) return;
+    setIsDeleting(true);
+
+    try {
+      // Delete user data from all related tables
+      await Promise.all([
+        // Delete liked songs
+        supabase.from("user_liked_songs").delete().eq("user_id", user.id),
+        // Delete search history
+        supabase.from("user_search_history").delete().eq("user_id", user.id),
+        // Delete play history
+        supabase.from("user_play_history").delete().eq("user_id", user.id),
+        // Delete profile
+        supabase.from("profiles").delete().eq("id", user.id),
+      ]);
+
+      // Sign out the user
+      await signOut();
+
+      // Navigate to login screen
+      router.replace("/login");
+    } catch (error) {
+      console.error("Error closing account:", error);
+    } finally {
+      setIsDeleting(false);
+      setShowCloseDialog(false);
+    }
+  };
 
   return (
     <SafeAreaView
@@ -221,7 +258,8 @@ export default function AccountScreen() {
 
         {/* Delete account */}
         <SettingHighlightRow label="Close account">
-          <View
+          <TouchableOpacity
+            onPress={() => setShowCloseDialog(true)}
             style={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 16 }}
           >
             <Text
@@ -239,9 +277,49 @@ export default function AccountScreen() {
                 close your account.
               </Text>
             </Text>
-          </View>
+          </TouchableOpacity>
         </SettingHighlightRow>
       </ScrollView>
+
+      {/* Close Account Confirmation Dialog */}
+      <BottomDialog
+        visible={showCloseDialog}
+        title="Close your account?"
+        description="This will permanently delete all your data including your liked songs, search history, and play history. This action cannot be undone."
+        confirmLabel={isDeleting ? "Closing..." : "Close Account"}
+        dismissLabel="Cancel"
+        onConfirm={handleCloseAccount}
+        onDismiss={() => setShowCloseDialog(false)}
+      />
+
+      {/* Loading overlay during deletion */}
+      {isDeleting && (
+        <View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.7)",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text
+            style={{
+              color: "#ffffff",
+              fontFamily: "CircularStd",
+              fontSize: 14,
+              marginTop: 12,
+            }}
+          >
+            Deleting your data...
+          </Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

@@ -1,8 +1,8 @@
 import { LikedSongRow } from "@/components/liked-songs/LikedSongRow";
 import { LikedSongsHeader } from "@/components/liked-songs/LikedSongsHeader";
 import {
-  LikedSongsSortOption,
-  LikedSongsSortSheet,
+    LikedSongsSortOption,
+    LikedSongsSortSheet,
 } from "@/components/liked-songs/LikedSongsSortSheet";
 import SongOptionsSheet from "@/components/SongOptionsSheet";
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
@@ -12,11 +12,11 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
-  Dimensions,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -89,7 +89,7 @@ export default function LikedSongsScreen() {
   const handlePlay = useCallback(
     (index: number) => {
       if (!filteredSongs.length) return;
-      setQueue(filteredSongs as any, index);
+      setQueue(filteredSongs as any, index, "LIKED_SONGS");
       playSong(filteredSongs[index] as any);
     },
     [filteredSongs, setQueue, playSong],

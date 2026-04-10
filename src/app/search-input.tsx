@@ -14,25 +14,25 @@ import { useSearch } from "@/hooks/useSearch";
 import { useSuggestions } from "@/hooks/useSuggestions";
 import { useTrendingSearches } from "@/hooks/useTrendingSearches";
 import {
-  RecentSearchEntry,
-  SearchResultItem,
-  SearchSong,
-  Suggestion,
-  TrendingSearch,
+    RecentSearchEntry,
+    SearchResultItem,
+    SearchSong,
+    Suggestion,
+    TrendingSearch,
 } from "@/types/search";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-  ActivityIndicator,
-  BackHandler,
-  FlatList,
-  Keyboard,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    BackHandler,
+    FlatList,
+    Keyboard,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -155,7 +155,7 @@ export default function SearchInputScreen() {
         artists: s.artists,
         album_title: s.album_title ?? undefined,
       }));
-      setQueue(queue, idx >= 0 ? idx : 0);
+      setQueue(queue, idx >= 0 ? idx : 0, "SEARCH");
       playSong(queue[idx >= 0 ? idx : 0] as any);
     },
     [playSong, setQueue],
