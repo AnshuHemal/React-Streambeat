@@ -1,5 +1,6 @@
 import BottomDialog from "@/components/BottomDialog";
 import SettingHighlightRow from "@/components/SettingHighlightRow";
+import { useCreateButtonSetting } from "@/hooks/useCreateButtonSetting";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -192,12 +193,12 @@ function NavRow({
 
 export default function ContentDisplayScreen() {
   const router = useRouter();
+  const { isEnabled: createButton, toggleCreateButton, isLoaded: createButtonLoaded } = useCreateButtonSetting();
 
   const [reduceAnimations, setReduceAnimations] = useState(false);
   const [canvas, setCanvas] = useState(true);
   const [explicitContent, setExplicitContent] = useState(true);
   const [showUnplayable, setShowUnplayable] = useState(false);
-  const [createButton, setCreateButton] = useState(true);
   const [langDialogVisible, setLangDialogVisible] = useState(false);
 
   return (
@@ -309,7 +310,7 @@ export default function ContentDisplayScreen() {
           title="Create button"
           description="The Create button will appear in your main navigation bar."
           value={createButton}
-          onToggle={() => setCreateButton((v) => !v)}
+          onToggle={toggleCreateButton}
         />
       </ScrollView>
 

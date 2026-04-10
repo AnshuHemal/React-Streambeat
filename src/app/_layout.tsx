@@ -1,6 +1,7 @@
 import MiniPlayer from "@/components/MiniPlayer";
 import PersistentTabBar from "@/components/PersistentTabBar";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { CreateButtonProvider } from "@/context/CreateButtonContext";
 import { LikedSongsProvider } from "@/context/LikedSongsContext";
 import { MusicPlayerProvider } from "@/context/MusicPlayerContext";
 import { PlayHistoryProvider } from "@/context/PlayHistoryContext";
@@ -67,7 +68,8 @@ export default function RootLayout() {
         <AuthProvider>
           <LikedSongsProvider>
             <PlayHistoryProvider>
-              <NavigationGuard>
+              <CreateButtonProvider>
+                <NavigationGuard>
                 <Stack
                   screenOptions={{
                     headerShown: false,
@@ -99,6 +101,8 @@ export default function RootLayout() {
                 </Stack>
                 <PersistentTabBar />
                 <MiniPlayer />
+              </NavigationGuard>
+              </CreateButtonProvider>
                 <View
                   style={{
                     position: "absolute",
@@ -134,7 +138,6 @@ export default function RootLayout() {
                     }}
                   />
                 </View>
-              </NavigationGuard>
             </PlayHistoryProvider>
           </LikedSongsProvider>
         </AuthProvider>
