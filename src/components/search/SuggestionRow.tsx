@@ -9,11 +9,6 @@ type Props = {
   onPress: () => void;
 };
 
-/**
- * Renders a single autocomplete suggestion row.
- * The portion of the text that matches the query is rendered in white (bold),
- * the rest in #a7a7a7 — same pattern Spotify uses.
- */
 export function SuggestionRow({ suggestion, query, onPress }: Props) {
   const q = query.trim().toLowerCase();
   const text = suggestion.text;

@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const { width: SCREEN_W } = Dimensions.get("window");
 const CARD_W = SCREEN_W * 0.72;
 
-// Simulated barcode bars — alternating widths to mimic a Spotify-style scan code
 const BARS = [
   3, 1, 2, 1, 3, 2, 1, 3, 1, 2, 3, 1, 2, 1, 3, 1, 2, 3, 1, 2, 1, 3, 2, 1, 3, 1,
   2, 1, 3, 2,
@@ -169,7 +168,6 @@ export default function StreambeatCodeModal({
                       key={i}
                       style={{
                         width: w * 2,
-                        // Vary bar heights to mimic Spotify's scan code wave pattern
                         height: 12 + ((i * 7 + w * 4) % 22),
                         backgroundColor: "#ffffff",
                         borderRadius: 5,

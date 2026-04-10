@@ -96,7 +96,11 @@ export default function RootLayout() {
                   />
                   <Stack.Screen
                     name="manage-artists"
-                    options={{ animation: "slide_from_bottom" }}
+                    options={{ animation: "fade" }}
+                  />
+                  <Stack.Screen
+                    name="blend/index"
+                    options={{ animation: "fade" }}
                   />
                 </Stack>
                 <PersistentTabBar />

@@ -11,7 +11,6 @@
  *   personalScore    — how often the user has played this artist
  *   recencyScore     — how recently the song/album was released
  *
- * Weights are tuned to approximate Spotify's feel:
  *   match       40%  — relevance is still king
  *   popularity  25%  — popular songs surface naturally
  *   personal    25%  — personalisation is a strong signal

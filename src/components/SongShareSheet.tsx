@@ -1,11 +1,3 @@
-/**
- * SongShareSheet
- *
- * Spotify-style share bottom sheet.
- * Card background uses the same color as the expanded player —
- * derived via usePlayerColor (hash-based from the image URL).
- * Three theme dots = the player color / darker variant / darkest variant.
- */
 
 import { usePlayerColor } from "@/hooks/usePlayerColor";
 import { fetchLyrics } from "@/services/lyrics";
@@ -343,7 +335,6 @@ function LyricsCard({
         </Text>
       </View>
 
-      {/* Spotify logo at bottom */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
         <Image
           source={require("@/assets/images/logo-white.png")}
@@ -879,7 +870,6 @@ export default function SongShareSheet({
             }}
           />
 
-          {/* Action buttons - Spotify style */}
           <View
             style={{
               flexDirection: "row",

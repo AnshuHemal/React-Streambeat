@@ -1,7 +1,3 @@
-/**
- * LyricsCard.tsx
- * Time-synced lyrics card — Spotify-style layout.
- */
 
 import { useMusicPlayer } from "@/context/MusicPlayerContext";
 import { usePlayerPosition } from "@/context/PlayerPositionContext";

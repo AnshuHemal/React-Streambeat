@@ -10,7 +10,7 @@ Features extracted
   energy         Normalised RMS energy  [0.0 – 1.0]
   valence        Estimated emotional positivity  [0.0 – 1.0]
                  Approximated from: mode, spectral brightness,
-                 tempo, and energy — the same signals Spotify uses.
+                 tempo, and energy.
   danceability   Rhythm regularity + tempo suitability  [0.0 – 1.0]
   acousticness   Confidence the track is acoustic  [0.0 – 1.0]
   instrumentalness  Confidence there are no vocals  [0.0 – 1.0]
