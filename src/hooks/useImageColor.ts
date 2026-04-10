@@ -192,11 +192,6 @@ async function extractColorWeb(url: string): Promise<string> {
   });
 }
 
-/**
- * darkenForHeader — produces a dark, muted version of the color for use as
- * a header/background. Keeps the hue but reduces saturation and lightness
- * to match Spotify's artist header style (dark brownish/muted tones).
- */
 function darkenForHeader(hex: string): string {
   const rgb = hexToRgb(hex);
   if (!rgb) return hex;

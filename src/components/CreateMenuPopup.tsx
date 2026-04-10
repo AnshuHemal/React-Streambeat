@@ -30,7 +30,6 @@ export default function CreateMenuPopup({ visible, onClose }: Props) {
   const translateYAnim = useRef(new Animated.Value(10)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
-  // Staggered item animations
   const itemAnimations = useRef(
     [0, 1, 2].map(() => ({
       opacity: new Animated.Value(0),
@@ -38,7 +37,6 @@ export default function CreateMenuPopup({ visible, onClose }: Props) {
     }))
   ).current;
 
-  // Handle visibility changes with mount/unmount and animations
   useEffect(() => {
     if (visible) {
       // Mount first
@@ -145,6 +143,9 @@ export default function CreateMenuPopup({ visible, onClose }: Props) {
 
   const handleBlendPress = () => {
     onClose();
+    setTimeout(() => {
+      router.push("/blend" as any);
+    }, 150);
   };
 
   const options: CreateOption[] = [
