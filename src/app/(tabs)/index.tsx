@@ -13,13 +13,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-  Animated,
-  BackHandler,
-  Dimensions,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    BackHandler,
+    Dimensions,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { Drawer } from "react-native-drawer-layout";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -175,7 +175,7 @@ export default function HomeScreen() {
         artists: s.artists,
         album_title: s.album_title ?? undefined,
       }));
-      setQueue(queue, index);
+      setQueue(queue, index, "HOME");
       playSong(queue[index] as any);
     },
     [personalizedSongs, setQueue, playSong],

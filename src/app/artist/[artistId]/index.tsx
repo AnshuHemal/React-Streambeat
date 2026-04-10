@@ -11,12 +11,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 import {
-  Animated,
-  Dimensions,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
+    Animated,
+    Dimensions,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -110,7 +110,7 @@ export default function ArtistScreen() {
         artists: s.artists,
         album_title: s.album_title ?? undefined,
       }));
-      setQueue(queue, startIndex);
+      setQueue(queue, startIndex, "ARTIST");
       playSong(queue[startIndex] as any);
     },
     [songs, setQueue, playSong],

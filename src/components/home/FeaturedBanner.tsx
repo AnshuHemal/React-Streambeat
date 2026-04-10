@@ -96,7 +96,7 @@ export function FeaturedBanner({ item, onPress }: Props) {
             color: "#ffffff",
             fontFamily: "CircularStd",
             fontSize: 22,
-            fontWeight: "700",
+            fontWeight: "600",
           }}
           numberOfLines={2}
         >

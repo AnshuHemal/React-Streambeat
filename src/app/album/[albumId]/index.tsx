@@ -13,16 +13,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    View,
+  Animated,
+  Image,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-    SafeAreaView,
-    useSafeAreaInsets,
+  SafeAreaView,
+  useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
 type Song = {
@@ -448,7 +448,7 @@ export default function AlbumDetailScreen() {
               album_title: album?.title,
               image_url: album?.image_url,
             })) || [];
-          setQueue(songsWithAlbumData, index);
+          setQueue(songsWithAlbumData, index, "ALBUM");
           playSong({
             ...item,
             album_title: album?.title,
@@ -788,7 +788,7 @@ export default function AlbumDetailScreen() {
                 album_title: album.title,
                 image_url: album.image_url,
               }));
-              setQueue(songsWithAlbumData, 0);
+              setQueue(songsWithAlbumData, 0, "ALBUM");
               playSong(songsWithAlbumData[0]);
             }
           }}
@@ -843,6 +843,7 @@ export default function AlbumDetailScreen() {
         artistName={selectedSong?.artist_name ?? artistsNames}
         albumTitle={album.title}
         imageUrl={album.image_url}
+        durationMs={selectedSong?.duration_ms}
         artists={
           selectedSong?.song_artists && selectedSong.song_artists.length > 0
             ? selectedSong.song_artists

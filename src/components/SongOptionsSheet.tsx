@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import SongShareSheet from "./SongShareSheet";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const DISMISS_THRESHOLD = 100;
@@ -43,6 +44,7 @@ type Props = {
   albumTitle: string;
   imageUrl: string | null;
   artists?: ArtistItem[];
+  durationMs?: number | null;
 };
 
 const MENU_ITEMS: MenuItem[] = [
@@ -84,6 +86,7 @@ export default function SongOptionsSheet({
   albumTitle,
   imageUrl,
   artists = [],
+  durationMs,
 }: Props) {
   const insets = useSafeAreaInsets();
   const { isLiked: isLikedFn, toggleLike, getScaleAnim } = useLikedSongs();
@@ -95,6 +98,17 @@ export default function SongOptionsSheet({
   const currentSnap = useRef<"half" | "full">("half");
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+
+  // Store share data in refs to persist after parent closes selectedSong
+  const shareDataRef = useRef({
+    songId: songId,
+    songTitle: songTitle,
+    artistName: artistName,
+    albumTitle: albumTitle,
+    imageUrl: imageUrl,
+    durationMs: durationMs,
+  });
 
   const snapTo = (position: number, callback?: () => void) => {
     Animated.spring(translateY, {
@@ -392,6 +406,23 @@ export default function SongOptionsSheet({
                   key={item.id}
                   activeOpacity={0.65}
                   onPress={() => {
+                    if (item.id === "share") {
+                      // Store current data before closing
+                      shareDataRef.current = {
+                        songId,
+                        songTitle,
+                        artistName,
+                        albumTitle,
+                        imageUrl,
+                        durationMs,
+                      };
+                      animateOut(() => {
+                        dragY.setValue(0);
+                        onClose();
+                        setShowShare(true);
+                      });
+                      return;
+                    }
                     if (item.id === "code") {
                       animateOut(() => {
                         dragY.setValue(0);
@@ -509,6 +540,17 @@ export default function SongOptionsSheet({
         songTitle={songTitle}
         artistName={artistName}
         imageUrl={imageUrl}
+      />
+
+      <SongShareSheet
+        visible={showShare}
+        onClose={() => setShowShare(false)}
+        songTitle={shareDataRef.current.songTitle}
+        artistName={shareDataRef.current.artistName}
+        imageUrl={shareDataRef.current.imageUrl}
+        songId={shareDataRef.current.songId}
+        albumTitle={shareDataRef.current.albumTitle}
+        durationMs={shareDataRef.current.durationMs ?? undefined}
       />
     </>
   );

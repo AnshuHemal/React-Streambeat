@@ -43,6 +43,8 @@ type Song = {
   };
 };
 
+type PlayingFromSource = "LIBRARY" | "ALBUM" | "SEARCH" | "ARTIST" | "HOME" | "LIKED_SONGS" | null;
+
 type MusicPlayerContextType = {
   currentSong: Song | null;
   isPlaying: boolean;
@@ -63,7 +65,9 @@ type MusicPlayerContextType = {
   skipToPrevious: () => Promise<void>;
   playQueue: Song[];
   currentIndex: number;
-  setQueue: (songs: Song[], startIndex?: number) => void;
+  setQueue: (songs: Song[], startIndex?: number, source?: PlayingFromSource) => void;
+  /** Where the current playback originated from (Library, Album, Search, etc.) */
+  playingFrom: PlayingFromSource;
   /** Stops playback, clears the current song, and hides the player */
   stopPlayer: () => void;
 };
@@ -89,6 +93,7 @@ export function MusicPlayerProvider({
   const [isExpanded, setIsExpanded] = useState(false);
   const [playQueue, setPlayQueue] = useState<Song[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [playingFrom, setPlayingFrom] = useState<PlayingFromSource>(null);
 
   // ── Refs (never cause re-renders) ──────────────────────────────────────────
   const playerRef = useRef<AudioPlayer | null>(null);
@@ -287,9 +292,10 @@ export function MusicPlayerProvider({
     p.seekTo(clamped / 1000);
   }, []);
 
-  const setQueue = useCallback((songs: Song[], startIndex = 0) => {
+  const setQueue = useCallback((songs: Song[], startIndex = 0, source?: PlayingFromSource) => {
     setPlayQueue(songs);
     setCurrentIndex(startIndex);
+    if (source) setPlayingFrom(source);
     playQueueRef.current = songs;
     currentIndexRef.current = startIndex;
   }, []);
@@ -341,6 +347,7 @@ export function MusicPlayerProvider({
     playQueue,
     currentIndex,
     setQueue,
+    playingFrom,
     stopPlayer,
   };
 
