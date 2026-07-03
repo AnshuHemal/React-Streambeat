@@ -127,7 +127,7 @@ export default function PhoneAuthScreen() {
                   activeOpacity={0.8}
                 >
                   {loading ? (
-                    <LoadingDots />
+                    <LoadingDots inline color="#000000" />
                   ) : (
                     <Text className="text-black font-CircularStd text-lg">
                       Next

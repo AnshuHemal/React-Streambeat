@@ -222,7 +222,7 @@ function ArtistRow({
           }}
         >
           {isLoading ? (
-            <LoadingDots />
+            <LoadingDots inline />
           ) : (
             <Text
               style={{

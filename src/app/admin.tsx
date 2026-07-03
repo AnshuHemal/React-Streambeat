@@ -2493,7 +2493,7 @@ export default function AdminPanelScreen() {
       >
         {loading ? (
           <View style={{ alignItems: "center", gap: 6 }}>
-            <LoadingDots />
+            <LoadingDots inline color="#000000" />
             {uploadStep ? (
               <Text
                 style={{

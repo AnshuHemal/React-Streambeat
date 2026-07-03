@@ -109,7 +109,7 @@ export default function LoginScreen() {
               activeOpacity={0.85}
             >
               {loading ? (
-                <LoadingDots />
+                <LoadingDots inline color="#000000" />
               ) : (
                 <Text className="text-black font-CircularStd text-base">
                   Log in

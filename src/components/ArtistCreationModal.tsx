@@ -266,7 +266,7 @@ export function ArtistCreationModal({
                 }}
               >
                 {loading ? (
-                  <LoadingDots />
+                  <LoadingDots inline color="#000000" />
                 ) : (
                   <Text
                     style={{

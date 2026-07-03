@@ -190,7 +190,7 @@ export const CreditsCard = React.memo(function CreditsCard({
               }}
             >
               {isLoading ? (
-                <LoadingDots />
+                <LoadingDots inline />
               ) : (
                 <Text
                   style={{

@@ -1065,7 +1065,7 @@ export default function AudioUploadForm({
           }}
         >
           {uploading ? (
-            <LoadingDots />
+            <LoadingDots inline color="#000000" />
           ) : (
             <Text
               style={{

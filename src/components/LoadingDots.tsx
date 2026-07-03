@@ -5,12 +5,14 @@ type Props = {
   color?: string;
   size?: number;
   gap?: number;
+  inline?: boolean;
 };
 
 export default function LoadingDots({
   color = "#ffffff",
   size = 12,
   gap = 10,
+  inline = false,
 }: Props) {
   const dots = [
     useRef(new Animated.Value(0)).current,
@@ -41,6 +43,35 @@ export default function LoadingDots({
     return () => animations.forEach((a) => a.stop());
   }, []);
 
+  const renderDots = () => (
+    <View style={{ flexDirection: "row", gap, alignItems: "center", justifyContent: "center" }}>
+      {dots.map((dot, i) => (
+        <Animated.View
+          key={i}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: color,
+            opacity: dot,
+            transform: [
+              {
+                scale: dot.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.6, 1],
+                }),
+              },
+            ],
+          }}
+        />
+      ))}
+    </View>
+  );
+
+  if (inline) {
+    return renderDots();
+  }
+
   return (
     <View
       style={{
@@ -50,28 +81,7 @@ export default function LoadingDots({
         justifyContent: "center",
       }}
     >
-      <View style={{ flexDirection: "row", gap }}>
-        {dots.map((dot, i) => (
-          <Animated.View
-            key={i}
-            style={{
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-              backgroundColor: color,
-              opacity: dot,
-              transform: [
-                {
-                  scale: dot.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.6, 1],
-                  }),
-                },
-              ],
-            }}
-          />
-        ))}
-      </View>
+      {renderDots()}
     </View>
   );
 }

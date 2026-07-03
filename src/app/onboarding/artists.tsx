@@ -384,7 +384,7 @@ export default function OnboardingArtistsScreen() {
           activeOpacity={0.85}
         >
           {saving ? (
-            <LoadingDots />
+            <LoadingDots inline color="#121212" />
           ) : (
             <Text
               style={{
